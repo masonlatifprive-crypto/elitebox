@@ -1,0 +1,526 @@
+/* Fonts loaded via preconnected <link> in index.html — never @import here. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Elitebox "Moonlit" tokens (Stage-8 redesign) ──────────────────
+       Night-sky blues, moon-silver light, lunar-ice accent, rare violet. */
+    --deep: #030612;
+    --navy: #070C1F;
+    --panel: #0C1330;
+    --elevated: #131C40;
+    --cyan: #7CD9EC; /* lunar ice — focus/data/now-playing only */
+    --purple: #8B7CE8; /* lunar violet — rare accent */
+    --highlight: #A99BF0;
+    --silver: #DCE6F8; /* moon silver */
+    --ink: #F2F5FC;
+    --muted: #8E99BC;
+    --ok: #7CD9EC;
+    --warn: #FFB84D;
+    --error: #FF4D6D;
+    --live: #FF2E63;
+    --glow-lunar: rgba(196, 211, 245, .32);
+    --glow-violet: rgba(139, 124, 232, .22);
+
+    /* ── Gradients ───────────────────────────────────────────────────── */
+    --gradient-signature: linear-gradient(135deg, #7CD9EC 0%, #8B7CE8 58%, #A99BF0 100%);
+    --gradient-chrome: linear-gradient(180deg, #FFFFFF 0%, #DCE6F8 42%, #8FA2C8 60%, #EDF2FC 100%);
+    --gradient-nebula:
+      radial-gradient(1100px 620px at 50% -18%, rgba(220, 230, 248, .055), transparent 62%),
+      radial-gradient(1200px 600px at 78% -10%, rgba(139, 124, 232, .10), transparent 60%),
+      radial-gradient(900px 520px at 8% 112%, rgba(124, 217, 236, .06), transparent 55%);
+
+    /* ── shadcn compatibility remap → moonlit dark theme ─────────────── */
+    --background: 229 71% 4%;
+    --foreground: 220 60% 97%;
+    --card: 228 60% 7%;
+    --card-foreground: 220 60% 97%;
+    --popover: 228 60% 7%;
+    --popover-foreground: 220 60% 97%;
+    --primary: 190 75% 71%;
+    --primary-foreground: 229 71% 5%;
+    --secondary: 229 40% 15%;
+    --secondary-foreground: 220 60% 97%;
+    --muted-hsl: 229 30% 18%;
+    --muted-foreground: 226 24% 71%;
+    --accent: 248 78% 70%;
+    --accent-foreground: 220 60% 97%;
+    --destructive: 348 100% 65%;
+    --destructive-foreground: 220 60% 97%;
+    --border: 228 30% 20%;
+    --input: 228 30% 20%;
+    --ring: 190 75% 71%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-deep text-ink font-sans antialiased;
+    background-image: var(--gradient-nebula);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(124, 217, 236, .26);
+    color: var(--ink);
+  }
+
+  img {
+    @apply select-none;
+    -webkit-user-drag: none;
+  }
+
+  /* ── Custom scrollbar (design.md §8) ───────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(142, 153, 188, .25);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 217, 236, .4);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(142, 153, 188, .25) transparent;
+  }
+
+  /* ── Focus-visible: 2px cyan outline, offset 3px, 120ms fade-in ────── */
+  :focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+    border-radius: inherit;
+    transition: outline-color 120ms ease-out;
+  }
+
+  /* ── TV mode (≥1280px + tv detection): 1.15× scale, 3px focus rings ── */
+  html.tv-mode {
+    font-size: 18.4px; /* 16px × 1.15 */
+  }
+  html.tv-mode :focus-visible,
+  html.tv-mode .focusable:focus-visible,
+  html.tv-mode .focusable.tv-focused {
+    outline-width: 3px;
+  }
+  html.tv-mode body {
+    padding: 0;
+  }
+
+  @media (min-width: 1280px) {
+    html.tv-mode .tv-safe {
+      padding-left: 48px;
+      padding-right: 48px;
+    }
+  }
+
+  /* ── Reduced motion: springs → 150ms opacity fades, loops disabled ─── */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 150ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 150ms !important;
+    }
+    .animate-float-slow, .animate-beam-slide, .animate-scroll-cue, .animate-live-pulse {
+      animation: none !important;
+    }
+  }
+}
+
+@layer components {
+  /* ── Glass elevation system (design.md §5) ─────────────────────────── */
+  .glass-1 {
+    background: rgba(190, 212, 250, 0.04);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(220, 230, 248, 0.06);
+    box-shadow: inset 0 1px 0 rgba(240, 246, 255, 0.05);
+  }
+  .glass-2 {
+    background: rgba(190, 212, 250, 0.05);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(220, 230, 248, 0.08);
+    box-shadow: inset 0 1px 0 rgba(240, 246, 255, 0.05);
+  }
+  .glass-3 {
+    background: rgba(190, 212, 250, 0.07);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(220, 230, 248, 0.11);
+    box-shadow: 0 0 28px rgba(196, 211, 245, 0.10), 0 12px 40px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(240, 246, 255, 0.06);
+  }
+  .glass-solid {
+    background: rgba(3, 6, 18, 0.92);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(220, 230, 248, 0.08);
+  }
+
+  /* ── Chrome-silver gradient text (wordmark / hero H1 only) ─────────── */
+  .text-chrome {
+    background: var(--gradient-chrome);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .text-gradient-signature {
+    background: var(--gradient-signature);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* ── Signature cyan→purple surfaces ────────────────────────────────── */
+  .bg-signature {
+    background: var(--gradient-signature);
+  }
+  .bg-chrome {
+    background: var(--gradient-chrome);
+  }
+  .nebula-wash {
+    background-image: var(--gradient-nebula);
+  }
+
+  /* ── MovieWall hero: seamless marquee drift (composited transforms) ── */
+  .moviewall-drift,
+  .moviewall-drift-r {
+    animation-name: moviewall-x;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+  .moviewall-drift-r {
+    animation-name: moviewall-x-r;
+  }
+  @keyframes moviewall-x {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
+  }
+  @keyframes moviewall-x-r {
+    from { transform: translate3d(-50%, 0, 0); }
+    to { transform: translate3d(0, 0, 0); }
+  }
+
+  /* ── LivingTree: the EliteBox signature — AI waveform × neural tree ──
+     Motion contract (exact): float 4.6s · glow breathe 3.4s · spine pulse
+     2.8s · branch pulse 2.7s staggered · node pulse 2.2s. Lunar palette:
+     right branches ice cyan, left branches violet (logo gradient alive). */
+  .living-tree {
+    position: relative;
+    width: 280px;
+    height: 170px;
+    animation: lt-float 4.6s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+    will-change: transform;
+  }
+  .lt-glow {
+    position: absolute;
+    inset: 20px 18px;
+    border-radius: 999px;
+    pointer-events: none;
+    background:
+      radial-gradient(46% 38% at 50% 24%, rgba(124, 217, 236, 0.4), transparent 72%),
+      radial-gradient(48% 40% at 50% 78%, rgba(139, 124, 232, 0.36), transparent 72%),
+      radial-gradient(34% 52% at 50% 50%, rgba(220, 230, 248, 0.2), transparent 74%);
+    filter: blur(24px);
+    opacity: 0.72;
+    animation: lt-glow 3.4s cubic-bezier(0.76, 0, 0.24, 1) infinite alternate;
+    will-change: transform, opacity;
+  }
+  .lt-spine {
+    position: absolute;
+    left: 50%;
+    top: 18px;
+    width: 2px;
+    height: 132px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(226, 238, 252, 0.95) 32%,
+      rgba(124, 217, 236, 0.92) 68%,
+      transparent
+    );
+    box-shadow:
+      0 0 18px rgba(124, 217, 236, 0.55),
+      0 0 44px rgba(139, 124, 232, 0.22);
+    animation: lt-spine 2.8s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+  }
+  .lt-rung {
+    position: absolute;
+    left: 50%;
+    height: 1.5px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: rgba(220, 230, 248, 0.5);
+    box-shadow: 0 0 8px rgba(124, 217, 236, 0.35);
+    animation: lt-rung 3.1s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  .lt-branch {
+    position: absolute;
+    top: 50%;
+    height: 2px;
+    width: var(--w);
+    border-radius: 999px;
+    animation: lt-branch 2.7s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+    animation-delay: var(--d);
+    will-change: transform, opacity;
+  }
+  .lt-branch.r {
+    left: 50%;
+    transform-origin: left center;
+    transform: translateY(var(--y)) rotate(var(--r)) scaleX(0.72);
+    background: linear-gradient(90deg, rgba(124, 217, 236, 0.95), rgba(124, 217, 236, 0.28));
+    box-shadow: 0 0 16px rgba(124, 217, 236, 0.45);
+  }
+  .lt-branch.l {
+    right: 50%;
+    transform-origin: right center;
+    transform: translateY(var(--y)) rotate(var(--r)) scaleX(0.72);
+    background: linear-gradient(-90deg, rgba(139, 124, 232, 0.95), rgba(139, 124, 232, 0.28));
+    box-shadow: 0 0 16px rgba(139, 124, 232, 0.45);
+  }
+  .lt-twig {
+    position: absolute;
+    top: 0;
+    height: 1.5px;
+    width: 42%;
+    border-radius: 999px;
+    animation: lt-twig 2.7s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+    animation-delay: calc(var(--d) - 0.6s);
+  }
+  .lt-branch.r > .lt-twig {
+    left: 52%;
+    transform-origin: left center;
+    transform: rotate(-26deg);
+    background: linear-gradient(90deg, rgba(124, 217, 236, 0.65), transparent);
+  }
+  .lt-branch.l > .lt-twig {
+    right: 52%;
+    transform-origin: right center;
+    transform: rotate(26deg);
+    background: linear-gradient(-90deg, rgba(139, 124, 232, 0.65), transparent);
+  }
+  .lt-node {
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: lt-node 2.2s ease-in-out infinite;
+    animation-delay: calc(var(--d) - 0.4s);
+    will-change: transform, opacity;
+  }
+  .lt-branch.r > .lt-node {
+    left: 100%;
+    background: radial-gradient(circle, #ecfdff 0%, #7cd9ec 48%, rgba(124, 217, 236, 0) 78%);
+    box-shadow: 0 0 12px rgba(124, 217, 236, 0.8);
+  }
+  .lt-branch.l > .lt-node {
+    right: 100%;
+    background: radial-gradient(circle, #f2edff 0%, #8b7ce8 48%, rgba(139, 124, 232, 0) 78%);
+    box-shadow: 0 0 12px rgba(139, 124, 232, 0.8);
+  }
+  .lt-free-node {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(226, 238, 252, 0.9);
+    box-shadow: 0 0 14px rgba(220, 230, 248, 0.75);
+    animation: lt-node 2.2s ease-in-out infinite;
+    animation-delay: var(--d);
+    will-change: transform, opacity;
+  }
+
+  @keyframes lt-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-15px) scale(1.018); }
+  }
+  @keyframes lt-glow {
+    0% { opacity: 0.58; transform: scale(0.94); }
+    100% { opacity: 0.9; transform: scale(1.08); }
+  }
+  @keyframes lt-spine {
+    0%, 100% { opacity: 0.78; height: 116px; top: 27px; }
+    50% { opacity: 1; height: 142px; top: 14px; }
+  }
+  @keyframes lt-branch {
+    0%, 100% { opacity: 0.62; }
+    45% { opacity: 1; }
+    50% { transform: translateY(var(--y)) rotate(var(--r)) scaleX(1.08); }
+  }
+  @keyframes lt-twig {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.9; }
+  }
+  @keyframes lt-rung {
+    0%, 100% { opacity: 0.28; }
+    50% { opacity: 0.6; }
+  }
+  @keyframes lt-node {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.86); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  }
+  .lt-branch.l > .lt-node,
+  .lt-branch.r > .lt-node { margin: 0; }
+
+  /* Static, fully-formed tree when the user prefers reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    .living-tree,
+    .lt-glow,
+    .lt-spine,
+    .lt-rung,
+    .lt-branch,
+    .lt-twig,
+    .lt-node,
+    .lt-free-node {
+      animation: none !important;
+    }
+    .lt-glow { opacity: 0.6; transform: none; }
+    .lt-spine { opacity: 0.92; }
+    .lt-branch { opacity: 0.85; }
+    .lt-branch.r,
+    .lt-branch.l { transform: translateY(var(--y)) rotate(var(--r)) scaleX(1); }
+    .lt-twig { opacity: 0.5; }
+    .lt-rung { opacity: 0.4; }
+    .lt-node,
+    .lt-free-node { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  /* ── Logo inferior tittle (dot BELOW the dotless ı) ────────────────── */
+  .logo-tittle {
+    position: relative;
+    display: inline-block;
+  }
+  /* dotless ı: a normal "i" whose own tittle is masked away (Sora lacks
+     U+0131 — never rely on fallback fonts for the brand glyph). Own chrome
+     ramp compressed to the stem window so it shines like its siblings. */
+  .dotless-i {
+    background: linear-gradient(180deg, #FFFFFF 0%, #DCE6F8 30%, #8FA2C8 55%, #EDF2FC 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0.40em, #000 0.42em, #000 0.93em, transparent 0.95em);
+    mask-image: linear-gradient(180deg, transparent 0.40em, #000 0.42em, #000 0.93em, transparent 0.95em);
+  }
+  .logo-tittle::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -0.18em;
+    width: 0.16em;
+    height: 0.16em;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px rgba(124, 217, 236, .9), 0 0 14px rgba(124, 217, 236, .5);
+  }
+
+  /* ── Hide scrollbars on snap rails while keeping scroll ────────────── */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ── Shelf edge fade masks (48px, transparent → deep) ──────────────── */
+  .shelf-fade-x {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+  }
+
+  /* ── Spatial navigation focus contract (TV) ────────────────────────── */
+  .focusable.tv-focused {
+    outline: 3px solid var(--cyan);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 2px rgba(124, 217, 236, .9), 0 0 24px rgba(124, 217, 236, .45), 0 8px 32px rgba(0, 0, 0, .5);
+    transform: scale(1.06);
+    z-index: 10;
+  }
+  .focusable {
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease-out;
+  }
+
+  /* ── Film grain overlay (texture-grain.png, 5% opacity) ────────────── */
+  .grain-overlay::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    pointer-events: none;
+    background-image: url('/texture-grain.png');
+    background-repeat: repeat;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+  }
+
+  /* ── Moonlit starfield: 3 static dot layers, one slow drift ────────── */
+  .starfield {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .starfield::before,
+  .starfield::after {
+    content: '';
+    position: absolute;
+    inset: -160px;
+    background-image:
+      radial-gradient(circle, rgba(242, 245, 252, .55) 0.6px, transparent 1px),
+      radial-gradient(circle, rgba(196, 211, 245, .35) 0.7px, transparent 1.1px),
+      radial-gradient(circle, rgba(242, 245, 252, .22) 0.9px, transparent 1.3px);
+    background-size: 148px 148px, 236px 236px, 372px 372px;
+    background-position: 0 0, 42px 78px, 120px 40px;
+  }
+  .starfield::after {
+    opacity: 0.6;
+    /* static — no drift (owner directive: moving background reads cheap) */
+  }
+
+  /* ── Moon halo: soft lunar disc glow behind hero logo ──────────────── */
+  .moon-halo {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(233, 240, 253, .17) 0%, rgba(196, 211, 245, .08) 38%, rgba(139, 124, 232, .04) 58%, transparent 70%);
+    animation: moon-breathe 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes star-drift {
+    from { transform: translateY(0); }
+    to { transform: translateY(160px); }
+  }
+  @keyframes moon-breathe {
+    0%, 100% { transform: scale(1); opacity: .9; }
+    50% { transform: scale(1.06); opacity: 1; }
+  }
+}

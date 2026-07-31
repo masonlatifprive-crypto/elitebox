@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+
+# Local env / secrets — never commit these
+.env
+.env.*
+*.local
+gitdb/
+.git-old-os/
