@@ -42,6 +42,8 @@ import {
   spring,
   toast,
 } from '@/components/ui-elite';
+import { useT } from '@/i18n';
+import type { TFunction } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 /* ── icon path repair: scaffold manifest uses .png, shipped art is .jpg ── */
@@ -128,15 +130,15 @@ type InstallPhase =
   | { kind: 'installing'; manifest: ManifestPreview }
   | { kind: 'error'; message: string };
 
-async function fetchManifestPreview(url: string): Promise<ManifestPreview> {
+async function fetchManifestPreview(url: string, t: TFunction): Promise<ManifestPreview> {
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
-    throw new Error('That is not a valid URL. Include the full https:// address.');
+    throw new Error(t('app.addons.errInvalidUrl'));
   }
   if (!/^https?:$/.test(parsed.protocol)) {
-    throw new Error('Only http/https manifest URLs are supported.');
+    throw new Error(t('app.addons.errHttpOnly'));
   }
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
@@ -146,18 +148,18 @@ async function fetchManifestPreview(url: string): Promise<ManifestPreview> {
   } catch (err) {
     throw new Error(
       err instanceof Error && err.name === 'AbortError'
-        ? `No response from ${parsed.host} within 8s — host unreachable or too slow.`
-        : `Could not reach ${parsed.host}. Check the URL and your connection.`,
+        ? t('app.addons.errTimeout', { host: parsed.host })
+        : t('app.addons.errUnreachable', { host: parsed.host }),
     );
   } finally {
     clearTimeout(timer);
   }
-  if (!res.ok) throw new Error(`Host responded HTTP ${res.status} — no manifest at that URL.`);
+  if (!res.ok) throw new Error(t('app.addons.errHttpStatus', { status: res.status }));
   let json: unknown;
   try {
     json = await res.json();
   } catch {
-    throw new Error('The URL responded, but the body is not valid JSON.');
+    throw new Error(t('app.addons.errNotJson'));
   }
   const m = json as {
     id?: unknown; name?: unknown; version?: unknown; description?: unknown;
@@ -167,7 +169,7 @@ async function fetchManifestPreview(url: string): Promise<ManifestPreview> {
     legal?: { copyrightSafe?: boolean; contentRightsDeclared?: boolean; allowsCopyrightedPiracy?: boolean };
   };
   if (typeof m.id !== 'string' || !m.id || typeof m.name !== 'string' || !m.name) {
-    throw new Error('Invalid manifest: missing required "id" or "name" fields.');
+    throw new Error(t('app.addons.errInvalidManifest'));
   }
   const blocked = addonBlockReason(url, m.id, m.name);
   if (blocked) throw new Error(blocked);
@@ -213,6 +215,7 @@ async function fetchManifestPreview(url: string): Promise<ManifestPreview> {
 }
 
 function InstallModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   const [url, setUrl] = useState('');
   const [phase, setPhase] = useState<InstallPhase>({ kind: 'input' });
 
@@ -226,7 +229,7 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
   const fetchPreview = async () => {
     setPhase({ kind: 'fetching' });
     try {
-      const manifest = await fetchManifestPreview(url.trim());
+      const manifest = await fetchManifestPreview(url.trim(), t);
       setPhase({ kind: 'preview', manifest });
     } catch (err) {
       setPhase({ kind: 'error', message: err instanceof Error ? err.message : String(err) });
@@ -237,7 +240,7 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
     setPhase({ kind: 'installing', manifest });
     try {
       const info = await addonEngine.install(manifest.url);
-      toast(`Addon installed: ${info.name}`);
+      toast(t('app.addons.toastInstalled', { name: info.name }));
       onClose();
     } catch (err) {
       setPhase({ kind: 'error', message: err instanceof Error ? err.message : String(err) });
@@ -247,7 +250,7 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
   const preview = phase.kind === 'preview' || phase.kind === 'installing' ? phase.manifest : undefined;
 
   return (
-    <Modal open={open} onClose={onClose} title="Install addon by URL">
+    <Modal open={open} onClose={onClose} title={t('app.addons.installTitle')}>
       <AnimatePresence mode="wait">
         {!preview ? (
           <motion.div
@@ -258,8 +261,7 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
             className="flex flex-col gap-16"
           >
             <p className="text-caption text-muted">
-              Paste an addon manifest URL (JSON). Elitebox validates it, shows exactly what it can
-              do, then installs.
+              {t('app.addons.installIntro')}
             </p>
             <input
               type="url"
@@ -282,9 +284,9 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
               </p>
             )}
             <div className="flex justify-end gap-12">
-              <ButtonGhost onClick={onClose}>Cancel</ButtonGhost>
+              <ButtonGhost onClick={onClose}>{t('app.addons.cancel')}</ButtonGhost>
               <ButtonPrimary onClick={() => void fetchPreview()} className={!url.trim() || phase.kind === 'fetching' ? 'opacity-50 pointer-events-none' : ''}>
-                {phase.kind === 'fetching' ? 'Fetching…' : 'Validate manifest'}
+                {phase.kind === 'fetching' ? t('app.addons.fetching') : t('app.addons.validate')}
               </ButtonPrimary>
             </div>
           </motion.div>
@@ -315,10 +317,10 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
             {preview.description && <p className="text-caption text-muted">{preview.description}</p>}
 
             <div className="flex flex-col gap-8">
-              <span className="text-micro uppercase text-muted">Resources it provides</span>
+              <span className="text-micro uppercase text-muted">{t('app.addons.resourcesLabel')}</span>
               <div className="flex flex-wrap gap-8">
                 {preview.resources.length === 0 ? (
-                  <span className="text-caption text-muted">None declared</span>
+                  <span className="text-caption text-muted">{t('app.addons.noneDeclared')}</span>
                 ) : (
                   preview.resources.map((r) => (
                     <span key={r} className="glass-1 rounded-full px-12 py-4 text-micro uppercase text-cyan">
@@ -335,7 +337,7 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
                       className="rounded-full border border-white/[.08] px-12 py-4 font-mono text-[11px] text-muted"
                     >
                       {c.type}/{c.id}
-                      {c.searchable ? ' · searchable' : ''}
+                      {c.searchable ? ` · ${t('app.addons.searchableTag')}` : ''}
                     </span>
                   ))}
                 </div>
@@ -343,26 +345,26 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
             </div>
 
             <div className="flex flex-col gap-8">
-              <span className="text-micro uppercase text-muted">Permissions, in plain language</span>
+              <span className="text-micro uppercase text-muted">{t('app.addons.permissionsLabel')}</span>
               {[
-                `Fetches catalogs, metadata and streams from ${preview.origin} only.`,
-                'Every request runs with a timeout and an automatic circuit breaker.',
-                'Can be disabled, reordered or removed at any time from this page.',
+                t('app.addons.permOrigin', { origin: preview.origin }),
+                t('app.addons.permBreaker'),
+                t('app.addons.permRemovable'),
                 preview.permissions.length > 0
-                  ? `Declares ${preview.permissions.length} permission${preview.permissions.length === 1 ? '' : 's'}: ${preview.permissions.join(', ')}.`
-                  : 'Declares no special permissions.',
+                  ? t('app.addons.permDeclares', { count: preview.permissions.length, list: preview.permissions.join(', ') })
+                  : t('app.addons.permDeclaresNone'),
                 preview.privacy &&
                 (preview.privacy.receivesUserId || preview.privacy.receivesWatchHistory || preview.privacy.receivesRegion)
-                  ? `Privacy: this addon may receive ${
-                      [
-                        preview.privacy.receivesUserId && 'your user id',
-                        preview.privacy.receivesWatchHistory && 'your watch history',
-                        preview.privacy.receivesRegion && 'your region',
+                  ? t('app.addons.privacyReceives', {
+                      items: [
+                        preview.privacy.receivesUserId && t('app.addons.privacyUserId'),
+                        preview.privacy.receivesWatchHistory && t('app.addons.privacyHistory'),
+                        preview.privacy.receivesRegion && t('app.addons.privacyRegion'),
                       ]
                         .filter(Boolean)
-                        .join(', ')
-                    }. Elitebox never sends identity or history to addon endpoints regardless.`
-                  : 'Privacy: declares no access to your identity, watch history or region.',
+                        .join(', '),
+                    })
+                  : t('app.addons.privacyNone'),
               ].map((line) => (
                 <div key={line} className="flex items-start gap-8">
                   <ShieldCheck size={16} strokeWidth={1.75} className="mt-2 shrink-0 text-cyan" />
@@ -374,10 +376,10 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
                   <ShieldCheck size={16} strokeWidth={1.75} className="mt-2 shrink-0 text-cyan" />
                   <span className="text-caption text-ink">
                     {preview.legal.allowsCopyrightedPiracy
-                      ? 'Legal declaration: this addon states it may serve copyrighted content without rights — install at your own risk. Elitebox blocks known piracy addons outright.'
+                      ? t('app.addons.legalPiracy')
                       : preview.legal.copyrightSafe || preview.legal.contentRightsDeclared
-                        ? 'Legal declaration: the addon states its content is copyright-safe and rights are declared.'
-                        : 'Legal declaration: the addon declares no content-rights status.'}
+                        ? t('app.addons.legalSafe')
+                        : t('app.addons.legalNone')}
                   </span>
                 </div>
               )}
@@ -386,20 +388,18 @@ function InstallModal({ open, onClose }: { open: boolean; onClose: () => void })
             <div className="flex items-start gap-8 rounded-lg border border-warn/40 bg-warn/10 px-12 py-10">
               <ShieldAlert size={16} strokeWidth={1.75} className="mt-2 shrink-0 text-warn" />
               <span className="text-caption text-ink">
-                Community addon — not verified by Elitebox. Known piracy sources are blocked
-                automatically; anything else installs at your discretion.
-                {preview.torrentHint &&
-                  ' This manifest mentions torrent-style sourcing — only install it if you know it serves content you have the legal right to access.'}
+                {t('app.addons.communityWarn')}
+                {preview.torrentHint && ` ${t('app.addons.communityTorrentWarn')}`}
               </span>
             </div>
 
             <div className="flex justify-end gap-12">
-              <ButtonGhost onClick={() => setPhase({ kind: 'input' })}>Back</ButtonGhost>
+              <ButtonGhost onClick={() => setPhase({ kind: 'input' })}>{t('app.addons.back')}</ButtonGhost>
               <ButtonPrimary
                 onClick={() => void install(preview)}
                 className={phase.kind === 'installing' ? 'opacity-50 pointer-events-none' : ''}
               >
-                {phase.kind === 'installing' ? 'Installing…' : 'Install'}
+                {phase.kind === 'installing' ? t('app.addons.installing') : t('app.addons.install')}
               </ButtonPrimary>
             </div>
           </motion.div>
@@ -426,6 +426,7 @@ function AddonRow({
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
 }) {
+  const { t } = useT();
   const enabled = useAddons((s) => Boolean(s.enabled[addon.id]));
   const [recovering, setRecovering] = useState(false);
   const benched = health?.circuit === 'open';
@@ -454,7 +455,7 @@ function AddonRow({
             <span className="text-caption font-semibold text-ink">{addon.name}</span>
             <span className="font-mono text-micro text-muted">v{addon.version}</span>
             {addon.builtin && (
-              <span className="rounded-full bg-signature px-8 py-1 text-micro uppercase text-deep">Built-in</span>
+              <span className="rounded-full bg-signature px-8 py-1 text-micro uppercase text-deep">{t('app.addons.builtIn')}</span>
             )}
           </div>
           <span className="text-caption text-muted line-clamp-2">{addon.description}</span>
@@ -473,12 +474,12 @@ function AddonRow({
           {health && <SuccessBar rate={health.successRate} />}
           {benched ? (
             <span className="font-mono text-[11px] text-error">
-              BENCHED {health.retryInSec ?? 0}s
+              {t('app.addons.benchedTag', { s: health.retryInSec ?? 0 })}
             </span>
           ) : (
             health && (
               <span className="font-mono text-[11px] text-muted">
-                circuit {health.circuit}
+                {t('app.addons.circuitTag', { state: health.circuit })}
               </span>
             )
           )}
@@ -488,9 +489,9 @@ function AddonRow({
           checked={enabled}
           onChange={(v) => {
             addonEngine.setEnabled(addon.id, v);
-            toast(v ? `${addon.name} enabled` : `${addon.name} disabled`);
+            toast(v ? t('app.addons.toastEnabled', { name: addon.name }) : t('app.addons.toastDisabled', { name: addon.name }));
           }}
-          label={`${enabled ? 'Disable' : 'Enable'} ${addon.name}`}
+          label={t(enabled ? 'app.addons.disableAria' : 'app.addons.enableAria', { name: addon.name })}
         />
       </div>
 
@@ -500,13 +501,13 @@ function AddonRow({
           {health && <HealthDot status={health.status} latencyMs={health.latencyMs} />}
           {health && <SuccessBar rate={health.successRate} />}
           {benched && (
-            <span className="font-mono text-[11px] text-error">BENCHED {health.retryInSec ?? 0}s</span>
+            <span className="font-mono text-[11px] text-error">{t('app.addons.benchedTag', { s: health.retryInSec ?? 0 })}</span>
           )}
         </div>
         <div className="flex items-center gap-4">
           <button
             type="button"
-            aria-label={`Move ${addon.name} up`}
+            aria-label={t('app.addons.moveUpAria', { name: addon.name })}
             disabled={index === 0}
             onClick={() => onMove(-1)}
             className="focusable glass-1 flex h-32 w-32 items-center justify-center rounded-full text-muted hover:text-cyan cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
@@ -515,7 +516,7 @@ function AddonRow({
           </button>
           <button
             type="button"
-            aria-label={`Move ${addon.name} down`}
+            aria-label={t('app.addons.moveDownAria', { name: addon.name })}
             disabled={index === total - 1}
             onClick={() => onMove(1)}
             className="focusable glass-1 flex h-32 w-32 items-center justify-center rounded-full text-muted hover:text-cyan cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
@@ -529,20 +530,20 @@ function AddonRow({
               setRecovering(true);
               void addonEngine.recover(addon.id).then((h) => {
                 setRecovering(false);
-                if (h.status === 'ok') toast(`${addon.name} recovered — probe ok`);
-                else toast.error(`${addon.name} probe failed, still ${h.status}`);
+                if (h.status === 'ok') toast(t('app.addons.toastRecovered', { name: addon.name }));
+                else toast.error(t('app.addons.toastProbeFailed', { name: addon.name, status: h.status }));
               });
             }}
             className="px-16 py-6 text-micro"
           >
-            {recovering ? 'Probing…' : 'Recover now'}
+            {recovering ? t('app.detail.probing') : t('app.addons.recoverNow')}
           </ButtonNeon>
         )}
         <div className="ml-auto flex items-center gap-4">
           {!addon.builtin && (
             <span
               className="font-mono text-[11px] text-muted"
-              title="Reliability score from real probe telemetry (success rate + circuit state)"
+              title={t('app.addons.relTitle')}
             >
               REL {addonEngine.reliability(addon.id)}
             </span>
@@ -556,23 +557,23 @@ function AddonRow({
                   subjectName: addon.name,
                   note: 'User-flagged from the addon manager.',
                 });
-                toast('Report noted — stored on this device for review');
+                toast(t('app.addons.toastReported'));
               }}
               className="text-muted hover:text-warn"
-              aria-label={`Report an issue with ${addon.name}`}
+              aria-label={t('app.addons.reportAria', { name: addon.name })}
             >
               <Flag size={14} strokeWidth={1.75} />
-              Report
+              {t('app.addons.report')}
             </ButtonGhost>
           )}
           {addon.builtin ? (
-            <span className="text-micro uppercase text-muted" title="The Showcase addon is bundled with Elitebox">
-              Bundled — cannot remove
+            <span className="text-micro uppercase text-muted" title={t('app.addons.bundledTitle')}>
+              {t('app.addons.bundled')}
             </span>
           ) : (
             <ButtonGhost onClick={onRemove} className="text-error hover:text-error">
               <Trash2 size={14} strokeWidth={1.75} />
-              Remove
+              {t('app.addons.remove')}
             </ButtonGhost>
           )}
         </div>
@@ -587,38 +588,39 @@ const DIRECTORY_SLOTS = [
   {
     icon: '/art/addon-icon-cinema.jpg',
     glyph: Clapperboard,
-    name: 'Cinema catalogs',
-    text: 'Community movie and series indexes install instantly from a manifest URL.',
+    nameKey: 'app.addons.dirCinemaName',
+    textKey: 'app.addons.dirCinemaText',
   },
   {
     icon: '/art/addon-icon-live.jpg',
     glyph: Tv,
-    name: 'Live TV sources',
-    text: 'IPTV and broadcast addons plug in the same way — one JSON manifest.',
+    nameKey: 'app.addons.dirLiveName',
+    textKey: 'app.addons.dirLiveText',
   },
   {
     icon: '/art/addon-icon-archive.jpg',
     glyph: Archive,
-    name: 'Archives & classics',
-    text: 'Public-domain and open-license archives, health-checked like everything else.',
+    nameKey: 'app.addons.dirArchiveName',
+    textKey: 'app.addons.dirArchiveText',
   },
   {
     icon: '/art/addon-icon-radio.jpg',
     glyph: Radio,
-    name: 'Radio & audio',
-    text: 'Stream addons can serve audio-only stations alongside video.',
+    nameKey: 'app.addons.dirRadioName',
+    textKey: 'app.addons.dirRadioText',
   },
   {
     icon: '/art/addon-icon-docs.jpg',
     glyph: FileText,
-    name: 'Build your own',
-    text: 'Four resources — catalog, meta, stream, subtitles — documented openly.',
+    nameKey: 'app.addons.dirBuildName',
+    textKey: 'app.addons.dirBuildText',
   },
 ];
 
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function AddonsPage() {
+  const { t } = useT();
   const installed = useAddons((s) => s.installed);
   const [health, setHealth] = useState<Record<string, AddonHealth>>(() => addonEngine.healthAll());
   const [installOpen, setInstallOpen] = useState(false);
@@ -661,9 +663,9 @@ export default function AddonsPage() {
       setHealth(addonEngine.healthAll());
       setLastCheck(Date.now());
       setRechecking(false);
-      toast(targets.length === 0 ? 'Health snapshot refreshed' : `Re-checked ${targets.length} addon${targets.length > 1 ? 's' : ''}`);
+      toast(targets.length === 0 ? t('app.addons.toastRefreshed') : t('app.addons.toastRechecked', { count: targets.length }));
     }
-  }, [installed]);
+  }, [installed, t]);
 
   const move = (index: number, dir: -1 | 1) => {
     const ids = installed.map((a) => a.id);
@@ -682,12 +684,12 @@ export default function AddonsPage() {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-wrap items-center gap-16"
       >
-        <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">Addons</h1>
+        <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">{t('app.addons.title')}</h1>
         <div className="ml-auto flex items-center gap-12">
-          <ButtonPrimary onClick={() => setInstallOpen(true)}>Install by URL</ButtonPrimary>
+          <ButtonPrimary onClick={() => setInstallOpen(true)}>{t('app.addons.installByUrl')}</ButtonPrimary>
           <ButtonNeon to="/store">
             <Store size={16} strokeWidth={1.75} />
-            Browse Store
+            {t('app.addons.browseStore')}
           </ButtonNeon>
         </div>
       </motion.div>
@@ -697,32 +699,32 @@ export default function AddonsPage() {
         <div className="flex items-center gap-8">
           <span className="h-8 w-8 rounded-full bg-ok shadow-[0_0_8px_rgba(124,217,236,.7)]" />
           <span className="font-display text-title text-ink">{overview.healthy}</span>
-          <span className="text-micro uppercase text-muted">Healthy</span>
+          <span className="text-micro uppercase text-muted">{t('app.addons.healthy')}</span>
         </div>
         <div className="flex items-center gap-8">
           <span className="h-8 w-8 rounded-full bg-warn shadow-[0_0_8px_rgba(255,184,77,.7)]" />
           <span className="font-display text-title text-ink">{overview.degraded}</span>
-          <span className="text-micro uppercase text-muted">Degraded</span>
+          <span className="text-micro uppercase text-muted">{t('app.addons.degraded')}</span>
         </div>
         <div className="flex items-center gap-8">
           <span className="h-8 w-8 rounded-full bg-error shadow-[0_0_8px_rgba(255,77,109,.7)]" />
           <span className="font-display text-title text-ink">{overview.benched}</span>
-          <span className="text-micro uppercase text-muted">Benched</span>
+          <span className="text-micro uppercase text-muted">{t('app.addons.benched')}</span>
         </div>
         <div className="flex items-center gap-8">
           <Activity size={16} strokeWidth={1.75} className="text-cyan" />
           <span className="font-mono text-caption text-ink">
             {overview.avg !== undefined ? `${overview.avg}ms` : '—'}
           </span>
-          <span className="text-micro uppercase text-muted">Avg latency</span>
+          <span className="text-micro uppercase text-muted">{t('app.addons.avgLatency')}</span>
         </div>
         <div className="ml-auto flex items-center gap-12">
           <span className="font-mono text-[11px] text-muted">
-            last check {new Date(lastCheck).toLocaleTimeString()}
+            {t('app.addons.lastCheck', { time: new Date(lastCheck).toLocaleTimeString() })}
           </span>
           <ButtonGhost onClick={() => void recheckAll()} className={rechecking ? 'opacity-50 pointer-events-none' : ''}>
             <RefreshCw size={14} strokeWidth={1.75} className={rechecking ? 'animate-spin' : ''} />
-            {rechecking ? 'Probing…' : 'Re-check all'}
+            {rechecking ? t('app.detail.probing') : t('app.addons.recheckAll')}
           </ButtonGhost>
         </div>
       </GlassPanel>
@@ -730,17 +732,17 @@ export default function AddonsPage() {
       {/* ── S3 installed list ── */}
       <section className="flex flex-col gap-12">
         <div className="flex flex-col gap-4">
-          <h2 className="font-display text-title text-ink">Installed</h2>
+          <h2 className="font-display text-title text-ink">{t('app.addons.installed')}</h2>
           <p className="text-caption text-muted">
-            Order decides catalog priority — the top addon answers first. Use the arrows to rearrange.
+            {t('app.addons.installedNote')}
           </p>
         </div>
         {installed.length === 0 ? (
           <EmptyState
             icon={Puzzle}
-            title="No addons installed."
-            caption="Addons bring catalogs, metadata and streams. Install one from a manifest URL."
-            action={<ButtonPrimary onClick={() => setInstallOpen(true)}>Install by URL</ButtonPrimary>}
+            title={t('app.addons.emptyTitle')}
+            caption={t('app.addons.emptyCaption')}
+            action={<ButtonPrimary onClick={() => setInstallOpen(true)}>{t('app.addons.installByUrl')}</ButtonPrimary>}
           />
         ) : (
           <div className="flex max-w-4xl flex-col gap-12">
@@ -764,10 +766,9 @@ export default function AddonsPage() {
       {/* ── S4 directory ── */}
       <section className="flex flex-col gap-16">
         <div className="flex flex-col gap-4">
-          <h2 className="font-display text-title text-ink">Directory</h2>
+          <h2 className="font-display text-title text-ink">{t('app.addons.directory')}</h2>
           <p className="max-w-[68ch] text-caption text-muted">
-            Elitebox ships with the built-in Showcase catalog. Everything else is community-made and
-            installs from a manifest URL — validated and permission-previewed before it ever runs.
+            {t('app.addons.directoryNote')}
           </p>
         </div>
         <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-3">
@@ -788,20 +789,19 @@ export default function AddonsPage() {
               <div className="flex flex-col gap-4">
                 <span className="text-caption font-semibold text-ink">Elitebox Showcase</span>
                 <span className="rounded-full bg-signature px-8 py-1 text-micro uppercase text-deep w-fit">
-                  Built-in
+                  {t('app.addons.builtIn')}
                 </span>
               </div>
             </div>
             <p className="text-caption text-muted">
-              Open-content catalog — Blender Studio films, Caminandes and open live channels. Works
-              fully offline.
+              {t('app.addons.showcaseBody')}
             </p>
-            <span className="text-micro uppercase text-ok">Installed · always available</span>
+            <span className="text-micro uppercase text-ok">{t('app.addons.showcaseStatus')}</span>
           </motion.div>
 
           {DIRECTORY_SLOTS.map((slot, i) => (
             <motion.div
-              key={slot.name}
+              key={slot.nameKey}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.15 }}
@@ -815,13 +815,13 @@ export default function AddonsPage() {
                   className="h-48 w-48 rounded-lg object-cover ring-1 ring-white/[.08]"
                 />
                 <div className="flex flex-col gap-4">
-                  <span className="text-caption font-semibold text-ink">{slot.name}</span>
+                  <span className="text-caption font-semibold text-ink">{t(slot.nameKey)}</span>
                   <slot.glyph size={16} strokeWidth={1.75} className="text-cyan" />
                 </div>
               </div>
-              <p className="text-caption text-muted">{slot.text}</p>
+              <p className="text-caption text-muted">{t(slot.textKey)}</p>
               <ButtonNeon onClick={() => setInstallOpen(true)} className="w-fit px-16 py-8 text-micro">
-                Install by URL
+                {t('app.addons.installByUrl')}
               </ButtonNeon>
             </motion.div>
           ))}
@@ -830,8 +830,8 @@ export default function AddonsPage() {
 
       {/* ── S5 protocol strip ── */}
       <p className="glass-2 rounded-xl px-16 py-12 font-mono text-caption text-muted">
-        One JSON manifest · four resources · documented openly.{' '}
-        <span className="text-cyan">Every addon is health-checked.</span>
+        {t('app.addons.protocolNote')}{' '}
+        <span className="text-cyan">{t('app.addons.protocolHighlight')}</span>
       </p>
 
       {/* ── install modal ── */}
@@ -841,25 +841,24 @@ export default function AddonsPage() {
       <Modal
         open={removeTarget !== null}
         onClose={() => setRemoveTarget(null)}
-        title={removeTarget ? `Remove ${removeTarget.name}?` : undefined}
+        title={removeTarget ? t('app.addons.removeTitle', { name: removeTarget.name }) : undefined}
       >
         <div className="flex flex-col gap-16">
           <p className="text-caption text-muted">
-            The addon is uninstalled from this profile. Its catalogs and streams disappear
-            immediately; reinstalling takes one manifest URL.
+            {t('app.addons.removeBody')}
           </p>
           <div className="flex justify-end gap-12">
-            <ButtonGhost onClick={() => setRemoveTarget(null)}>Keep it</ButtonGhost>
+            <ButtonGhost onClick={() => setRemoveTarget(null)}>{t('app.addons.keepIt')}</ButtonGhost>
             <ButtonDanger
               onClick={() => {
                 if (removeTarget) {
                   addonEngine.remove(removeTarget.id);
-                  toast(`Removed ${removeTarget.name}`);
+                  toast(t('app.addons.toastRemoved', { name: removeTarget.name }));
                 }
                 setRemoveTarget(null);
               }}
             >
-              Remove addon
+              {t('app.addons.removeAddon')}
             </ButtonDanger>
           </div>
         </div>

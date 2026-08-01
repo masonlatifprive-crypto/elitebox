@@ -6,10 +6,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useT } from '@/i18n';
 
 const KEY = 'elitebox.v1.storage-notice-ok';
 
 export default function StorageBanner() {
+  const { t } = useT();
   const [show, setShow] = useState(false);
   useEffect(() => {
     try {
@@ -43,9 +45,9 @@ export default function StorageBanner() {
           className="glass-solid fixed bottom-16 left-16 right-16 z-[60] mx-auto flex max-w-[560px] items-center gap-16 rounded-2xl px-20 py-14 shadow-panel sm:left-1/2 sm:right-auto sm:-translate-x-1/2"
         >
           <p className="flex-1 text-caption text-ink/90">
-            Elitebox keeps your library on this device and sets zero trackers.{' '}
+            {t('marketing.storageBanner.text')}{' '}
             <Link to="/cookies" className="focusable rounded-sm text-cyan hover:underline">
-              Learn more
+              {t('marketing.storageBanner.learnMore')}
             </Link>
           </p>
           <button
@@ -53,12 +55,12 @@ export default function StorageBanner() {
             onClick={dismiss}
             className="focusable shrink-0 rounded-full bg-signature px-16 py-8 text-[12px] font-bold text-deep cursor-pointer"
           >
-            Got it
+            {t('marketing.storageBanner.gotIt')}
           </button>
           <button
             type="button"
             onClick={dismiss}
-            aria-label="Dismiss notice"
+            aria-label={t('marketing.storageBanner.dismiss')}
             className="focusable shrink-0 rounded-full text-muted hover:text-ink cursor-pointer"
           >
             <X size={16} strokeWidth={1.75} />

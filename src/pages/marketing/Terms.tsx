@@ -2,18 +2,20 @@
  * /terms — Elitebox Terms of Service.
  */
 import { LegalDoc } from './LegalDoc';
+import { useT } from '@/i18n';
 
 export default function Terms() {
+  const { t } = useT();
   return (
     <LegalDoc
-      eyebrow="Legal"
-      title="Terms of Service"
+      eyebrow={t('marketing.legal.eyebrow')}
+      title={t('marketing.legal.terms.title')}
       updated="July 31, 2026"
-      intro="These terms govern your use of Elitebox — the web app, native apps and the Elitebox Premium subscription. They are written to be read, not to hide in."
+      intro={t('marketing.legal.terms.intro')}
       sections={[
         {
           id: 'the-service',
-          title: '1. The service',
+          title: t('marketing.legal.terms.s1'),
           body: (
             <>
               <p>
@@ -30,7 +32,7 @@ export default function Terms() {
         },
         {
           id: 'your-content-rights',
-          title: '2. Content you access',
+          title: t('marketing.legal.terms.s2'),
           body: (
             <>
               <p>
@@ -47,7 +49,7 @@ export default function Terms() {
         },
         {
           id: 'premium',
-          title: '3. Elitebox Premium',
+          title: t('marketing.legal.terms.s3'),
           body: (
             <>
               <p>
@@ -65,7 +67,7 @@ export default function Terms() {
         },
         {
           id: 'accounts',
-          title: '4. Accounts and acceptable use',
+          title: t('marketing.legal.terms.s4'),
           body: (
             <>
               <p>
@@ -82,7 +84,7 @@ export default function Terms() {
         },
         {
           id: 'liability',
-          title: '5. Availability and liability',
+          title: t('marketing.legal.terms.s5'),
           body: (
             <p>
               Elitebox is provided &quot;as is&quot;. We work hard to keep it fast, stable and
@@ -94,7 +96,7 @@ export default function Terms() {
         },
         {
           id: 'changes',
-          title: '6. Changes',
+          title: t('marketing.legal.terms.s6'),
           body: (
             <p>
               Changes to these terms are posted on the Updates page with a new date. Continued

@@ -17,6 +17,7 @@ import Footer from '@/components/Footer';
 import StorageBanner from '@/components/StorageBanner';
 import AppRail from '@/components/AppRail';
 import CommandPalette from '@/components/CommandPalette';
+import MagnetDrop from '@/components/MagnetDrop';
 import { useSpatialNav } from '@/lib/tvnav';
 
 export function MarketingShell() {
@@ -76,6 +77,8 @@ export function AppShell() {
         </div>
       </main>
       <CommandPalette />
+      {/* Global .torrent drop zone + shared magnet result sheet (every /app route) */}
+      <MagnetDrop />
     </div>
   );
 }

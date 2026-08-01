@@ -15,6 +15,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, OctagonX, X } from 'lucide-react';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 import type { AddonHealth } from '@/lib/types';
 
@@ -32,6 +33,13 @@ type CommonProps = {
   /** External URL — renders a real <a target="_blank" rel="noopener noreferrer">. */
   href?: string;
   onClick?: () => void;
+  /**
+   * Disabled state: a real `disabled` attribute on <button> renders, and
+   * `aria-disabled` + inert pointer/keyboard behavior on link renders. Muted
+   * styling comes from btnBase's `disabled:` variants (buttons) or explicit
+   * opacity/pointer classes (links). Omitting it changes nothing.
+   */
+  disabled?: boolean;
   className?: string;
   children: ReactNode;
 };
@@ -45,7 +53,7 @@ function useButtonHandlers(to?: string, onClick?: () => void) {
   return { to, onClick };
 }
 
-export function ButtonPrimary({ to, onClick, className, children }: CommonProps) {
+export function ButtonPrimary({ to, onClick, disabled, className, children }: CommonProps) {
   const cls = cn(
     btnBase,
     btnSizes,
@@ -58,17 +66,23 @@ export function ButtonPrimary({ to, onClick, className, children }: CommonProps)
     </motion.span>
   );
   return to ? (
-    <Link to={to} onClick={onClick} className={cls}>
+    <Link
+      to={to}
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      className={cn(cls, disabled && 'pointer-events-none opacity-50')}
+    >
       {inner}
     </Link>
   ) : (
-    <button type="button" onClick={onClick} className={cls}>
+    <button type="button" onClick={onClick} disabled={disabled} className={cls}>
       {inner}
     </button>
   );
 }
 
-export function ButtonNeon({ to, onClick, className, children }: CommonProps) {
+export function ButtonNeon({ to, onClick, disabled, className, children }: CommonProps) {
   const cls = cn(
     btnBase,
     btnSizes,
@@ -76,42 +90,58 @@ export function ButtonNeon({ to, onClick, className, children }: CommonProps) {
     className,
   );
   return to ? (
-    <Link to={to} onClick={onClick} className={cls}>
+    <Link
+      to={to}
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      className={cn(cls, disabled && 'pointer-events-none opacity-50')}
+    >
       {children}
     </Link>
   ) : (
-    <button type="button" onClick={onClick} className={cls}>
+    <button type="button" onClick={onClick} disabled={disabled} className={cls}>
       {children}
     </button>
   );
 }
 
-export function ButtonGhost({ to, href, onClick, className, children }: CommonProps) {
+export function ButtonGhost({ to, href, onClick, disabled, className, children }: CommonProps) {
   const cls = cn(
     btnBase,
     'px-16 py-8 text-caption font-semibold text-muted hover:text-ink hover:bg-white/[.06] active:scale-[0.97]',
     className,
   );
   if (href) {
-    return (
+    return disabled ? (
+      <a aria-disabled="true" tabIndex={-1} className={cn(cls, 'pointer-events-none opacity-50')}>
+        {children}
+      </a>
+    ) : (
       <a href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={cls}>
         {children}
       </a>
     );
   }
   return to ? (
-    <Link to={to} onClick={onClick} className={cls}>
+    <Link
+      to={to}
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      className={cn(cls, disabled && 'pointer-events-none opacity-50')}
+    >
       {children}
     </Link>
   ) : (
-    <button type="button" onClick={onClick} className={cls}>
+    <button type="button" onClick={onClick} disabled={disabled} className={cls}>
       {children}
     </button>
   );
 }
 
 /** Danger outline variant (addon remove, profile delete). */
-export function ButtonDanger({ to, onClick, className, children }: CommonProps) {
+export function ButtonDanger({ to, onClick, disabled, className, children }: CommonProps) {
   const cls = cn(
     btnBase,
     btnSizes,
@@ -120,11 +150,17 @@ export function ButtonDanger({ to, onClick, className, children }: CommonProps) 
   );
   const props = useButtonHandlers(to, onClick);
   return props.to ? (
-    <Link to={props.to} onClick={props.onClick} className={cls}>
+    <Link
+      to={props.to}
+      onClick={disabled ? undefined : props.onClick}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      className={cn(cls, disabled && 'pointer-events-none opacity-50')}
+    >
       {children}
     </Link>
   ) : (
-    <button type="button" onClick={props.onClick} className={cls}>
+    <button type="button" onClick={props.onClick} disabled={disabled} className={cls}>
       {children}
     </button>
   );
@@ -141,16 +177,17 @@ export function HealthDot({
   latencyMs?: number;
   className?: string;
 }) {
+  const { t } = useT();
   const color =
     status === 'ok' ? 'bg-ok shadow-[0_0_8px_rgba(124,217,236,.7)]'
     : status === 'degraded' ? 'bg-warn shadow-[0_0_8px_rgba(255,184,77,.7)]'
     : 'bg-error shadow-[0_0_8px_rgba(255,77,109,.7)]';
   const label =
     status === 'ok'
-      ? `Healthy${latencyMs !== undefined ? ` · ${Math.round(latencyMs)}ms` : ''}`
+      ? `${t('app.ui.healthOk')}${latencyMs !== undefined ? ` · ${Math.round(latencyMs)}ms` : ''}`
       : status === 'degraded'
-        ? `Degraded${latencyMs !== undefined ? ` · ${Math.round(latencyMs)}ms` : ''}`
-        : 'Down';
+        ? `${t('app.ui.healthDegraded')}${latencyMs !== undefined ? ` · ${Math.round(latencyMs)}ms` : ''}`
+        : t('app.ui.healthDown');
   return (
     <span className={cn('inline-flex items-center gap-6', className)} title={label}>
       <span className={cn('inline-block h-8 w-8 rounded-full', color)} />
@@ -164,6 +201,7 @@ export function HealthDot({
 /* ── Quality badges (§10.7) ────────────────────────────────────────────── */
 
 export function Badge({ kind, className }: { kind: 'HD' | '4K' | 'LIVE'; className?: string }) {
+  const { t } = useT();
   if (kind === 'LIVE') {
     return (
       <span
@@ -173,7 +211,7 @@ export function Badge({ kind, className }: { kind: 'HD' | '4K' | 'LIVE'; classNa
         )}
       >
         <span className="h-6 w-6 rounded-full bg-live animate-live-pulse" />
-        <span className="text-ink">Live</span>
+        <span className="text-ink">{t('app.ui.badgeLive')}</span>
       </span>
     );
   }
@@ -251,6 +289,7 @@ export function Modal({
   children: ReactNode;
   className?: string;
 }) {
+  const { t } = useT();
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
@@ -335,7 +374,7 @@ export function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close dialog"
+                aria-label={t('app.ui.closeDialog')}
                 className="focusable ml-auto rounded-full p-8 text-muted hover:text-ink hover:bg-white/[.06] cursor-pointer"
               >
                 <X size={20} strokeWidth={1.75} />
@@ -404,13 +443,14 @@ function subscribeToasts(cb: () => void) {
 }
 
 export function ToastHost() {
+  const { t } = useT();
   const toasts = useSyncExternalStore(subscribeToasts, () => toastSnapshot);
   return (
     <div className="pointer-events-none fixed inset-x-0 z-[90] flex flex-col items-center gap-8 px-16 top-16 md:top-16 max-md:top-auto max-md:bottom-24">
       <AnimatePresence>
-        {toasts.map((t) => (
+        {toasts.map((item) => (
           <motion.div
-            key={t.id}
+            key={item.id}
             layout="position"
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -418,20 +458,20 @@ export function ToastHost() {
             transition={spring.snappy}
             className={cn(
               'glass-2 pointer-events-auto flex items-center gap-12 rounded-lg px-16 py-12',
-              t.kind === 'error' && 'border border-error/50',
+              item.kind === 'error' && 'border border-error/50',
             )}
-            role={t.kind === 'error' ? 'alert' : 'status'}
+            role={item.kind === 'error' ? 'alert' : 'status'}
           >
-            {t.kind === 'error' ? (
+            {item.kind === 'error' ? (
               <OctagonX size={18} strokeWidth={1.75} className="text-error shrink-0" />
             ) : (
               <CheckCircle2 size={18} strokeWidth={1.75} className="text-cyan shrink-0" />
             )}
-            <span className="text-caption text-ink">{t.msg}</span>
+            <span className="text-caption text-ink">{item.msg}</span>
             <button
               type="button"
-              aria-label="Dismiss notification"
-              onClick={() => dismissToast(t.id)}
+              aria-label={t('app.ui.dismissNotification')}
+              onClick={() => dismissToast(item.id)}
               className="focusable rounded-full p-4 text-muted hover:text-ink cursor-pointer"
             >
               <X size={14} strokeWidth={1.75} />

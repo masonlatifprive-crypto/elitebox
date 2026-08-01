@@ -52,6 +52,7 @@ import {
   toast,
 } from '@/components/ui-elite';
 import type { AddonHealth, AddonInfo, MetaItem, MetaType, MetaVideo, StreamSource } from '@/lib/types';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 /* Episode runtimes for the showcase series (minutes, real runtimes). */
@@ -118,6 +119,7 @@ function SourceGroupPanel({
   onPlay: (index: number) => void;
   onRecovered: () => void;
 }) {
+  const { t } = useT();
   const health = useAddonHealth(group.addon.id, rev);
   const [recovering, setRecovering] = useState(false);
 
@@ -125,7 +127,7 @@ function SourceGroupPanel({
     setRecovering(true);
     await addonEngine.recover(group.addon.id);
     setRecovering(false);
-    toast(`${group.addon.name} recovered · streams rechecked`);
+    toast(t('app.detail.toastRecovered', { name: group.addon.name }));
     onRecovered();
   };
 
@@ -146,11 +148,11 @@ function SourceGroupPanel({
         <HealthDot status={health.status} latencyMs={health.latencyMs} />
         {benched && (
           <span className="font-mono text-[11px] uppercase tracking-wider text-error">
-            Benched {health.retryInSec ?? 0}s
+            {t('app.detail.benched', { s: health.retryInSec ?? 0 })}
           </span>
         )}
         {degraded && (
-          <span className="font-mono text-[11px] uppercase tracking-wider text-warn">Degraded</span>
+          <span className="font-mono text-[11px] uppercase tracking-wider text-warn">{t('app.detail.degradedBadge')}</span>
         )}
         {(benched || degraded) && (
           <button
@@ -160,22 +162,22 @@ function SourceGroupPanel({
             className="focusable ml-auto inline-flex items-center gap-6 rounded-full px-12 py-6 text-micro font-semibold uppercase text-muted hover:text-ink hover:bg-white/[.06] cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={13} strokeWidth={1.75} className={recovering ? 'animate-spin' : ''} />
-            {recovering ? 'Probing…' : benched ? 'Recover' : 'Test now'}
+            {recovering ? t('app.detail.probing') : benched ? t('app.detail.recover') : t('app.detail.testNow')}
           </button>
         )}
       </div>
 
       {benched ? (
         <p className="px-16 md:px-24 pb-16 text-caption text-muted">
-          Circuit breaker is open after repeated failures — this addon is benched
-          {health.retryInSec !== undefined ? ` for ${health.retryInSec}s` : ''}. Streams recover
-          themselves, or force a probe now.
+          {t('app.detail.circuitOpenBody', {
+            for: health.retryInSec !== undefined ? t('app.detail.circuitOpenFor', { s: health.retryInSec }) : '',
+          })}
         </p>
       ) : (
         <>
           {degraded && (
             <p className="px-16 md:px-24 pb-8 text-caption text-warn">
-              Degraded — will retry automatically.
+              {t('app.detail.degradedBody')}
             </p>
           )}
           <ul className="pb-8">
@@ -190,9 +192,9 @@ function SourceGroupPanel({
                   {rank === 0 && group.streams.length > 1 && (
                     <span
                       className="shrink-0 rounded-full bg-signature px-8 py-2 text-[10px] font-bold uppercase text-deep"
-                      title="Best score from this addon's real reliability and the source's declared quality"
+                      title={t('app.detail.autoBestTitle')}
                     >
-                      Auto-best
+                      {t('app.detail.autoBest')}
                     </span>
                   )}
                   <span className="flex min-w-0 flex-1 flex-col gap-2">
@@ -215,14 +217,14 @@ function SourceGroupPanel({
                   </span>
                   <span className="inline-flex shrink-0 items-center gap-6 text-caption font-semibold text-cyan opacity-80 group-hover:opacity-100">
                     <Play size={14} strokeWidth={1.75} className="fill-current" />
-                    Play
+                    {t('app.detail.play')}
                   </span>
                 </button>
               </li>
             ))}
             {group.streams.length === 0 && (
               <li className="px-16 md:px-24 py-12 text-caption text-muted">
-                No streams returned for this title.
+                {t('app.detail.noStreams')}
               </li>
             )}
           </ul>
@@ -233,6 +235,7 @@ function SourceGroupPanel({
 }
 
 export default function Detail() {
+  const { t } = useT();
   const { type = 'movie', id = '' } = useParams();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
@@ -298,7 +301,7 @@ export default function Detail() {
     await Promise.all(installed.map((a) => addonEngine.recover(a.id)));
     setHealthRev((r) => r + 1);
     await loadStreams();
-    toast('All addons retried');
+    toast(t('app.detail.toastRetriedAll'));
   };
 
   /* ── play gating ───────────────────────────────────────────────────── */
@@ -368,7 +371,7 @@ export default function Detail() {
   const backdropY = useTransform(scrollYProgress, [0, 1], [0, 120]);
   const backdropScale = useTransform(scrollYProgress, [0, 1], [1.05, 1]);
 
-  const typeLabel = type === 'series' ? 'Series' : type === 'channel' ? 'Live TV' : 'Movies';
+  const typeLabel = type === 'series' ? t('app.rail.series') : type === 'channel' ? t('app.rail.live') : t('app.rail.movies');
   const typeHref = type === 'series' ? '/app/series' : type === 'channel' ? '/app/live' : '/app/movies';
 
   /* ── loading skeleton ──────────────────────────────────────────────── */
@@ -390,9 +393,9 @@ export default function Detail() {
     return (
       <EmptyState
         icon={Orbit}
-        title="This title drifted out of orbit."
-        caption="No addon returned metadata for this coordinate. It may have left the catalog."
-        action={<ButtonPrimary to="/app/discover">Back to Discover</ButtonPrimary>}
+        title={t('app.detail.notFoundTitle')}
+        caption={t('app.detail.notFoundCaption')}
+        action={<ButtonPrimary to="/app/discover">{t('app.detail.backToDiscover')}</ButtonPrimary>}
         className="min-h-[70dvh]"
       />
     );
@@ -400,15 +403,15 @@ export default function Detail() {
 
   const toggleLibrary = () => {
     toggleFavorite(meta.id);
-    toast(inLibrary ? 'Removed from Favorites' : 'Added to Favorites');
+    toast(inLibrary ? t('app.detail.toastRemovedFavorites') : t('app.detail.toastAddedFavorites'));
   };
   const toggleWatch = () => {
     toggleWatchlist(meta.id);
-    toast(inWatchlist ? 'Removed from Watchlist' : 'Added to Watchlist');
+    toast(inWatchlist ? t('app.detail.toastRemovedWatchlist') : t('app.detail.toastAddedWatchlist'));
   };
   const toggleSeen = () => {
     toggleWatched(meta.id);
-    toast(isWatched ? 'Marked as unwatched' : 'Marked as watched');
+    toast(isWatched ? t('app.detail.toastUnwatched') : t('app.detail.toastWatched'));
   };
   /** Share via the OS sheet when available, else copy the deep link. */
   const shareTitle = async () => {
@@ -419,9 +422,9 @@ export default function Detail() {
         return;
       }
       await navigator.clipboard.writeText(url);
-      toast('Link copied to clipboard');
+      toast(t('app.detail.toastLinkCopied'));
     } catch (err) {
-      if ((err as Error).name !== 'AbortError') toast.error('Could not share this title');
+      if ((err as Error).name !== 'AbortError') toast.error(t('app.detail.toastShareFailed'));
     }
   };
 
@@ -462,10 +465,10 @@ export default function Detail() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.35 }}
-                aria-label="Breadcrumb"
+                aria-label={t('app.detail.breadcrumbAria')}
                 className="flex items-center gap-6 text-micro uppercase text-muted"
               >
-                <Link to="/app" className="focusable rounded hover:text-ink">Home</Link>
+                <Link to="/app" className="focusable rounded hover:text-ink">{t('app.rail.home')}</Link>
                 <ChevronRight size={12} strokeWidth={1.75} />
                 <Link to={typeHref} className="focusable rounded hover:text-ink">{typeLabel}</Link>
                 <ChevronRight size={12} strokeWidth={1.75} />
@@ -511,7 +514,7 @@ export default function Detail() {
                 {meta.upcoming ? (
                   <span className="inline-flex items-center gap-6 rounded-full bg-gradient-to-r from-cyan/20 to-purple/20 px-12 py-5 text-micro uppercase tracking-wider text-cyan ring-1 ring-cyan/40">
                     <Sparkles size={12} strokeWidth={1.75} />
-                    {meta.releaseLabel ?? 'Coming soon'}
+                    {meta.releaseLabel ?? t('app.poster.comingSoon')}
                   </span>
                 ) : meta.live ? (
                   <Badge kind="LIVE" />
@@ -524,7 +527,7 @@ export default function Detail() {
                   </span>
                 ))}
                 {meta.upcoming ? (
-                  <span className="text-micro uppercase text-highlight">Elitebox Original</span>
+                  <span className="text-micro uppercase text-highlight">{t('app.home.originalTag')}</span>
                 ) : (
                   (meta.type === 'movie' || meta.type === 'series') && (
                     <span className="text-micro uppercase text-muted/70">Blender Foundation · CC-BY</span>
@@ -548,7 +551,7 @@ export default function Detail() {
                     onClick={() => setSynopsisOpen((v) => !v)}
                     className="focusable mt-4 rounded text-caption font-semibold text-cyan hover:underline cursor-pointer"
                   >
-                    {synopsisOpen ? 'Less' : 'More'}
+                    {synopsisOpen ? t('app.detail.less') : t('app.detail.more')}
                   </button>
                 )}
               </motion.div>
@@ -568,22 +571,22 @@ export default function Detail() {
                       ) : (
                         <Bookmark size={16} strokeWidth={1.75} />
                       )}
-                      {inWatchlist ? 'On your Watchlist' : 'Watchlist — get it on arrival'}
+                      {inWatchlist ? t('app.detail.onWatchlist') : t('app.detail.watchlistArrival')}
                     </ButtonNeon>
                     <ButtonGhost onClick={toggleLibrary} aria-pressed={inLibrary}>
                       {inLibrary ? <Check size={16} strokeWidth={1.75} /> : <Plus size={16} strokeWidth={1.75} />}
-                      {inLibrary ? 'In Favorites' : 'Favorites'}
+                      {inLibrary ? t('app.detail.inFavorites') : t('app.detail.favorites')}
                     </ButtonGhost>
-                    <ButtonGhost onClick={shareTitle} aria-label={`Share ${meta.name}`}>
+                    <ButtonGhost onClick={shareTitle} aria-label={t('app.detail.shareAria', { name: meta.name })}>
                       <Share2 size={16} strokeWidth={1.75} />
-                      Share
+                      {t('app.detail.share')}
                     </ButtonGhost>
                   </>
                 ) : (
                   <>
                     <ButtonPrimary onClick={() => requestPlay(undefined, mainPlayTarget)}>
                       <Play size={16} strokeWidth={1.75} className="fill-current" />
-                      {resumeEntry ? `Resume ${fmtClock(resumeEntry.progressSec)}` : 'Play'}
+                      {resumeEntry ? t('app.home.resumeAt', { time: fmtClock(resumeEntry.progressSec) }) : t('app.detail.play')}
                     </ButtonPrimary>
                     <ButtonNeon onClick={toggleLibrary} aria-pressed={inLibrary}>
                       {inLibrary ? (
@@ -591,7 +594,7 @@ export default function Detail() {
                       ) : (
                         <Plus size={16} strokeWidth={1.75} />
                       )}
-                      {inLibrary ? 'In Favorites' : 'Favorites'}
+                      {inLibrary ? t('app.detail.inFavorites') : t('app.detail.favorites')}
                     </ButtonNeon>
                     <ButtonGhost onClick={toggleWatch} aria-pressed={inWatchlist}>
                       {inWatchlist ? (
@@ -599,7 +602,7 @@ export default function Detail() {
                       ) : (
                         <Bookmark size={16} strokeWidth={1.75} />
                       )}
-                      {inWatchlist ? 'In Watchlist' : 'Watchlist'}
+                      {inWatchlist ? t('app.home.inWatchlist') : t('app.detail.watchlist')}
                     </ButtonGhost>
                     <ButtonGhost onClick={toggleSeen} aria-pressed={isWatched}>
                       {isWatched ? (
@@ -607,22 +610,23 @@ export default function Detail() {
                       ) : (
                         <Eye size={16} strokeWidth={1.75} />
                       )}
-                      {isWatched ? 'Watched' : 'Mark watched'}
+                      {isWatched ? t('app.detail.watched') : t('app.detail.markWatched')}
                     </ButtonGhost>
                     {meta.officialUrl && (
                       <ButtonGhost href={meta.officialUrl}>
                         <Clapperboard size={16} strokeWidth={1.75} />
-                        Trailer &amp; info
+                        {t('app.detail.trailerInfo')}
                       </ButtonGhost>
                     )}
-                    <ButtonGhost onClick={shareTitle} aria-label={`Share ${meta.name}`}>
+                    <ButtonGhost onClick={shareTitle} aria-label={t('app.detail.shareAria', { name: meta.name })}>
                       <Share2 size={16} strokeWidth={1.75} />
-                      Share
+                      {t('app.detail.share')}
                     </ButtonGhost>
                     {resumeEntry && (
                       <span className="text-micro uppercase text-cyan">
-                        {Math.round((resumeEntry.progressSec / Math.max(1, resumeEntry.durationSec)) * 100)}%
-                        watched
+                        {t('app.detail.percentWatched', {
+                          pct: Math.round((resumeEntry.progressSec / Math.max(1, resumeEntry.durationSec)) * 100),
+                        })}
                       </span>
                     )}
                   </>
@@ -639,7 +643,7 @@ export default function Detail() {
             >
               <img
                 src={meta.poster}
-                alt={`${meta.name} poster`}
+                alt={t('app.detail.posterAlt', { name: meta.name })}
                 className="w-200 rounded-lg ring-1 ring-white/[.12] shadow-aura-purple"
               />
             </motion.div>
@@ -651,9 +655,9 @@ export default function Detail() {
       {meta.type === 'series' && meta.videos && meta.videos.length > 0 && (
         <section className="mt-48">
           <div className="mb-16 flex flex-wrap items-center gap-16">
-            <h2 className="font-display text-display-l text-ink">Episodes</h2>
+            <h2 className="font-display text-display-l text-ink">{t('app.detail.episodes')}</h2>
             <span className="glass-1 rounded-full px-12 py-6 text-micro uppercase text-muted">
-              Season 1
+              {t('app.detail.seasonOne')}
             </span>
             <div className="ml-auto flex items-center gap-8">
               <ButtonGhost
@@ -662,19 +666,19 @@ export default function Detail() {
                 className="px-12 py-6 text-micro"
               >
                 {spoilerSafe ? <EyeOff size={14} strokeWidth={1.75} /> : <Eye size={14} strokeWidth={1.75} />}
-                {spoilerSafe ? 'Titles hidden' : 'Hide titles'}
+                {spoilerSafe ? t('app.detail.titlesHidden') : t('app.detail.hideTitles')}
               </ButtonGhost>
               <ButtonGhost
                 onClick={() => {
                   for (const v of meta.videos ?? []) {
                     if (!watched.includes(v.id)) toggleWatched(v.id);
                   }
-                  toast('Season marked as watched');
+                  toast(t('app.detail.toastSeasonWatched'));
                 }}
                 className="px-12 py-6 text-micro"
               >
                 <CheckCheck size={14} strokeWidth={1.75} />
-                Mark season watched
+                {t('app.detail.markSeasonWatched')}
               </ButtonGhost>
             </div>
           </div>
@@ -697,7 +701,11 @@ export default function Detail() {
                     <div className="relative hidden shrink-0 sm:block">
                       <img
                         src={episodeArt(meta, video)}
-                        alt={`${spoilerSafe ? `Episode ${video.episode ?? i + 1}` : video.title} — thumbnail`}
+                        alt={t('app.detail.episodeThumbAlt', {
+                          title: spoilerSafe
+                            ? t('app.detail.episodeFallback', { n: video.episode ?? i + 1 })
+                            : video.title,
+                        })}
                         loading="lazy"
                         decoding="async"
                         className={cn(
@@ -716,10 +724,10 @@ export default function Detail() {
                         S{String(video.season ?? 1).padStart(2, '0')} E
                         {String(video.episode ?? i + 1).padStart(2, '0')}
                         {EPISODE_RUNTIME[video.id] ? ` · ${EPISODE_RUNTIME[video.id]} min` : ''}
-                        {epWatched ? ' · Watched' : ''}
+                        {epWatched ? ` · ${t('app.detail.watched')}` : ''}
                       </span>
                       <span className="truncate text-title text-ink">
-                        {spoilerSafe ? `Episode ${video.episode ?? i + 1}` : video.title}
+                        {spoilerSafe ? t('app.detail.episodeFallback', { n: video.episode ?? i + 1 }) : video.title}
                       </span>
                       {entry && !epWatched && (
                         <div className="h-3 w-full max-w-240 overflow-hidden rounded-full bg-white/[.08]">
@@ -731,9 +739,13 @@ export default function Detail() {
                       type="button"
                       onClick={() => {
                         toggleWatched(video.id);
-                        toast(epWatched ? `${spoilerSafe ? 'Episode' : video.title} unmarked` : `${spoilerSafe ? 'Episode' : video.title} marked as watched`);
+                        toast(epWatched
+                          ? t('app.detail.toastEpUnmarked', { title: spoilerSafe ? t('app.detail.episodeWord') : video.title })
+                          : t('app.detail.toastEpWatched', { title: spoilerSafe ? t('app.detail.episodeWord') : video.title }));
                       }}
-                      aria-label={epWatched ? `Unmark ${video.title}` : `Mark ${video.title} as watched`}
+                      aria-label={epWatched
+                        ? t('app.detail.unmarkAria', { title: video.title })
+                        : t('app.detail.markAria', { title: video.title })}
                       aria-pressed={epWatched}
                       className={cn(
                         'focusable flex h-40 w-40 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer',
@@ -745,7 +757,7 @@ export default function Detail() {
                     <button
                       type="button"
                       onClick={() => requestPlay(undefined, video.id)}
-                      aria-label={`Play ${video.title}`}
+                      aria-label={t('app.catalog.playAria', { name: video.title })}
                       className="focusable glass-2 flex h-48 w-48 shrink-0 items-center justify-center rounded-full text-cyan transition-transform hover:scale-110 cursor-pointer"
                     >
                       <Play size={20} strokeWidth={1.75} className="fill-current" />
@@ -778,19 +790,16 @@ export default function Detail() {
             />
             <span className="inline-flex items-center gap-8 rounded-full bg-gradient-to-r from-cyan/20 to-purple/20 px-14 py-7 text-micro uppercase tracking-wider text-cyan ring-1 ring-cyan/40">
               <Sparkles size={13} strokeWidth={1.75} />
-              {meta.releaseLabel ?? 'Coming soon'}
+              {meta.releaseLabel ?? t('app.poster.comingSoon')}
             </span>
             <h2 className="mt-16 font-display text-display-l text-ink">
-              {meta.name} arrives on Elitebox soon.
+              {t('app.detail.arrivesTitle', { name: meta.name })}
             </h2>
             <p className="mt-8 max-w-[58ch] text-body text-muted">
-              This Elitebox Original is in final preparation. Add it to your Watchlist and it will
-              surface on your Board the moment it lands in the catalog — no streams exist until
-              then, and we won&apos;t pretend otherwise.
+              {t('app.detail.arrivesBody')}
             </p>
             <p className="mt-12 max-w-[58ch] text-caption text-muted/70">
-              Key art shown is pre-production concept art; final poster, premiere date, cast and
-              crew will be announced.
+              {t('app.detail.arrivesNote')}
             </p>
             <div className="mt-24 flex flex-wrap items-center gap-12">
               <ButtonNeon onClick={toggleWatch} aria-pressed={inWatchlist}>
@@ -799,11 +808,11 @@ export default function Detail() {
                 ) : (
                   <Bookmark size={16} strokeWidth={1.75} />
                 )}
-                {inWatchlist ? 'On your Watchlist' : 'Add to Watchlist'}
+                {inWatchlist ? t('app.detail.onWatchlist') : t('app.detail.addToWatchlist')}
               </ButtonNeon>
               <ButtonGhost onClick={shareTitle}>
                 <Share2 size={16} strokeWidth={1.75} />
-                Share
+                {t('app.detail.share')}
               </ButtonGhost>
             </div>
           </div>
@@ -816,8 +825,8 @@ export default function Detail() {
         transition={spring.smooth}
         className="mt-48"
       >
-        <h2 className="font-display text-display-l text-ink">Stream sources</h2>
-        <p className="mt-4 mb-16 text-caption text-muted">Checked live · grouped by addon</p>
+        <h2 className="font-display text-display-l text-ink">{t('app.detail.streamSources')}</h2>
+        <p className="mt-4 mb-16 text-caption text-muted">{t('app.detail.streamSourcesSub')}</p>
 
         {streams === null ? (
           <div className="glass-2 max-w-4xl animate-pulse rounded-2xl p-24">
@@ -829,12 +838,12 @@ export default function Detail() {
           <div className="glass-2 max-w-4xl rounded-2xl">
             <EmptyState
               icon={Satellite}
-              title="No sources returned for this title."
-              caption="Every enabled addon came back empty. Retry them or check addon health."
+              title={t('app.detail.noSourcesTitle')}
+              caption={t('app.detail.noSourcesCaption')}
               action={
                 <div className="flex flex-wrap items-center justify-center gap-12">
-                  <ButtonPrimary onClick={retryAllAddons}>Retry all addons</ButtonPrimary>
-                  <ButtonGhost to="/app/addons">Addon health</ButtonGhost>
+                  <ButtonPrimary onClick={retryAllAddons}>{t('app.detail.retryAllAddons')}</ButtonPrimary>
+                  <ButtonGhost to="/app/addons">{t('app.detail.addonHealth')}</ButtonGhost>
                 </div>
               }
               className="py-48"
@@ -862,7 +871,7 @@ export default function Detail() {
       {/* ── S4 more like this ─────────────────────────────────────────── */}
       {moreLikeThis.length > 0 && (
         <section className="mt-48">
-          <Shelf title="More like this" items={moreLikeThis} seeAllTo="/app/discover" />
+          <Shelf title={t('app.detail.moreLikeThis')} items={moreLikeThis} seeAllTo="/app/discover" />
         </section>
       )}
 

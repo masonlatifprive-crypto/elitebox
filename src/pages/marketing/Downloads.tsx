@@ -33,6 +33,7 @@ import {
 import { API_URL, authToken, useAuth } from '@/lib/auth';
 import { ButtonGhost, ButtonPrimary, Eyebrow, GlassPanel, toast } from '@/components/ui-elite';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
 /* ── types ─────────────────────────────────────────────────────────────── */
 
@@ -67,23 +68,36 @@ const FAMILY_ICON: Record<Family, typeof Monitor> = {
 };
 
 /** Static fallback when the build service isn't linked — same matrix, all unstaged. */
+/** i18n note slugs for FALLBACK_BUILDS (server-supplied builds carry their own notes). */
+const NOTE_SLUG: Record<string, string> = {
+  'win-exe-x64': 'winExeX64',
+  'win-portable-x64': 'winPortableX64',
+  'mac-universal': 'macUniversal',
+  'linux-appimage': 'linuxAppImage',
+  'linux-deb': 'linuxDeb',
+  'android-apk': 'androidApk',
+  'android-aab': 'androidAab',
+  'androidtv-apk': 'androidtvApk',
+};
+
 const FALLBACK_BUILDS: BuildEntry[] = [
-  { id: 'win-exe-x64', platform: 'Windows', variant: 'Installer', arch: 'x64', version: '1.0.0', notes: 'NSIS installer — desktop + start-menu shortcuts, auto-updates', gated: true, staged: false },
-  { id: 'win-portable-x64', platform: 'Windows', variant: 'Portable (zip)', arch: 'x64', version: '1.0.0', notes: 'Unzip & run Elitebox.exe — no install. Unsigned preview package; the signed NSIS installer ships from the Windows release runner', gated: true, staged: false },
-  { id: 'mac-universal', platform: 'macOS', variant: 'DMG', arch: 'Universal', version: '1.0.0', notes: 'Apple Silicon + Intel in one image', gated: true, staged: false },
-  { id: 'linux-appimage', platform: 'Linux', variant: 'AppImage', arch: 'x64', version: '1.0.0', notes: 'Distro-agnostic, chmod +x and run', gated: true, staged: false },
-  { id: 'linux-deb', platform: 'Linux', variant: 'deb', arch: 'x64', version: '1.0.0', notes: 'Debian / Ubuntu package', gated: true, staged: false },
-  { id: 'android-apk', platform: 'Android', variant: 'APK', arch: 'ARM64', version: '1.0.0', notes: 'Direct install — Android 9+', gated: true, staged: false },
-  { id: 'android-aab', platform: 'Android', variant: 'AAB', arch: 'ARM64', version: '1.0.0', notes: 'Play Store upload bundle', gated: true, staged: false },
-  { id: 'androidtv-apk', platform: 'Android TV / Google TV / Fire TV', variant: 'APK (leanback)', arch: 'ARM64', version: '1.0.0', notes: '10-foot UI with spatial remote navigation', gated: true, staged: false },
+  { id: 'win-exe-x64', platform: 'Windows', variant: 'Installer', arch: 'x64', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'win-portable-x64', platform: 'Windows', variant: 'Portable (zip)', arch: 'x64', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'mac-universal', platform: 'macOS', variant: 'DMG', arch: 'Universal', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'linux-appimage', platform: 'Linux', variant: 'AppImage', arch: 'x64', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'linux-deb', platform: 'Linux', variant: 'deb', arch: 'x64', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'android-apk', platform: 'Android', variant: 'APK', arch: 'ARM64', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'android-aab', platform: 'Android', variant: 'AAB', arch: 'ARM64', version: '1.0.0', notes: '', gated: true, staged: false },
+  { id: 'androidtv-apk', platform: 'Android TV / Google TV / Fire TV', variant: 'APK (leanback)', arch: 'ARM64', version: '1.0.0', notes: '', gated: true, staged: false },
 ];
 
-const REQUIREMENTS: Record<string, string[]> = {
-  Windows: ['Windows 10 64-bit or later', '200 MB free disk space'],
-  macOS: ['macOS 12 or later', 'Apple Silicon & Intel'],
-  Linux: ['glibc 2.31+', '200 MB free disk space'],
-  Android: ['Android 9 or later', 'ARM64 recommended'],
-  'Android TV / Google TV / Fire TV': ['Android TV 9+ or Fire OS 7+', 'D-pad remote — spatial navigation built in'],
+/** i18n requirement key pairs per platform. */
+const REQUIREMENT_KEYS: Record<string, [string, string]> = {
+  Windows: ['windows1', 'windows2'],
+  macOS: ['mac1', 'mac2'],
+  Linux: ['linux1', 'linux2'],
+  Android: ['android1', 'android2'],
+  'Android TV / Google TV / Fire TV': ['tv1', 'tv2'],
 };
 
 function fmtSize(bytes?: number): string {
@@ -95,6 +109,7 @@ function fmtSize(bytes?: number): string {
 /* ── component ─────────────────────────────────────────────────────────── */
 
 export default function Downloads() {
+  const { t } = useT();
   const { user, demoMode, hasAccess } = useAuth();
   const premium = hasAccess();
   const [builds, setBuilds] = useState<BuildEntry[]>(FALLBACK_BUILDS);
@@ -142,18 +157,18 @@ export default function Downloads() {
       });
       const j = (await res.json()) as { url?: string; error?: string; code?: string };
       if (res.status === 402) {
-        toast.error('Elitebox Premium is required for native builds');
+        toast.error(t('marketing.downloads.toasts.premiumRequired'));
         return;
       }
       if (res.status === 409) {
-        toast('Still being packaged by the release pipeline — check back shortly');
+        toast(t('marketing.downloads.toasts.stillPackaging'));
         return;
       }
       if (!res.ok || !j.url) throw new Error(j.error || `HTTP ${res.status}`);
       window.open(`${API_URL}${j.url}`, '_blank', 'noopener');
-      toast(`Download started — ${b.platform} ${b.variant}`);
+      toast(t('marketing.downloads.toasts.started', { platform: b.platform, variant: b.variant }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Download failed');
+      toast.error(err instanceof Error ? err.message : t('marketing.downloads.toasts.failed'));
     } finally {
       setBusyId(null);
     }
@@ -167,14 +182,12 @@ export default function Downloads() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col gap-12"
       >
-        <Eyebrow>Downloads</Eyebrow>
-        <h1 className="font-display text-display-xl text-ink">Elitebox, everywhere you watch.</h1>
+        <Eyebrow>{t('marketing.downloads.eyebrow')}</Eyebrow>
+        <h1 className="font-display text-display-xl text-ink">{t('marketing.downloads.title')}</h1>
         <p className="max-w-[64ch] text-body text-muted">
-          For the best experience, always run the latest Elitebox build. The web app is live
-          today; native builds download right here with{' '}
-          <span className="text-ink">Elitebox Premium</span> — every file verified by sha256
-          before it reaches you. Looking for another platform? It is listed below with its
-          honest build status.
+          {t('marketing.downloads.introA')}
+          <span className="text-ink">{t('marketing.downloads.introPremium')}</span>
+          {t('marketing.downloads.introB')}
         </p>
         <div className="flex flex-wrap items-center gap-10 text-caption">
           <span
@@ -186,17 +199,17 @@ export default function Downloads() {
             )}
           >
             {premium ? <CheckCircle2 size={12} strokeWidth={1.75} /> : <Crown size={12} strokeWidth={1.75} />}
-            {premium ? 'Premium active — native builds unlocked' : 'Free account — native builds need Premium'}
+            {premium ? t('marketing.downloads.premiumActive') : t('marketing.downloads.freeAccount')}
           </span>
           <span className="inline-flex items-center gap-6 rounded-full bg-white/[.05] px-10 py-5 text-muted ring-1 ring-white/[.08]">
             <ShieldCheck size={12} strokeWidth={1.75} className="text-cyan" />
-            {linked ? 'Build service linked' : 'Build service not linked in this preview'}
+            {linked ? t('marketing.downloads.serviceLinked') : t('marketing.downloads.serviceNotLinked')}
           </span>
         </div>
       </motion.header>
 
       {/* family tabs */}
-      <nav aria-label="Platform family" className="glass-2 flex w-fit flex-wrap gap-4 rounded-full p-6">
+      <nav aria-label={t('marketing.downloads.familyAria')} className="glass-2 flex w-fit flex-wrap gap-4 rounded-full p-6">
         {families.map((f) => {
           const Icon = FAMILY_ICON[f];
           return (
@@ -211,7 +224,7 @@ export default function Downloads() {
               )}
             >
               <Icon size={16} strokeWidth={1.75} />
-              {f}
+              {t(`marketing.downloads.families.${f.toLowerCase()}`)}
             </button>
           );
         })}
@@ -223,17 +236,16 @@ export default function Downloads() {
           <span className="glass-1 flex h-48 w-48 items-center justify-center rounded-xl text-cyan">
             <Globe size={24} strokeWidth={1.75} />
           </span>
-          <h2 className="font-display text-title text-ink">Web & PWA — live now</h2>
+          <h2 className="font-display text-title text-ink">{t('marketing.downloads.web.title')}</h2>
           <p className="max-w-[58ch] text-body text-muted">
-            The full Elitebox runs in your browser and installs as a Progressive Web App from the
-            browser menu — same account, library and addons as every native build.
+            {t('marketing.downloads.web.copy')}
           </p>
           <div className="flex flex-wrap gap-10">
             <Link to="/app">
-              <ButtonPrimary>Open the app</ButtonPrimary>
+              <ButtonPrimary>{t('marketing.downloads.web.open')}</ButtonPrimary>
             </Link>
             <span className="inline-flex items-center gap-6 rounded-full bg-ok/15 px-10 py-5 text-micro uppercase text-ok ring-1 ring-ok/40">
-              <CheckCircle2 size={12} strokeWidth={1.75} /> Live
+              <CheckCircle2 size={12} strokeWidth={1.75} /> {t('marketing.downloads.web.live')}
             </span>
           </div>
         </GlassPanel>
@@ -247,7 +259,7 @@ export default function Downloads() {
               <div className="flex flex-wrap items-baseline gap-12">
                 <h2 className="font-display text-title text-ink">{platform}</h2>
                 <span className="text-caption text-muted">
-                  {(REQUIREMENTS[platform] ?? []).join(' · ')}
+                  {(REQUIREMENT_KEYS[platform] ?? []).map((k) => t(`marketing.downloads.reqs.${k}`)).join(' · ')}
                 </span>
               </div>
               <div className="glass-2 overflow-hidden rounded-2xl">
@@ -272,11 +284,13 @@ export default function Downloads() {
                         <span className="text-caption font-semibold text-ink">
                           {b.variant} <span className="font-mono text-micro text-muted">· {b.arch} · v{b.version}</span>
                         </span>
-                        <span className="text-caption text-muted">{b.notes}</span>
+                        <span className="text-caption text-muted">
+                          {NOTE_SLUG[b.id] && !linked ? t(`marketing.downloads.notes.${NOTE_SLUG[b.id]}`) : b.notes}
+                        </span>
                         <span className="font-mono text-[11px] text-muted/70">
                           {b.staged
-                            ? `${fmtSize(b.sizeBytes)} · sha256 ${b.sha256?.slice(0, 16)}…`
-                            : 'Being packaged by the release pipeline'}
+                            ? t('marketing.downloads.row.sha', { size: fmtSize(b.sizeBytes), hash: b.sha256?.slice(0, 16) ?? '' })
+                            : t('marketing.downloads.row.packaging')}
                         </span>
                       </div>
                       {b.staged && linked ? (
@@ -291,20 +305,20 @@ export default function Downloads() {
                             ) : (
                               <Download size={14} strokeWidth={1.75} />
                             )}
-                            {busyId === b.id ? 'Signing…' : 'Download'}
+                            {busyId === b.id ? t('marketing.downloads.row.signing') : t('marketing.downloads.row.download')}
                           </ButtonPrimary>
                         ) : (
                           <Link to="/subscribe">
                             <ButtonPrimary className="px-16 py-8 text-[12px]">
                               <Lock size={14} strokeWidth={1.75} />
-                              Unlock with Premium
+                              {t('marketing.downloads.row.unlock')}
                             </ButtonPrimary>
                           </Link>
                         )
                       ) : (
                         <span className="inline-flex items-center gap-6 rounded-full bg-warn/10 px-12 py-6 text-micro uppercase text-warn ring-1 ring-warn/30">
                           <FileLock2 size={12} strokeWidth={1.75} />
-                          {premium ? 'Ships with v1.0' : 'Premium build · ships with v1.0'}
+                          {premium ? t('marketing.downloads.row.ships') : t('marketing.downloads.row.shipsPremium')}
                         </span>
                       )}
                     </div>
@@ -317,26 +331,24 @@ export default function Downloads() {
 
       {/* honesty footnote */}
       <GlassPanel className="flex flex-col gap-8 rounded-xl p-20">
-        <span className="text-micro uppercase text-muted">How gated downloads work</span>
+        <span className="text-micro uppercase text-muted">{t('marketing.downloads.footnote.title')}</span>
         <p className="text-caption text-muted">
-          Native installers live on the Elitebox build service. After a successful Premium
-          payment your account can request a signed, 15-minute download link for any staged
-          build — files are never publicly reachable. {demoMode && !linked
-            ? 'This preview runs without the companion server linked, so statuses are shown from the release matrix; link VITE_API_URL to fetch live availability.'
+          {t('marketing.downloads.footnote.body')} {demoMode && !linked
+            ? t('marketing.downloads.footnote.demo')
             : user
-              ? 'Your entitlement is checked on every request.'
-              : 'Sign in, then subscribe, to unlock them.'}
+              ? t('marketing.downloads.footnote.signedIn')
+              : t('marketing.downloads.footnote.signedOut')}
         </p>
         {!user && (
           <div className="pt-4">
             <Link to="/login">
-              <ButtonGhost className="px-16 py-8 text-[12px]">Sign in</ButtonGhost>
+              <ButtonGhost className="px-16 py-8 text-[12px]">{t('marketing.downloads.footnote.signIn')}</ButtonGhost>
             </Link>
           </div>
         )}
         <span className="hidden items-center gap-6 text-caption text-muted md:flex">
           <TabletSmartphone size={14} strokeWidth={1.75} className="text-cyan" />
-          iOS & iPadOS follow the same shell after v1.0 — the architecture is ready for them.
+          {t('marketing.downloads.footnote.ios')}
         </span>
       </GlassPanel>
     </div>

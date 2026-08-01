@@ -14,6 +14,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type Hls from 'hls.js';
 import {
   AlertTriangle,
+  ArrowRight,
   AudioLines,
   Cast,
   Check,
@@ -32,6 +33,8 @@ import {
   RotateCw,
   SkipForward,
   Sparkles,
+  SquareArrowOutUpRight,
+  Upload,
   Volume2,
   VolumeX,
   X,
@@ -49,7 +52,9 @@ import {
   spring,
   toast,
 } from '@/components/ui-elite';
-import type { MetaItem, MetaType, MetaVideo, StreamSource } from '@/lib/types';
+import type { MetaItem, MetaType, MetaVideo, StreamSource, StreamSubtitle } from '@/lib/types';
+import { useT } from '@/i18n';
+import ExternalPlayerMenu from '@/components/ExternalPlayerMenu';
 import {
   ensureCastFramework,
   isCastEnvironment,
@@ -169,6 +174,7 @@ function SeekBar({
   marker?: { start: number; end: number };
   onSeek: (sec: number) => void;
 }) {
+  const { t } = useT();
   const barRef = useRef<HTMLDivElement>(null);
   const [hoverSec, setHoverSec] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -194,17 +200,17 @@ function SeekBar({
           style={{ left: `${(hoverSec / duration) * 100}%` }}
         >
           {fmtClock(hoverSec)}
-          {nearMarker(hoverSec) && <span className="text-purple"> · Intro</span>}
+          {nearMarker(hoverSec) && <span className="text-purple"> · {t('app.player.introMarker')}</span>}
         </div>
       )}
       <motion.div
         ref={barRef}
         role="slider"
-        aria-label="Seek"
+        aria-label={t('app.player.seekAria')}
         aria-valuemin={0}
         aria-valuemax={Math.round(duration)}
         aria-valuenow={Math.round(current)}
-        aria-valuetext={`${fmtClock(current)} of ${fmtClock(duration)}`}
+        aria-valuetext={t('app.player.seekValue', { current: fmtClock(current), duration: fmtClock(duration) })}
         tabIndex={0}
         initial={false}
         className="focusable group relative flex h-20 cursor-pointer items-center"
@@ -295,6 +301,7 @@ function NextUpCard({
   onPlayNow: () => void;
   onDismiss: () => void;
 }) {
+  const { t } = useT();
   const R = 15;
   const C = 2 * Math.PI * R;
   return (
@@ -307,7 +314,7 @@ function NextUpCard({
     >
       <img src={art} alt="" className="h-64 w-112 rounded-md object-cover ring-1 ring-white/[.1]" />
       <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <span className="text-micro uppercase text-muted">Up next</span>
+        <span className="text-micro uppercase text-muted">{t('app.player.upNext')}</span>
         <span className="truncate text-caption font-semibold text-ink">
           E{video.episode} · {video.title}
         </span>
@@ -317,14 +324,14 @@ function NextUpCard({
             onClick={onPlayNow}
             className="focusable rounded-full bg-chrome px-12 py-6 text-micro font-bold uppercase text-deep hover:brightness-110 cursor-pointer"
           >
-            Play now
+            {t('app.player.playNow')}
           </button>
           <button
             type="button"
             onClick={onDismiss}
             className="focusable rounded-full px-12 py-6 text-micro font-semibold uppercase text-muted hover:text-ink cursor-pointer"
           >
-            Dismiss
+            {t('app.player.dismiss')}
           </button>
         </div>
       </div>
@@ -377,6 +384,7 @@ function ErrorPanel({
   onRetry: () => void;
   onBack: () => void;
 }) {
+  const { t } = useT();
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -390,7 +398,7 @@ function ErrorPanel({
         exit={{ opacity: 0, scale: 0.92 }}
         transition={spring.smooth}
         role="alertdialog"
-        aria-label="Playback error"
+        aria-label={t('app.player.errorAria')}
         className="glass-3 relative w-full max-w-md rounded-2xl p-32"
       >
         {/* one-shot purple pulse ring */}
@@ -404,23 +412,23 @@ function ErrorPanel({
           <span className="glass-2 flex h-64 w-64 items-center justify-center rounded-full">
             <AlertTriangle size={30} strokeWidth={1.75} className="text-purple" />
           </span>
-          <h2 className="font-display text-title text-ink">This stream stumbled.</h2>
+          <h2 className="font-display text-title text-ink">{t('app.player.errorTitle')}</h2>
           <p className="text-caption text-muted">{detail.cause}</p>
           <div className="flex w-full flex-col gap-12">
-            <ButtonPrimary onClick={onNext}>Try next source</ButtonPrimary>
-            <ButtonNeon onClick={onLower}>Lower quality</ButtonNeon>
+            <ButtonPrimary onClick={onNext}>{t('app.player.tryNext')}</ButtonPrimary>
+            <ButtonNeon onClick={onLower}>{t('app.player.lowerQuality')}</ButtonNeon>
             <ButtonGhost onClick={onRetry}>
               <RefreshCw size={14} strokeWidth={1.75} />
-              Retry
+              {t('app.player.retry')}
             </ButtonGhost>
-            {isLastSource && <ButtonGhost onClick={onBack}>Back to title</ButtonGhost>}
+            {isLastSource && <ButtonGhost onClick={onBack}>{t('app.player.backToTitle')}</ButtonGhost>}
           </div>
           <details className="w-full text-left">
             <summary className="focusable cursor-pointer rounded text-micro uppercase text-muted hover:text-ink">
-              Details
+              {t('app.player.errorDetails')}
             </summary>
             <pre className="mt-8 max-h-144 overflow-auto rounded-md bg-black/40 p-12 font-mono text-[11px] leading-relaxed text-muted whitespace-pre-wrap break-all">
-              {`error:  ${detail.code}\naddon:  ${detail.addonName}\nsource: ${detail.url}`}
+              {`${t('app.player.errorLabelError')}:  ${detail.code}\n${t('app.player.errorLabelAddon')}:  ${detail.addonName}\n${t('app.player.errorLabelSource')}: ${detail.url}`}
             </pre>
           </details>
         </div>
@@ -440,6 +448,7 @@ function Sheet({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useT();
   return (
     <>
       <div className="absolute inset-0 z-30" onClick={onClose} aria-hidden />
@@ -457,7 +466,7 @@ function Sheet({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close panel"
+            aria-label={t('app.player.closePanel')}
             className="focusable rounded-full p-8 text-muted hover:text-ink hover:bg-white/[.06] cursor-pointer"
           >
             <X size={18} strokeWidth={1.75} />
@@ -472,17 +481,18 @@ function Sheet({
 /* ── shortcuts overlay content ─────────────────────────────────────────── */
 
 const SHORTCUTS: Array<[string, string]> = [
-  ['Space / K', 'Play / pause'],
-  ['F', 'Fullscreen'],
-  ['← / →', 'Seek ∓10s (Shift: 60s)'],
-  ['↑ / ↓', 'Volume'],
-  ['M', 'Mute'],
-  ['C', 'Subtitles on/off'],
-  ['?', 'This overlay'],
-  ['Esc', 'Back'],
+  ['Space / K', 'app.player.scPlayPause'],
+  ['F', 'app.player.scFullscreen'],
+  ['← / →', 'app.player.scSeek'],
+  ['↑ / ↓', 'app.player.scVolume'],
+  ['M', 'app.player.scMute'],
+  ['C', 'app.player.scSubtitles'],
+  ['?', 'app.player.scOverlay'],
+  ['Esc', 'app.player.scBack'],
 ];
 
 function ShortcutsTable() {
+  const { t } = useT();
   const half = Math.ceil(SHORTCUTS.length / 2);
   const columns = [SHORTCUTS.slice(0, half), SHORTCUTS.slice(half)];
   return (
@@ -490,10 +500,10 @@ function ShortcutsTable() {
       {columns.map((col, ci) => (
         <table key={ci} className="w-full font-mono text-[12px]">
           <tbody>
-            {col.map(([key, action]) => (
+            {col.map(([key, actionKey]) => (
               <tr key={key} className="border-b border-white/[.06] last:border-b-0">
                 <td className="py-10 pr-16 text-cyan">{key}</td>
-                <td className="py-10 text-muted">{action}</td>
+                <td className="py-10 text-muted">{t(actionKey)}</td>
               </tr>
             ))}
           </tbody>
@@ -505,7 +515,7 @@ function ShortcutsTable() {
 
 /* ── the player itself ─────────────────────────────────────────────────── */
 
-type PanelKind = 'subs' | 'speed' | 'audio' | 'sources' | 'episodes' | null;
+type PanelKind = 'subs' | 'speed' | 'audio' | 'sources' | 'episodes' | 'external' | null;
 type SubSize = 'S' | 'M' | 'L' | 'XL';
 type SubColor = 'ink' | 'cyan' | 'yellow';
 type SubBg = 'none' | 'scrim' | 'solid';
@@ -545,6 +555,7 @@ const MEDIA_ERROR_NAMES: Record<number, string> = {
 };
 
 function PlayerInner() {
+  const { t } = useT();
   const { type = 'movie', id = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -775,7 +786,7 @@ function PlayerInner() {
             }
             failRef.current(
               `hls:${data.type}/${data.details}`,
-              'The stream stopped responding — it may be rate-limited or offline.',
+              t('app.player.causeStreamStopped'),
             );
           });
         } else {
@@ -793,7 +804,7 @@ function PlayerInner() {
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
-  }, [sourceUrl]);
+  }, [sourceUrl, t]);
 
   /* ── resume + progress persistence (5s / pause / unload, idempotent) ── */
   const saveProgress = useCallback(() => {
@@ -843,14 +854,14 @@ function PlayerInner() {
       }
     }
     if (pendingSeekRef.current !== null) {
-      const t = pendingSeekRef.current;
+      const pending = pendingSeekRef.current;
       pendingSeekRef.current = null;
       if (Number.isFinite(v.duration) && v.duration > 0) {
-        v.currentTime = Math.min(t, Math.max(0, v.duration - 0.5));
+        v.currentTime = Math.min(pending, Math.max(0, v.duration - 0.5));
       }
       if (switchedRef.current) {
         switchedRef.current = false;
-        toast(`Switched source · resumed at ${fmtClock(t)}`);
+        toast(t('app.player.toastSwitched', { time: fmtClock(pending) }));
       }
     } else if (!resumeCheckedRef.current) {
       resumeCheckedRef.current = true;
@@ -862,7 +873,7 @@ function PlayerInner() {
         entry.progressSec < v.duration * 0.95
       ) {
         v.currentTime = entry.progressSec;
-        toast(`Resumed at ${fmtClock(entry.progressSec)}`);
+        toast(t('app.player.toastResumed', { time: fmtClock(entry.progressSec) }));
       }
     }
     v.play().catch(() => {
@@ -874,7 +885,7 @@ function PlayerInner() {
     if (hlsRef.current) return; // hls.js reports its own fatal errors
     const v = videoRef.current;
     const code = v?.error ? (MEDIA_ERROR_NAMES[v.error.code] ?? `MEDIA_ERR_${v.error.code}`) : 'UNKNOWN';
-    failRef.current(code, 'The source stopped responding — it may be rate-limited or offline.');
+    failRef.current(code, t('app.player.causeStreamStopped'));
   };
 
   const seek = useCallback((sec: number) => {
@@ -973,14 +984,14 @@ function PlayerInner() {
   /* Upload a local subtitle file (user-owned, stays on-device). */
   const uploadSubtitle = (file: File) => {
     if (!/\.(srt|vtt)$/i.test(file.name)) {
-      toast.error('Choose a .srt or .vtt subtitle file');
+      toast.error(t('app.player.toastSubFileType'));
       return;
     }
     const url = URL.createObjectURL(file);
     const track: StreamSubtitle = { lang: 'upload', url };
     setUploadedSubs((prev) => [...prev, { ...track, lang: `upload · ${file.name}` }]);
     selectSubTrack(url);
-    toast(`Subtitle loaded: ${file.name}`);
+    toast(t('app.player.toastSubLoaded', { name: file.name }));
   };
 
   useEffect(() => {
@@ -1007,7 +1018,7 @@ function PlayerInner() {
         if (!cancelled) {
           setSubCues(null);
           setSubTrackId('off');
-          toast.error('Subtitles failed to load');
+          toast.error(t('app.player.toastSubFailed'));
         }
       })
       .finally(() => {
@@ -1016,7 +1027,7 @@ function PlayerInner() {
     return () => {
       cancelled = true;
     };
-  }, [subTrackId, allSubTracks]);
+  }, [subTrackId, allSubTracks, t]);
 
   const adjustSubOffset = (delta: number) => {
     setSubOffset((o) => {
@@ -1028,7 +1039,7 @@ function PlayerInner() {
   const resetSubOffset = () => {
     setSubOffset(0);
     setMemory(id, { subOffsetSec: 0 });
-    toast('Subtitle sync reset');
+    toast(t('app.player.toastSyncReset'));
   };
 
   const cycleSubtitles = useCallback(() => {
@@ -1241,9 +1252,9 @@ function PlayerInner() {
         await v.requestPictureInPicture();
       }
     } catch {
-      toast.error("Picture-in-picture couldn't start. Your browser blocked it.");
+      toast.error(t('app.player.toastPipBlocked'));
     }
-  }, []);
+  }, [t]);
 
   /* ── chromecast ────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -1270,23 +1281,23 @@ function PlayerInner() {
       }
       if (castActive) {
         stopCasting(framework);
-        toast('Casting stopped.');
+        toast(t('app.player.toastCastStopped'));
         return;
       }
       const media = castMediaRef.current;
       if (!media) return;
       const deviceName = await startCasting(framework, media);
-      toast(`Casting to ${deviceName}.`);
+      toast(t('app.player.toastCastingTo', { device: deviceName }));
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       /* user dismissing the device picker rejects — that's not an error */
       if (!/cancel/i.test(message)) {
-        toast.error(message ? `Casting failed — ${message}.` : 'Casting failed.');
+        toast.error(message ? t('app.player.toastCastFailedReason', { message }) : t('app.player.toastCastFailed'));
       }
     } finally {
       setCastBusy(false);
     }
-  }, [castBusy, castActive]);
+  }, [castBusy, castActive, t]);
 
   /* ── keyboard map ──────────────────────────────────────────────────── */
   useEffect(() => {
@@ -1408,10 +1419,10 @@ function PlayerInner() {
     const v = videoRef.current as (HTMLVideoElement & { remote?: { prompt(): Promise<void> } }) | null;
     if (v?.remote) {
       v.remote.prompt().catch(() => {
-        toast.error('Casting needs a compatible device — not available in this browser');
+        toast.error(t('app.player.toastCastUnavailable'));
       });
     } else {
-      toast.error('Casting needs a compatible device — not available in this browser');
+      toast.error(t('app.player.toastCastUnavailable'));
     }
   };
 
@@ -1427,13 +1438,13 @@ function PlayerInner() {
   if (resolved === null) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-16 bg-deep p-16 text-center">
-        <h1 className="font-display text-display-l text-ink">This title drifted out of orbit.</h1>
+        <h1 className="font-display text-display-l text-ink">{t('app.detail.notFoundTitle')}</h1>
         <p className="max-w-[46ch] text-caption text-muted">
-          No metadata or stream could be resolved for playback.
+          {t('app.player.unresolvable')}
         </p>
         <div className="flex gap-12">
-          <ButtonPrimary onClick={() => navigate(-1)}>Go back</ButtonPrimary>
-          <ButtonGhost to="/app/discover">Back to Discover</ButtonGhost>
+          <ButtonPrimary onClick={() => navigate(-1)}>{t('app.player.goBack')}</ButtonPrimary>
+          <ButtonGhost to="/app/discover">{t('app.detail.backToDiscover')}</ButtonGhost>
         </div>
       </div>
     );
@@ -1457,6 +1468,9 @@ function PlayerInner() {
         live: isLive,
       }
     : null;
+
+  /* title handed to external players (Android intents display it) */
+  const externalTitle = episodeLabel ? `${meta.name} · ${episodeLabel}` : meta.name;
 
   const chromeAnim = reduceMotion
     ? { opacity: chromeVisible ? 1 : 0 }
@@ -1548,7 +1562,7 @@ function PlayerInner() {
             setBuffering(false);
             if (recoveredRef.current) {
               recoveredRef.current = false;
-              toast('Recovered via backup source');
+              toast(t('app.player.toastRecovered'));
             }
           }}
           onWaiting={() => setBuffering(true)}
@@ -1598,7 +1612,8 @@ function PlayerInner() {
             className="pointer-events-none absolute left-1/2 top-[18%] z-30 -translate-x-1/2 rounded-full bg-deep/80 px-16 py-8 font-mono text-[13px] text-cyan ring-1 ring-cyan/40 backdrop-blur-sm"
           >
             {seekPreview.delta > 0 ? '+' : '−'}
-            {Math.abs(seekPreview.delta)}s <span className="text-muted">→</span>{' '}
+            {Math.abs(seekPreview.delta)}s{' '}
+            <ArrowRight size={12} strokeWidth={1.75} className="inline text-muted" aria-hidden />{' '}
             {fmtClock(seekPreview.target)}
           </motion.div>
         )}
@@ -1623,7 +1638,7 @@ function PlayerInner() {
         <div className="glass-2 absolute left-1/2 top-24 z-30 flex -translate-x-1/2 items-center gap-8 rounded-full px-16 py-8">
           <Loader2 size={14} className="animate-spin text-cyan" />
           <span className="font-mono text-[12px] text-muted">
-            Stream lost — retrying in {autoRetryIn}s
+            {t('app.player.retryingIn', { s: autoRetryIn })}
           </span>
         </div>
       )}
@@ -1642,7 +1657,7 @@ function PlayerInner() {
             className="focusable glass-3 absolute bottom-128 right-24 z-30 flex items-center gap-8 rounded-full px-20 py-12 text-caption font-semibold text-ink hover:shadow-glow-neon cursor-pointer"
           >
             <SkipForward size={16} strokeWidth={1.75} className="text-cyan" />
-            Skip intro
+            {t('app.player.skipIntro')}
           </motion.button>
         )}
       </AnimatePresence>
@@ -1677,7 +1692,7 @@ function PlayerInner() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          aria-label="Back"
+          aria-label={t('app.player.back')}
           className="focusable glass-2 flex h-40 w-40 items-center justify-center rounded-full text-ink hover:text-cyan cursor-pointer"
         >
           <ChevronLeft size={20} strokeWidth={1.75} />
@@ -1692,7 +1707,7 @@ function PlayerInner() {
           <button
             type="button"
             onClick={() => setPanel(panel === 'episodes' ? null : 'episodes')}
-            aria-label="Episodes"
+            aria-label={t('app.detail.episodes')}
             className="focusable glass-2 flex h-40 w-40 items-center justify-center rounded-full text-ink hover:text-cyan cursor-pointer"
           >
             <ListVideo size={18} strokeWidth={1.75} />
@@ -1701,7 +1716,7 @@ function PlayerInner() {
         <button
           type="button"
           onClick={cast}
-          aria-label="Cast"
+          aria-label={t('app.player.cast')}
           className="focusable glass-2 flex h-40 w-40 items-center justify-center rounded-full text-ink hover:text-cyan cursor-pointer"
         >
           <Cast size={18} strokeWidth={1.75} />
@@ -1709,7 +1724,7 @@ function PlayerInner() {
         <button
           type="button"
           onClick={() => setShortcutsOpen((v) => !v)}
-          aria-label="Keyboard shortcuts"
+          aria-label={t('app.player.shortcutsAria')}
           aria-pressed={shortcutsOpen}
           className="focusable glass-2 flex h-40 w-40 items-center justify-center rounded-full text-ink hover:text-cyan cursor-pointer"
         >
@@ -1730,7 +1745,7 @@ function PlayerInner() {
           {isLive ? (
             <div className="mb-8 flex items-center gap-8">
               <Badge kind="LIVE" />
-              <span className="font-mono text-[12px] text-muted">Broadcasting now</span>
+              <span className="font-mono text-[12px] text-muted">{t('app.player.broadcastingNow')}</span>
             </div>
           ) : (
             <SeekBar
@@ -1745,7 +1760,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={togglePlay}
-              aria-label={playing ? 'Pause' : 'Play'}
+              aria-label={playing ? t('app.player.pause') : t('app.player.play')}
               className="focusable flex h-40 w-40 items-center justify-center rounded-full text-ink transition-transform hover:scale-110 hover:text-cyan active:scale-90 cursor-pointer"
             >
               {playing ? (
@@ -1757,7 +1772,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={() => seek(currentTime - 10)}
-              aria-label="Back 10 seconds"
+              aria-label={t('app.player.back10')}
               disabled={isLive}
               className="focusable flex h-40 w-40 items-center justify-center rounded-full text-muted transition-transform hover:scale-110 hover:text-cyan active:scale-90 cursor-pointer disabled:opacity-40"
             >
@@ -1766,7 +1781,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={() => seek(currentTime + 10)}
-              aria-label="Forward 10 seconds"
+              aria-label={t('app.player.forward10')}
               disabled={isLive}
               className="focusable flex h-40 w-40 items-center justify-center rounded-full text-muted transition-transform hover:scale-110 hover:text-cyan active:scale-90 cursor-pointer disabled:opacity-40"
             >
@@ -1777,7 +1792,7 @@ function PlayerInner() {
               <button
                 type="button"
                 onClick={() => setMuted((m) => !m)}
-                aria-label={muted ? 'Unmute' : 'Mute'}
+                aria-label={muted ? t('app.player.unmute') : t('app.player.mute')}
                 className="focusable flex h-40 w-40 items-center justify-center rounded-full text-muted hover:text-cyan cursor-pointer"
               >
                 {muted || volume === 0 ? (
@@ -1796,7 +1811,7 @@ function PlayerInner() {
                   setVolume(Number(e.target.value));
                   setMuted(false);
                 }}
-                aria-label="Volume"
+                aria-label={t('app.player.volume')}
                 className="w-0 cursor-pointer accent-[#7CD9EC] opacity-0 transition-all duration-200 group-hover:w-80 group-hover:opacity-100 group-focus-within:w-80 group-focus-within:opacity-100"
               />
             </div>
@@ -1807,7 +1822,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={() => setPanel(panel === 'subs' ? null : 'subs')}
-              aria-label="Subtitles"
+              aria-label={t('app.player.subtitles')}
               aria-pressed={subTrackId !== 'off'}
               className={cn(
                 'focusable relative flex h-40 w-40 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-90 cursor-pointer',
@@ -1822,7 +1837,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={() => setPanel(panel === 'speed' ? null : 'speed')}
-              aria-label="Playback speed"
+              aria-label={t('app.player.speedAria')}
               className="focusable flex h-40 items-center gap-6 rounded-full px-8 font-mono text-[12px] text-muted hover:text-cyan cursor-pointer"
             >
               <Gauge size={18} strokeWidth={1.75} />
@@ -1831,7 +1846,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={() => setPanel(panel === 'audio' ? null : 'audio')}
-              aria-label="Audio tracks"
+              aria-label={t('app.player.audioAria')}
               className="focusable hidden h-40 w-40 items-center justify-center rounded-full text-muted hover:text-cyan sm:flex cursor-pointer"
             >
               <AudioLines size={20} strokeWidth={1.75} />
@@ -1839,7 +1854,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={() => setPanel(panel === 'sources' ? null : 'sources')}
-              aria-label="Quality and sources"
+              aria-label={t('app.player.qualityAria')}
               className="focusable flex h-40 items-center gap-6 rounded-full px-8 font-mono text-[12px] text-muted hover:text-cyan cursor-pointer"
             >
               {source?.quality ?? '—'}
@@ -1849,7 +1864,7 @@ function PlayerInner() {
               <button
                 type="button"
                 onClick={() => void togglePiP()}
-                aria-label={pipActive ? 'Exit picture-in-picture' : 'Picture-in-picture'}
+                aria-label={pipActive ? t('app.player.pipExit') : t('app.player.pipEnter')}
                 aria-pressed={pipActive}
                 className={cn(
                   'focusable flex h-40 w-40 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-90 cursor-pointer',
@@ -1864,9 +1879,9 @@ function PlayerInner() {
                 type="button"
                 onClick={() => void toggleCast()}
                 disabled={castBusy}
-                aria-label={castActive ? 'Stop casting' : 'Cast to TV'}
+                aria-label={castActive ? t('app.player.castStop') : t('app.player.castToTv')}
                 aria-pressed={castActive}
-                title={castActive ? 'Stop casting' : 'Cast to TV'}
+                title={castActive ? t('app.player.castStop') : t('app.player.castToTv')}
                 className={cn(
                   'focusable flex h-40 w-40 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-90 cursor-pointer disabled:opacity-50',
                   castActive ? 'text-cyan' : 'text-muted hover:text-cyan',
@@ -1879,12 +1894,27 @@ function PlayerInner() {
                 )}
               </button>
             )}
+            {source && (
+              <button
+                type="button"
+                onClick={() => setPanel(panel === 'external' ? null : 'external')}
+                aria-label={t('app.player.externalOpen')}
+                aria-pressed={panel === 'external'}
+                title={t('app.player.externalOpen')}
+                className={cn(
+                  'focusable flex h-44 w-44 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-90 cursor-pointer',
+                  panel === 'external' ? 'text-cyan' : 'text-muted hover:text-cyan',
+                )}
+              >
+                <SquareArrowOutUpRight size={20} strokeWidth={1.75} />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => patchSettings({ playback: { ...playbackSettings, ambient: !ambient } })}
-              aria-label="Ambient mode"
+              aria-label={t('app.player.ambient')}
               aria-pressed={ambient}
-              title="Ambient mode"
+              title={t('app.player.ambient')}
               className={cn(
                 'focusable flex h-40 w-40 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-90 cursor-pointer',
                 ambient ? 'text-cyan' : 'text-muted hover:text-cyan',
@@ -1895,7 +1925,7 @@ function PlayerInner() {
             <button
               type="button"
               onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              aria-label={isFullscreen ? t('app.player.fullscreenExit') : t('app.player.fullscreen')}
               className="focusable flex h-40 w-40 items-center justify-center rounded-full text-muted transition-transform hover:scale-110 hover:text-cyan active:scale-90 cursor-pointer"
             >
               {isFullscreen ? (
@@ -1911,7 +1941,7 @@ function PlayerInner() {
       {/* right sheets */}
       <AnimatePresence>
         {panel === 'subs' && (
-          <Sheet key="subs" title="Subtitles" onClose={() => setPanel(null)}>
+          <Sheet key="subs" title={t('app.player.subtitles')} onClose={() => setPanel(null)}>
             <ul className="flex flex-col gap-8">
               <li>
                 <button
@@ -1922,7 +1952,7 @@ function PlayerInner() {
                     subTrackId === 'off' ? 'bg-white/[.08] text-ink' : 'text-muted hover:bg-white/[.05]',
                   )}
                 >
-                  Off
+                  {t('app.player.subsOff')}
                   {subTrackId === 'off' && <Check size={16} strokeWidth={1.75} className="text-cyan" />}
                 </button>
               </li>
@@ -1946,11 +1976,11 @@ function PlayerInner() {
               ))}
             </ul>
             {allSubTracks.length === 0 && (
-              <p className="mt-8 text-caption text-muted">No subtitle tracks for this source.</p>
+              <p className="mt-8 text-caption text-muted">{t('app.player.noSubTracks')}</p>
             )}
-            {subLoading && <p className="mt-8 font-mono text-[11px] text-muted">Loading track…</p>}
+            {subLoading && <p className="mt-8 font-mono text-[11px] text-muted">{t('app.player.loadingTrack')}</p>}
 
-            <h4 className="mb-8 mt-16 text-micro uppercase text-muted">Your own file</h4>
+            <h4 className="mb-8 mt-16 text-micro uppercase text-muted">{t('app.player.ownFile')}</h4>
             <label
               className="focusable glass-1 flex cursor-pointer items-center justify-center gap-8 rounded-lg px-12 py-10 text-caption text-ink hover:text-cyan"
               tabIndex={0}
@@ -1962,7 +1992,7 @@ function PlayerInner() {
               }}
             >
               <Upload size={14} strokeWidth={1.75} />
-              Load .srt / .vtt from this device
+              {t('app.player.loadSubFile')}
               <input
                 type="file"
                 accept=".srt,.vtt,text/vtt,text/plain"
@@ -1975,7 +2005,7 @@ function PlayerInner() {
               />
             </label>
 
-            <h4 className="mb-8 mt-24 text-micro uppercase text-muted">Style</h4>
+            <h4 className="mb-8 mt-24 text-micro uppercase text-muted">{t('app.player.style')}</h4>
             <div
               className={cn(
                 'mb-16 rounded-lg bg-black/40 p-16 text-center',
@@ -1987,7 +2017,7 @@ function PlayerInner() {
               )}
               style={subOutline ? { textShadow: SUB_OUTLINE_STYLE } : undefined}
             >
-              Everything you watch. One place.
+              {t('app.player.stylePreview')}
             </div>
             <div className="mb-12 flex items-center gap-8">
               {(['S', 'M', 'L', 'XL'] as SubSize[]).map((s) => (
@@ -2012,7 +2042,7 @@ function PlayerInner() {
                   type="button"
                   onClick={() => applySubColor(c)}
                   aria-pressed={subColor === c}
-                  aria-label={`Subtitle color ${c}`}
+                  aria-label={t('app.player.colorAria', { color: t(`app.player.color_${c}`) })}
                   className={cn(
                     'focusable h-28 w-28 rounded-full ring-2 cursor-pointer',
                     subColor === c ? 'ring-cyan' : 'ring-white/[.15]',
@@ -2032,13 +2062,13 @@ function PlayerInner() {
                       subBg === b ? 'bg-white/[.12] text-ink' : 'text-muted hover:text-ink',
                     )}
                   >
-                    {b}
+                    {t(`app.player.bg_${b}`)}
                   </button>
                 ))}
               </div>
             </div>
             <div className="mb-12 flex items-center gap-8">
-              <span className="text-micro uppercase text-muted">Weight</span>
+              <span className="text-micro uppercase text-muted">{t('app.player.weight')}</span>
               {(['normal', 'semibold', 'bold'] as SubWeight[]).map((w) => (
                 <button
                   key={w}
@@ -2050,7 +2080,7 @@ function PlayerInner() {
                     subWeight === w ? 'bg-white/[.12] text-ink' : 'glass-1 text-muted hover:text-ink',
                   )}
                 >
-                  {w === 'semibold' ? 'semi' : w}
+                  {t(w === 'semibold' ? 'app.player.weightSemi' : `app.player.weight_${w}`)}
                 </button>
               ))}
               <button
@@ -2062,12 +2092,12 @@ function PlayerInner() {
                   subOutline ? 'bg-white/[.12] text-ink' : 'glass-1 text-muted hover:text-ink',
                 )}
               >
-                Outline
+                {t('app.player.outline')}
               </button>
             </div>
             <div className="flex flex-col gap-10">
               <div className="flex items-center justify-between">
-                <span className="text-caption text-muted">Sync offset</span>
+                <span className="text-caption text-muted">{t('app.player.syncOffset')}</span>
                 <span className="font-mono text-[12px] text-cyan">
                   {subOffset >= 0 ? '+' : ''}
                   {subOffset.toFixed(2)}s
@@ -2079,7 +2109,7 @@ function PlayerInner() {
                     key={d}
                     type="button"
                     onClick={() => adjustSubOffset(d)}
-                    aria-label={`Subtitle offset ${d > 0 ? 'plus' : 'minus'} ${Math.abs(d)} seconds`}
+                    aria-label={t(d > 0 ? 'app.player.offsetPlus' : 'app.player.offsetMinus', { s: Math.abs(d) })}
                     className="focusable glass-1 flex-1 rounded-full px-8 py-6 font-mono text-[12px] text-ink cursor-pointer"
                   >
                     {d > 0 ? `+${d}` : `−${Math.abs(d)}`}s
@@ -2092,17 +2122,17 @@ function PlayerInner() {
                 disabled={subOffset === 0}
                 className="focusable glass-1 rounded-full px-12 py-6 text-micro uppercase text-muted hover:text-ink cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
               >
-                Reset sync
+                {t('app.player.resetSync')}
               </button>
             </div>
             <p className="mt-16 text-micro uppercase text-muted/70">
-              All subtitles normalized · UTF-8
+              {t('app.player.subsNormalized')}
             </p>
           </Sheet>
         )}
 
         {panel === 'speed' && (
-          <Sheet key="speed" title="Playback speed" onClose={() => setPanel(null)}>
+          <Sheet key="speed" title={t('app.player.speedAria')} onClose={() => setPanel(null)}>
             <input
               type="range"
               min={0.5}
@@ -2110,7 +2140,7 @@ function PlayerInner() {
               step={0.25}
               value={speed}
               onChange={(e) => applySpeed(Number(e.target.value))}
-              aria-label="Playback speed"
+              aria-label={t('app.player.speedAria')}
               className="w-full cursor-pointer accent-[#7CD9EC]"
             />
             <div className="mt-8 flex justify-between font-mono text-[11px] text-muted">
@@ -2134,14 +2164,14 @@ function PlayerInner() {
                 </button>
               ))}
             </div>
-            <p className="mt-24 text-micro uppercase text-muted/70">Remembered for this title.</p>
+            <p className="mt-24 text-micro uppercase text-muted/70">{t('app.player.speedRemembered')}</p>
           </Sheet>
         )}
 
         {panel === 'audio' && (
-          <Sheet key="audio" title="Audio tracks" onClose={() => setPanel(null)}>
+          <Sheet key="audio" title={t('app.player.audioAria')} onClose={() => setPanel(null)}>
             {audioTracks.length <= 1 ? (
-              <p className="text-caption text-muted">Single audio track.</p>
+              <p className="text-caption text-muted">{t('app.player.singleAudio')}</p>
             ) : (
               <ul className="flex flex-col gap-8">
                 {audioTracks.map((t) => (
@@ -2172,7 +2202,7 @@ function PlayerInner() {
         )}
 
         {panel === 'sources' && (
-          <Sheet key="sources" title="Quality & sources" onClose={() => setPanel(null)}>
+          <Sheet key="sources" title={t('app.player.sourcesTitle')} onClose={() => setPanel(null)}>
             {sourceGroups.map((g) => (
               <div key={g.addonId} className="mb-16">
                 <div className="mb-8 flex items-center gap-8">
@@ -2201,7 +2231,7 @@ function PlayerInner() {
                           </span>
                         )}
                         <span className="min-w-0 flex-1 truncate text-caption text-ink">{s.title}</span>
-                        {i === srcIdx && <span className="font-mono text-[11px] text-cyan">playing</span>}
+                        {i === srcIdx && <span className="font-mono text-[11px] text-cyan">{t('app.player.playingTag')}</span>}
                       </button>
                     </li>
                   ))}
@@ -2209,13 +2239,36 @@ function PlayerInner() {
               </div>
             ))}
             <p className="text-micro uppercase text-muted/70">
-              Switching source preserves your position.
+              {t('app.player.sourcesPreserveNote')}
             </p>
+            {source && (
+              <>
+                <h4 className="mb-8 mt-24 text-micro uppercase text-muted">{t('app.player.externalOpen')}</h4>
+                <ExternalPlayerMenu
+                  streamUrl={source.url}
+                  title={externalTitle}
+                  onDone={() => setPanel(null)}
+                />
+              </>
+            )}
+          </Sheet>
+        )}
+
+        {panel === 'external' && source && (
+          <Sheet key="external" title={t('app.player.externalOpen')} onClose={() => setPanel(null)}>
+            <p className="mb-16 text-caption text-muted">
+              {t('app.player.externalBody')}
+            </p>
+            <ExternalPlayerMenu
+              streamUrl={source.url}
+              title={externalTitle}
+              onDone={() => setPanel(null)}
+            />
           </Sheet>
         )}
 
         {panel === 'episodes' && meta.videos && (
-          <Sheet key="episodes" title="Episodes" onClose={() => setPanel(null)}>
+          <Sheet key="episodes" title={t('app.detail.episodes')} onClose={() => setPanel(null)}>
             <ul className="flex flex-col gap-8">
               {meta.videos.map((v) => {
                 const current = v.id === id;
@@ -2240,7 +2293,7 @@ function PlayerInner() {
                       <span className={cn('flex-1 truncate text-caption', current ? 'text-ink' : '')}>
                         {v.title}
                       </span>
-                      {current && <span className="font-mono text-[11px] text-cyan">now</span>}
+                      {current && <span className="font-mono text-[11px] text-cyan">{t('app.player.nowTag')}</span>}
                     </button>
                   </li>
                 );
@@ -2270,20 +2323,20 @@ function PlayerInner() {
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-16">
           <div className="glass-3 flex w-full max-w-md flex-col items-center gap-16 rounded-2xl p-32 text-center">
             <AlertTriangle size={28} strokeWidth={1.75} className="text-purple" />
-            <h2 className="font-display text-title text-ink">No sources returned.</h2>
+            <h2 className="font-display text-title text-ink">{t('app.player.noSourcesTitle')}</h2>
             <p className="text-caption text-muted">
-              Every enabled addon came back empty for this title.
+              {t('app.player.noSourcesCaption')}
             </p>
             <div className="flex w-full flex-col gap-12">
-              <ButtonPrimary onClick={reloadStreams}>Retry</ButtonPrimary>
-              <ButtonGhost onClick={() => navigate(`/app/detail/${type}/${id}`)}>Back to title</ButtonGhost>
+              <ButtonPrimary onClick={reloadStreams}>{t('app.player.retry')}</ButtonPrimary>
+              <ButtonGhost onClick={() => navigate(`/app/detail/${type}/${id}`)}>{t('app.player.backToTitle')}</ButtonGhost>
             </div>
           </div>
         </div>
       )}
 
       {/* shortcuts overlay (?) */}
-      <Modal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} title="Keyboard shortcuts">
+      <Modal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} title={t('app.player.shortcutsTitle')}>
         <ShortcutsTable />
       </Modal>
     </div>

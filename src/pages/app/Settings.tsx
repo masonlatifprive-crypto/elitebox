@@ -23,6 +23,7 @@ import {
   HardDrive,
   Info,
   Loader2,
+  Magnet,
   MonitorPlay,
   Palette,
   Play,
@@ -47,6 +48,9 @@ import {
 } from '@/components/ui-elite';
 import { addonEngine } from '@/lib/addons/engine';
 import { DEFAULT_PROFILE_ID, useLibrary, useProfiles, useSettings } from '@/lib/store';
+import type { EliteSettings } from '@/lib/store';
+import { useT } from '@/i18n';
+import type { TFunction } from '@/i18n';
 import { clearErrorLog, readErrorLog, type ErrorEntry } from '@/lib/errorlog';
 import { detectTV } from '@/lib/tvnav';
 import { cn } from '@/lib/utils';
@@ -272,13 +276,13 @@ interface DiagRow {
   detail: string;
 }
 
-const DIAG_DEFS: Array<{ id: string; label: string }> = [
-  { id: 'network', label: 'Network interface' },
-  { id: 'latency', label: 'Public endpoint latency' },
-  { id: 'storage-rw', label: 'Local storage read/write' },
-  { id: 'hls', label: 'HLS playback support' },
-  { id: 'addons', label: 'Addon engine health' },
-  { id: 'storage-est', label: 'Storage estimate' },
+const DIAG_DEFS: Array<{ id: string; labelKey: string }> = [
+  { id: 'network', labelKey: 'app.settings.diagNetwork' },
+  { id: 'latency', labelKey: 'app.settings.diagLatency' },
+  { id: 'storage-rw', labelKey: 'app.settings.diagStorageRw' },
+  { id: 'hls', labelKey: 'app.settings.diagHls' },
+  { id: 'addons', labelKey: 'app.settings.diagAddons' },
+  { id: 'storage-est', labelKey: 'app.settings.diagStorageEst' },
 ];
 
 function eliteboxStorageBytes(): number {
@@ -292,12 +296,12 @@ function eliteboxStorageBytes(): number {
   return bytes;
 }
 
-async function runDiagCheck(id: string): Promise<{ ok: boolean; detail: string }> {
+async function runDiagCheck(id: string, t: TFunction): Promise<{ ok: boolean; detail: string }> {
   switch (id) {
     case 'network':
       return navigator.onLine
-        ? { ok: true, detail: 'online' }
-        : { ok: false, detail: 'offline — checks below may fail' };
+        ? { ok: true, detail: t('app.settings.diagOnline') }
+        : { ok: false, detail: t('app.settings.diagOffline') };
     case 'latency': {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 6000);
@@ -307,9 +311,9 @@ async function runDiagCheck(id: string): Promise<{ ok: boolean; detail: string }
           'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           { method: 'HEAD', cache: 'no-store', signal: ctrl.signal },
         );
-        return { ok: true, detail: `${Math.round(performance.now() - started)}ms to stream mirror` };
+        return { ok: true, detail: t('app.settings.diagLatencyOk', { ms: Math.round(performance.now() - started) }) };
       } catch {
-        return { ok: false, detail: 'unreachable within 6s' };
+        return { ok: false, detail: t('app.settings.diagLatencyFail') };
       } finally {
         clearTimeout(timer);
       }
@@ -320,10 +324,10 @@ async function runDiagCheck(id: string): Promise<{ ok: boolean; detail: string }
         localStorage.setItem('elitebox.v1.diag', probe);
         const read = localStorage.getItem('elitebox.v1.diag');
         localStorage.removeItem('elitebox.v1.diag');
-        if (read !== probe) return { ok: false, detail: 'read-back mismatch' };
-        return { ok: true, detail: `ok · ${(eliteboxStorageBytes() / 1024).toFixed(1)} KB used by Elitebox` };
+        if (read !== probe) return { ok: false, detail: t('app.settings.diagMismatch') };
+        return { ok: true, detail: t('app.settings.diagStorageOk', { kb: (eliteboxStorageBytes() / 1024).toFixed(1) }) };
       } catch {
-        return { ok: false, detail: 'localStorage unavailable or full' };
+        return { ok: false, detail: t('app.settings.diagStorageFail') };
       }
     }
     case 'hls': {
@@ -335,8 +339,8 @@ async function runDiagCheck(id: string): Promise<{ ok: boolean; detail: string }
         mse = MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
       }
       if (mse) return { ok: true, detail: native ? 'hls.js (MSE) + native' : 'hls.js via MSE' };
-      if (native) return { ok: true, detail: 'native only' };
-      return { ok: false, detail: 'none — HLS playback unavailable' };
+      if (native) return { ok: true, detail: t('app.settings.diagHlsNative') };
+      return { ok: false, detail: t('app.settings.diagHlsNone') };
     }
     case 'addons': {
       const all = addonEngine.healthAll();
@@ -344,34 +348,46 @@ async function runDiagCheck(id: string): Promise<{ ok: boolean; detail: string }
       const okCount = ids.filter((k) => all[k].status === 'ok').length;
       return {
         ok: okCount === ids.length,
-        detail: `${okCount}/${ids.length} healthy · ${ids.filter((k) => all[k].circuit === 'open').length} benched`,
+        detail: t('app.settings.diagAddonsDetail', {
+          ok: okCount,
+          total: ids.length,
+          benched: ids.filter((k) => all[k].circuit === 'open').length,
+        }),
       };
     }
     case 'storage-est': {
-      if (!navigator.storage?.estimate) return { ok: false, detail: 'estimate API unavailable' };
+      if (!navigator.storage?.estimate) return { ok: false, detail: t('app.settings.diagEstUnavailable') };
       const est = await navigator.storage.estimate();
       const usedMb = ((est.usage ?? 0) / 1048576).toFixed(1);
       const quotaGb = ((est.quota ?? 0) / 1073741824).toFixed(1);
-      return { ok: true, detail: `${usedMb} MB used of ${quotaGb} GB` };
+      return { ok: true, detail: t('app.settings.diagEstDetail', { used: usedMb, quota: quotaGb }) };
     }
     default:
-      return { ok: false, detail: 'unknown check' };
+      return { ok: false, detail: t('app.settings.diagUnknown') };
   }
 }
 
 /* ── sections nav ──────────────────────────────────────────────────────── */
 
 const SECTIONS = [
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-  { id: 'playback', label: 'Playback', icon: Play },
-  { id: 'subtitles', label: 'Subtitles', icon: Subtitles },
-  { id: 'addons', label: 'Addons', icon: Puzzle },
-  { id: 'privacy', label: 'Privacy', icon: ShieldCheck },
-  { id: 'storage', label: 'Storage & Cache', icon: HardDrive },
-  { id: 'diagnostics', label: 'Diagnostics', icon: Activity },
-  { id: 'configuration', label: 'Configuration', icon: Download },
-  { id: 'about', label: 'About', icon: Info },
+  { id: 'appearance', labelKey: 'app.settings.navAppearance', icon: Palette },
+  { id: 'playback', labelKey: 'app.settings.navPlayback', icon: Play },
+  { id: 'streaming', labelKey: 'app.settings.navStreaming', icon: Magnet },
+  { id: 'subtitles', labelKey: 'app.settings.navSubtitles', icon: Subtitles },
+  { id: 'addons', labelKey: 'app.settings.navAddons', icon: Puzzle },
+  { id: 'privacy', labelKey: 'app.settings.navPrivacy', icon: ShieldCheck },
+  { id: 'storage', labelKey: 'app.settings.navStorage', icon: HardDrive },
+  { id: 'diagnostics', labelKey: 'app.settings.navDiagnostics', icon: Activity },
+  { id: 'configuration', labelKey: 'app.settings.navConfiguration', icon: Download },
+  { id: 'about', labelKey: 'app.settings.navAbout', icon: Info },
 ] as const;
+
+/** Honest one-liners per torrent profile — what each mode really does. */
+const TORRENT_PROFILE_DESC: Record<EliteSettings['streaming']['torrentProfile'], string> = {
+  off: 'app.settings.torrentDescOff',
+  metadata: 'app.settings.torrentDescMetadata',
+  desktop: 'app.settings.torrentDescDesktop',
+};
 
 const OPEN_CONTENT_CREDITS = [
   'Big Buck Bunny · Sintel · Tears of Steel · Elephants Dream — Blender Foundation, CC-BY 3.0',
@@ -384,6 +400,7 @@ const OPEN_CONTENT_CREDITS = [
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { t } = useT();
   const { settings, patchSettings, exportConfig, importConfig, resetAll } = useSettings();
   const prefs = useExtPrefs();
   const profiles = useProfiles((s) => s.profiles);
@@ -432,18 +449,18 @@ export default function SettingsPage() {
 
   const runDiagnostics = useCallback(async () => {
     setDiagRunning(true);
-    const rows: DiagRow[] = DIAG_DEFS.map((d) => ({ ...d, status: 'pending', detail: 'queued' }));
+    const rows: DiagRow[] = DIAG_DEFS.map((d) => ({ id: d.id, label: t(d.labelKey), status: 'pending', detail: t('app.settings.diagQueued') }));
     setDiag([...rows]);
     for (let i = 0; i < DIAG_DEFS.length; i++) {
-      rows[i] = { ...rows[i], status: 'running', detail: 'running…' };
+      rows[i] = { ...rows[i], status: 'running', detail: t('app.settings.diagRunning') };
       setDiag([...rows]);
-      const r = await runDiagCheck(DIAG_DEFS[i].id);
+      const r = await runDiagCheck(DIAG_DEFS[i].id, t);
       rows[i] = { ...rows[i], status: r.ok ? 'ok' : 'fail', detail: r.detail };
       setDiag([...rows]);
       await new Promise((res) => setTimeout(res, 150));
     }
     setDiagRunning(false);
-  }, []);
+  }, [t]);
 
   const copyDiagnostics = useCallback(() => {
     if (!diag) return;
@@ -456,9 +473,9 @@ export default function SettingsPage() {
     };
     void navigator.clipboard
       .writeText(JSON.stringify(report, null, 2))
-      .then(() => toast('Diagnostics copied — attach it to any bug report'))
-      .catch(() => toast.error('Clipboard unavailable in this browser'));
-  }, [diag]);
+      .then(() => toast(t('app.settings.toastDiagCopied')))
+      .catch(() => toast.error(t('app.magnet.clipboardUnavailable')));
+  }, [diag, t]);
 
   const doExport = useCallback(() => {
     const json = exportConfig();
@@ -469,8 +486,8 @@ export default function SettingsPage() {
     a.download = 'elitebox-config.json';
     a.click();
     URL.revokeObjectURL(url);
-    toast(`Configuration exported (${(blob.size / 1024).toFixed(1)} KB)`);
-  }, [exportConfig]);
+    toast(t('app.settings.toastExported', { kb: (blob.size / 1024).toFixed(1) }));
+  }, [exportConfig, t]);
 
   const doImport = useCallback(
     (file: File) => {
@@ -478,16 +495,16 @@ export default function SettingsPage() {
       reader.onload = () => {
         const ok = importConfig(String(reader.result ?? ''));
         if (ok) {
-          toast('Configuration imported');
+          toast(t('app.settings.toastImported'));
           refreshStorage();
         } else {
-          toast.error('Import failed — not a valid Elitebox config file');
+          toast.error(t('app.settings.toastImportFailed'));
         }
       };
-      reader.onerror = () => toast.error('Could not read that file');
+      reader.onerror = () => toast.error(t('app.settings.toastReadFailed'));
       reader.readAsText(file);
     },
-    [importConfig, refreshStorage],
+    [importConfig, refreshStorage, t],
   );
 
   const subtitlePreviewStyle = useMemo(() => {
@@ -516,14 +533,14 @@ export default function SettingsPage() {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-wrap items-center gap-16"
       >
-        <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">Settings</h1>
+        <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">{t('app.rail.settings')}</h1>
         {profile && (
           <span className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-6">
             <img src={profile.avatar} alt="" className="h-20 w-20 rounded-full object-cover" />
             <span className="text-caption text-muted">{profile.name}</span>
           </span>
         )}
-        <span className="text-micro uppercase text-muted">Saved locally · this device only</span>
+        <span className="text-micro uppercase text-muted">{t('app.settings.savedLocally')}</span>
       </motion.header>
 
       <div className="flex gap-32 max-lg:flex-col">
@@ -540,7 +557,7 @@ export default function SettingsPage() {
                 className="focusable flex shrink-0 items-center gap-12 rounded-lg px-12 py-8 text-caption text-muted hover:text-ink hover:bg-white/[.06]"
               >
                 <s.icon size={16} strokeWidth={1.75} className="text-cyan" />
-                {s.label}
+                {t(s.labelKey)}
               </motion.a>
             ))}
           </div>
@@ -551,42 +568,53 @@ export default function SettingsPage() {
           {/* ── S1 Appearance ── */}
           <section id="appearance" className="scroll-mt-96">
             <GlassPanel level={2} className="p-24">
-              <h2 className="font-display text-title text-ink">Appearance</h2>
+              <h2 className="font-display text-title text-ink">{t('app.settings.navAppearance')}</h2>
+              <SettingRow label={t('common.settings.language')} desc={t('common.settings.languageDesc')}>
+                <SelectControl
+                  label={t('common.settings.language')}
+                  value={settings.general.language}
+                  options={[
+                    { value: 'en', label: 'English' },
+                    { value: 'nl', label: 'Nederlands' },
+                  ]}
+                  onChange={(v) => patchSettings({ general: { ...settings.general, language: v } })}
+                />
+              </SettingRow>
               <SettingRow
-                label="TV mode"
-                desc="10-foot interface: larger scale and focus targets. TVs are auto-detected; force it here. Full effect after reload."
+                label={t('app.settings.tvMode')}
+                desc={t('app.settings.tvModeDesc')}
               >
                 <EliteSwitch
                   checked={prefs.tvMode}
                   onChange={(v) => {
                     prefs.patch({ tvMode: v });
-                    toast(v ? 'TV mode on — reload for full effect' : 'TV mode off');
+                    toast(v ? t('app.settings.toastTvOn') : t('app.palette.tvOff'));
                   }}
-                  label="Toggle TV mode"
+                  label={t('app.settings.tvModeToggle')}
                 />
               </SettingRow>
               <SettingRow
-                label="Reduced motion"
-                desc="Cinematic springs become instant fades on this device. Your OS setting is always respected."
+                label={t('app.settings.reducedMotion')}
+                desc={t('app.settings.reducedMotionDesc')}
               >
                 <EliteSwitch
                   checked={prefs.reduceMotion}
                   onChange={(v) => prefs.patch({ reduceMotion: v })}
-                  label="Toggle reduced motion"
+                  label={t('app.settings.reducedMotionToggle')}
                 />
               </SettingRow>
-              <SettingRow label="Ambience particles" desc="The living particle field behind the app.">
+              <SettingRow label={t('app.settings.ambience')} desc={t('app.settings.ambienceDesc')}>
                 <EliteSwitch
                   checked={settings.appearance.ambience}
                   onChange={(v) => patchSettings({ appearance: { ...settings.appearance, ambience: v } })}
-                  label="Toggle ambience particles"
+                  label={t('app.settings.ambienceToggle')}
                 />
               </SettingRow>
-              <SettingRow label="Film grain" desc="Subtle cinematic grain overlay on artwork.">
+              <SettingRow label={t('app.settings.grain')} desc={t('app.settings.grainDesc')}>
                 <EliteSwitch
                   checked={settings.appearance.grain}
                   onChange={(v) => patchSettings({ appearance: { ...settings.appearance, grain: v } })}
-                  label="Toggle film grain"
+                  label={t('app.settings.grainToggle')}
                 />
               </SettingRow>
             </GlassPanel>
@@ -595,41 +623,41 @@ export default function SettingsPage() {
           {/* ── S2 Playback ── */}
           <section id="playback" className="scroll-mt-96">
             <GlassPanel level={2} className="p-24">
-              <h2 className="font-display text-title text-ink">Playback</h2>
-              <SettingRow label="Default speed" desc="Applied when a title has no saved speed memory.">
+              <h2 className="font-display text-title text-ink">{t('app.settings.navPlayback')}</h2>
+              <SettingRow label={t('app.settings.defaultSpeed')} desc={t('app.settings.defaultSpeedDesc')}>
                 <SelectControl
-                  label="Default playback speed"
+                  label={t('app.settings.defaultSpeedAria')}
                   value={settings.playback.defaultSpeed}
                   options={[0.5, 0.75, 1, 1.25, 1.5, 2].map((v) => ({ value: v, label: `${v}×` }))}
                   onChange={(v) => patchSettings({ playback: { ...settings.playback, defaultSpeed: v } })}
                 />
               </SettingRow>
-              <SettingRow label="Autoplay next episode" desc="Roll into the next episode when one exists.">
+              <SettingRow label={t('app.settings.autoplayNext')} desc={t('app.settings.autoplayNextDesc')}>
                 <EliteSwitch
                   checked={settings.playback.autoplayNext}
                   onChange={(v) => patchSettings({ playback: { ...settings.playback, autoplayNext: v } })}
-                  label="Toggle autoplay next episode"
+                  label={t('app.settings.autoplayNextToggle')}
                 />
               </SettingRow>
-              <SettingRow label="Preferred quality" desc="Auto picks the best source your connection sustains.">
+              <SettingRow label={t('app.settings.preferredQuality')} desc={t('app.settings.preferredQualityDesc')}>
                 <SelectControl
-                  label="Preferred quality"
+                  label={t('app.settings.preferredQualityAria')}
                   value={settings.playback.preferredQuality}
                   options={[
-                    { value: 'auto', label: 'Auto' },
+                    { value: 'auto', label: t('app.settings.qualityAuto') },
                     { value: 'HD', label: 'HD' },
                     { value: '4K', label: '4K' },
-                    { value: 'SD', label: 'SD (save data)' },
+                    { value: 'SD', label: t('app.settings.qualitySd') },
                   ]}
                   onChange={(v) => patchSettings({ playback: { ...settings.playback, preferredQuality: v } })}
                 />
               </SettingRow>
               <SettingRow
-                label="Resume prompt threshold"
-                desc="Ask to resume once you're past this point in a title."
+                label={t('app.settings.resumeThreshold')}
+                desc={t('app.settings.resumeThresholdDesc')}
               >
                 <SliderControl
-                  label="Resume prompt threshold"
+                  label={t('app.settings.resumeThresholdAria')}
                   value={prefs.resumeThresholdPct}
                   min={2}
                   max={80}
@@ -637,37 +665,88 @@ export default function SettingsPage() {
                   format={(v) => `${v}%`}
                 />
               </SettingRow>
-              <SettingRow label="Hardware acceleration" desc="Use the GPU for decoding when available.">
+              <SettingRow label={t('app.settings.hwAccel')} desc={t('app.settings.hwAccelDesc')}>
                 <EliteSwitch
                   checked={settings.playback.hardwareAccel}
                   onChange={(v) => patchSettings({ playback: { ...settings.playback, hardwareAccel: v } })}
-                  label="Toggle hardware acceleration"
+                  label={t('app.settings.hwAccelToggle')}
                 />
               </SettingRow>
-              <SettingRow label="Ambient mode" desc="Soft lunar glow behind the video while you watch.">
+              <SettingRow label={t('app.settings.ambientMode')} desc={t('app.settings.ambientModeDesc')}>
                 <EliteSwitch
                   checked={settings.playback.ambient ?? true}
                   onChange={(v) => patchSettings({ playback: { ...settings.playback, ambient: v } })}
-                  label="Toggle ambient mode"
+                  label={t('app.settings.ambientModeToggle')}
                 />
               </SettingRow>
+            </GlassPanel>
+          </section>
+
+          {/* ── S2b Streaming ── */}
+          <section id="streaming" className="scroll-mt-96">
+            <GlassPanel level={2} className="flex flex-col gap-8 p-24">
+              <h2 className="font-display text-title text-ink">{t('app.settings.navStreaming')}</h2>
+              <SettingRow
+                label={t('app.settings.torrentProfile')}
+                desc={t('app.settings.torrentProfileDesc')}
+              >
+                <SelectControl
+                  label={t('app.settings.torrentProfileAria')}
+                  value={settings.streaming.torrentProfile}
+                  options={[
+                    { value: 'off', label: t('app.settings.torrentOptOff') },
+                    { value: 'metadata', label: t('app.settings.torrentOptMetadata') },
+                    { value: 'desktop', label: t('app.settings.torrentOptDesktop') },
+                  ]}
+                  onChange={(v) => {
+                    patchSettings({ streaming: { ...settings.streaming, torrentProfile: v } });
+                    toast(
+                      v === 'off'
+                        ? t('app.settings.toastTorrentOff')
+                        : v === 'metadata'
+                          ? t('app.settings.toastTorrentMetadata')
+                          : t('app.settings.toastTorrentDesktop'),
+                    );
+                  }}
+                />
+              </SettingRow>
+              <p className="text-caption text-muted">
+                {t(TORRENT_PROFILE_DESC[settings.streaming.torrentProfile])}
+              </p>
+              <SettingRow
+                label={t('app.settings.cacheLimit')}
+                desc={t('app.settings.cacheLimitDesc')}
+              >
+                <SliderControl
+                  label={t('app.settings.cacheLimitAria')}
+                  value={settings.streaming.maxCacheGb}
+                  min={1}
+                  max={16}
+                  onChange={(v) => patchSettings({ streaming: { ...settings.streaming, maxCacheGb: v } })}
+                  format={(v) => `${v} GB`}
+                />
+              </SettingRow>
+              <div className="mt-8 flex items-start gap-8 rounded-xl border border-cyan/25 bg-[rgba(124,217,236,.05)] p-12">
+                <ShieldCheck size={14} strokeWidth={1.75} className="mt-2 shrink-0 text-cyan" />
+                <p className="text-caption text-muted">{t('app.magnet.legal.settingsNote')}</p>
+              </div>
             </GlassPanel>
           </section>
 
           {/* ── S3 Subtitles ── */}
           <section id="subtitles" className="scroll-mt-96">
             <GlassPanel level={2} className="flex flex-col gap-8 p-24">
-              <h2 className="font-display text-title text-ink">Subtitles</h2>
-              <SettingRow label="Subtitles enabled" desc="Show subtitle tracks when a stream provides them.">
+              <h2 className="font-display text-title text-ink">{t('app.settings.navSubtitles')}</h2>
+              <SettingRow label={t('app.settings.subsEnabled')} desc={t('app.settings.subsEnabledDesc')}>
                 <EliteSwitch
                   checked={settings.subtitles.enabled}
                   onChange={(v) => patchSettings({ subtitles: { ...settings.subtitles, enabled: v } })}
-                  label="Toggle subtitles"
+                  label={t('app.settings.subsEnabledToggle')}
                 />
               </SettingRow>
-              <SettingRow label="Preferred language" desc="Picked automatically when multiple tracks exist.">
+              <SettingRow label={t('app.settings.subsLang')} desc={t('app.settings.subsLangDesc')}>
                 <SelectControl
-                  label="Preferred subtitle language"
+                  label={t('app.settings.subsLangAria')}
                   value={settings.subtitles.preferredLang}
                   options={[
                     { value: 'en', label: 'English' },
@@ -679,9 +758,9 @@ export default function SettingsPage() {
                   onChange={(v) => patchSettings({ subtitles: { ...settings.subtitles, preferredLang: v } })}
                 />
               </SettingRow>
-              <SettingRow label="Size" desc="Scales the subtitle track in the player.">
+              <SettingRow label={t('app.settings.subsSize')} desc={t('app.settings.subsSizeDesc')}>
                 <Segmented
-                  label="Subtitle size"
+                  label={t('app.settings.subsSizeAria')}
                   value={settings.subtitles.size}
                   options={[
                     { value: 'small', label: 'S' },
@@ -691,13 +770,13 @@ export default function SettingsPage() {
                   onChange={(v) => patchSettings({ subtitles: { ...settings.subtitles, size: v } })}
                 />
               </SettingRow>
-              <SettingRow label="Color" desc="Ink, cyan or yellow — whichever reads best on your screen.">
-                <div className="flex gap-8" role="radiogroup" aria-label="Subtitle color">
+              <SettingRow label={t('app.settings.subsColor')} desc={t('app.settings.subsColorDesc')}>
+                <div className="flex gap-8" role="radiogroup" aria-label={t('app.settings.subsColorAria')}>
                   {(
                     [
-                      { value: 'ink', bg: 'var(--ink)', label: 'Ink' },
-                      { value: 'cyan', bg: 'var(--cyan)', label: 'Cyan' },
-                      { value: 'yellow', bg: '#FFE14D', label: 'Yellow' },
+                      { value: 'ink', bg: 'var(--ink)', labelKey: 'app.settings.colorInk' },
+                      { value: 'cyan', bg: 'var(--cyan)', labelKey: 'app.settings.colorCyan' },
+                      { value: 'yellow', bg: '#FFE14D', labelKey: 'app.settings.colorYellow' },
                     ] as const
                   ).map((c) => (
                     <button
@@ -705,7 +784,7 @@ export default function SettingsPage() {
                       type="button"
                       role="radio"
                       aria-checked={prefs.subtitleColor === c.value}
-                      aria-label={`Subtitle color ${c.label}`}
+                      aria-label={t('app.settings.subsColorOptionAria', { color: t(c.labelKey) })}
                       onClick={() => prefs.patch({ subtitleColor: c.value })}
                       className={cn(
                         'focusable h-32 w-32 cursor-pointer rounded-full ring-2 ring-offset-2 ring-offset-deep transition-all',
@@ -716,9 +795,9 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </SettingRow>
-              <SettingRow label="Bottom offset" desc="Lift subtitles off the bottom edge of the player.">
+              <SettingRow label={t('app.settings.bottomOffset')} desc={t('app.settings.bottomOffsetDesc')}>
                 <SliderControl
-                  label="Subtitle bottom offset"
+                  label={t('app.settings.bottomOffsetAria')}
                   value={prefs.subtitleOffsetPx}
                   min={0}
                   max={120}
@@ -746,12 +825,12 @@ export default function SettingsPage() {
                     className="absolute inset-x-0 text-center font-sans font-semibold"
                     style={subtitlePreviewStyle}
                   >
-                    Everything you watch. One place.
+                    {t('app.player.stylePreview')}
                   </motion.span>
                 )}
                 {!settings.subtitles.enabled && (
                   <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-caption text-muted">
-                    Subtitles disabled — enable them to preview
+                    {t('app.settings.previewDisabled')}
                   </span>
                 )}
               </div>
@@ -761,10 +840,10 @@ export default function SettingsPage() {
           {/* ── S4 Addons ── */}
           <section id="addons" className="scroll-mt-96">
             <GlassPanel level={2} className="p-24">
-              <h2 className="font-display text-title text-ink">Addons</h2>
-              <SettingRow label="Request timeout" desc="Shorter = snappier, stricter. Slow addons get benched sooner.">
+              <h2 className="font-display text-title text-ink">{t('app.settings.navAddons')}</h2>
+              <SettingRow label={t('app.settings.timeout')} desc={t('app.settings.timeoutDesc')}>
                 <SliderControl
-                  label="Addon request timeout"
+                  label={t('app.settings.timeoutAria')}
                   value={prefs.addonTimeoutMs}
                   min={2000}
                   max={10000}
@@ -774,16 +853,16 @@ export default function SettingsPage() {
                 />
               </SettingRow>
               <SettingRow
-                label="Circuit-breaker sensitivity"
-                desc="How quickly a failing addon is benched. Balanced benches after 3 consecutive failures."
+                label={t('app.settings.circuit')}
+                desc={t('app.settings.circuitDesc')}
               >
                 <Segmented
-                  label="Circuit-breaker sensitivity"
+                  label={t('app.settings.circuitAria')}
                   value={prefs.circuitSensitivity}
                   options={[
-                    { value: 'relaxed', label: 'Relaxed' },
-                    { value: 'balanced', label: 'Balanced' },
-                    { value: 'strict', label: 'Strict' },
+                    { value: 'relaxed', label: t('app.settings.circuitRelaxed') },
+                    { value: 'balanced', label: t('app.settings.circuitBalanced') },
+                    { value: 'strict', label: t('app.settings.circuitStrict') },
                   ]}
                   onChange={(v) => prefs.patch({ circuitSensitivity: v })}
                 />
@@ -791,7 +870,7 @@ export default function SettingsPage() {
               <div className="pt-16">
                 <ButtonNeon to="/app/addons">
                   <Puzzle size={16} strokeWidth={1.75} />
-                  Open Addon Manager
+                  {t('app.settings.openManager')}
                 </ButtonNeon>
               </div>
             </GlassPanel>
@@ -800,53 +879,53 @@ export default function SettingsPage() {
           {/* ── S4b Privacy ── */}
           <section id="privacy" className="scroll-mt-96">
             <GlassPanel level={2} className="flex flex-col gap-4 p-24">
-              <h2 className="font-display text-title text-ink">Privacy</h2>
+              <h2 className="font-display text-title text-ink">{t('app.settings.navPrivacy')}</h2>
               <SettingRow
-                label="Incognito — pause watch history"
-                desc="While on, nothing you play is recorded to Continue Watching. Existing entries are untouched."
+                label={t('app.settings.incognito')}
+                desc={t('app.settings.incognitoDesc')}
               >
                 <EliteSwitch
                   checked={historyPaused}
                   onChange={(v) => {
                     setHistoryPaused(v);
-                    toast(v ? 'Incognito on — watch history paused' : 'Watch history resumed');
+                    toast(v ? t('app.settings.toastIncognitoOn') : t('app.settings.toastIncognitoOff'));
                   }}
-                  label="Toggle incognito (pause watch history)"
+                  label={t('app.settings.incognitoToggle')}
                 />
               </SettingRow>
               <SettingRow
-                label="What addons can see"
-                desc="Addons receive only the title requests your device makes to them — never your account, identity or watch history."
+                label={t('app.settings.addonVisibility')}
+                desc={t('app.settings.addonVisibilityDesc')}
               >
-                <span className="font-mono text-[11px] uppercase text-ok">Enforced by the engine</span>
+                <span className="font-mono text-[11px] uppercase text-ok">{t('app.settings.enforcedBadge')}</span>
               </SettingRow>
 
               <div className="mt-8 flex flex-col gap-10 border-t border-white/[.06] pt-16">
                 <div className="flex items-center justify-between gap-12">
                   <div className="flex flex-col gap-2">
-                    <span className="text-caption text-ink">On-device error log</span>
+                    <span className="text-caption text-ink">{t('app.settings.errorLogTitle')}</span>
                     <span className="text-caption text-muted">
-                      Uncaught errors stay in this local ring buffer — nothing is uploaded.
+                      {t('app.settings.errorLogDesc')}
                     </span>
                   </div>
                   <div className="flex gap-8">
                     <ButtonGhost onClick={() => setErrorEntries(readErrorLog())}>
-                      Refresh
+                      {t('app.settings.refresh')}
                     </ButtonGhost>
                     <ButtonGhost
                       onClick={() => {
                         clearErrorLog();
                         setErrorEntries([]);
-                        toast('Error log cleared');
+                        toast(t('app.settings.toastLogCleared'));
                       }}
                       className="text-error hover:text-error"
                     >
-                      Clear
+                      {t('app.settings.clear')}
                     </ButtonGhost>
                   </div>
                 </div>
                 {(errorEntries ?? []).length === 0 ? (
-                  <span className="font-mono text-[11px] text-muted">No captured errors — clean run.</span>
+                  <span className="font-mono text-[11px] text-muted">{t('app.settings.errorLogEmpty')}</span>
                 ) : (
                   <ul className="flex max-h-192 flex-col gap-6 overflow-y-auto rounded-lg bg-deep/60 p-12">
                     {(errorEntries ?? []).slice(0, 20).map((e) => (
@@ -867,10 +946,10 @@ export default function SettingsPage() {
           {/* ── S5 Storage & Cache ── */}
           <section id="storage" className="scroll-mt-96">
             <GlassPanel level={2} className="flex flex-col gap-16 p-24">
-              <h2 className="font-display text-title text-ink">Storage & Cache</h2>
+              <h2 className="font-display text-title text-ink">{t('app.settings.navStorage')}</h2>
               <div className="flex flex-col gap-8">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-caption text-muted">Elitebox data on this device</span>
+                  <span className="text-caption text-muted">{t('app.settings.dataOnDevice')}</span>
                   <span className="font-mono text-[12px] text-cyan">{(storageBytes / 1024).toFixed(1)} KB</span>
                 </div>
                 <div className="h-8 w-full overflow-hidden rounded-full bg-white/[.06]">
@@ -881,25 +960,26 @@ export default function SettingsPage() {
                 </div>
                 <span className="font-mono text-[11px] text-muted">
                   {estimate
-                    ? `browser origin: ${(estimate.usage / 1048576).toFixed(1)} MB of ${(estimate.quota / 1073741824).toFixed(1)} GB quota${
-                        storagePct !== null ? ` (${storagePct.toFixed(2)}%)` : ''
-                      }`
-                    : 'browser storage estimate unavailable'}
+                    ? `${t('app.settings.estimateLine', {
+                        used: (estimate.usage / 1048576).toFixed(1),
+                        quota: (estimate.quota / 1073741824).toFixed(1),
+                      })}${storagePct !== null ? ` (${storagePct.toFixed(2)}%)` : ''}`
+                    : t('app.settings.estimateUnavailable')}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-12">
                 <ButtonGhost
                   onClick={() => {
                     refreshStorage();
-                    toast('Storage re-measured');
+                    toast(t('app.settings.toastMeasured'));
                   }}
                 >
                   <RefreshCw size={14} strokeWidth={1.75} />
-                  Re-measure
+                  {t('app.settings.reMeasure')}
                 </ButtonGhost>
                 <ButtonGhost onClick={() => setClearOpen(true)} className="text-error hover:text-error">
                   <Trash2 size={14} strokeWidth={1.75} />
-                  Clear all data
+                  {t('app.settings.clearAllData')}
                 </ButtonGhost>
               </div>
             </GlassPanel>
@@ -909,24 +989,23 @@ export default function SettingsPage() {
           <section id="diagnostics" className="scroll-mt-96">
             <GlassPanel level={2} className="flex flex-col gap-16 p-24">
               <div className="flex flex-wrap items-center gap-16">
-                <h2 className="font-display text-title text-ink">Diagnostics</h2>
+                <h2 className="font-display text-title text-ink">{t('app.settings.navDiagnostics')}</h2>
                 <div className="ml-auto flex items-center gap-8">
                   {diag && !diagRunning && (
                     <ButtonGhost onClick={copyDiagnostics}>
                       <Copy size={14} strokeWidth={1.75} />
-                      Copy report
+                      {t('app.settings.copyReport')}
                     </ButtonGhost>
                   )}
                   <ButtonPrimary onClick={() => void runDiagnostics()} className={diagRunning ? 'opacity-50 pointer-events-none' : ''}>
                     <Gauge size={16} strokeWidth={1.75} />
-                    {diagRunning ? 'Running…' : diag ? 'Re-run diagnostics' : 'Run diagnostics'}
+                    {diagRunning ? t('app.settings.running') : diag ? t('app.settings.rerunDiag') : t('app.settings.runDiag')}
                   </ButtonPrimary>
                 </div>
               </div>
               {diag === null ? (
                 <p className="text-caption text-muted">
-                  Six real checks: network, stream-mirror latency, storage, HLS support, addon
-                  health, quota. Nothing is simulated.
+                  {t('app.settings.diagIdle')}
                 </p>
               ) : (
                 <div className="flex flex-col gap-8">
@@ -957,17 +1036,17 @@ export default function SettingsPage() {
           {/* ── S6 Configuration ── */}
           <section id="configuration" className="scroll-mt-96">
             <GlassPanel level={2} className="flex flex-col gap-8 p-24">
-              <h2 className="font-display text-title text-ink">Configuration</h2>
-              <SettingRow label="Export configuration" desc="One JSON: profiles, addons, settings, library, progress.">
+              <h2 className="font-display text-title text-ink">{t('app.settings.navConfiguration')}</h2>
+              <SettingRow label={t('app.settings.exportConfig')} desc={t('app.settings.exportConfigDesc')}>
                 <ButtonPrimary onClick={doExport}>
                   <Download size={16} strokeWidth={1.75} />
-                  Export
+                  {t('app.settings.export')}
                 </ButtonPrimary>
               </SettingRow>
-              <SettingRow label="Import configuration" desc="Restore from a previously exported elitebox-config.json.">
+              <SettingRow label={t('app.settings.importConfig')} desc={t('app.settings.importConfigDesc')}>
                 <ButtonNeon onClick={() => fileRef.current?.click()}>
                   <Upload size={16} strokeWidth={1.75} />
-                  Import
+                  {t('app.settings.import')}
                 </ButtonNeon>
                 <input
                   ref={fileRef}
@@ -982,8 +1061,8 @@ export default function SettingsPage() {
                 />
               </SettingRow>
               <div className="mt-8 border-t border-error/30 pt-16">
-                <SettingRow label="Reset Elitebox" desc="Wipes everything on this device — profiles, library, addons, settings.">
-                  <ButtonDanger onClick={() => setResetOpen(true)}>Reset</ButtonDanger>
+                <SettingRow label={t('app.settings.resetRow')} desc={t('app.settings.resetRowDesc')}>
+                  <ButtonDanger onClick={() => setResetOpen(true)}>{t('app.settings.reset')}</ButtonDanger>
                 </SettingRow>
               </div>
             </GlassPanel>
@@ -996,11 +1075,11 @@ export default function SettingsPage() {
                 <LogoMark height={40} glow />
                 <div className="flex flex-col gap-4">
                   <span className="font-mono text-caption text-ink">Elitebox v1.0.0</span>
-                  <span className="text-caption text-muted">Media control that feels alive.</span>
+                  <span className="text-caption text-muted">{t('app.settings.aboutTagline')}</span>
                 </div>
               </div>
               <div className="flex flex-col gap-8">
-                <span className="text-micro uppercase text-muted">Open content licenses</span>
+                <span className="text-micro uppercase text-muted">{t('app.settings.licenses')}</span>
                 {OPEN_CONTENT_CREDITS.map((line) => (
                   <span key={line} className="text-caption text-muted">
                     {line}
@@ -1009,8 +1088,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex flex-col gap-4 border-t border-white/[.06] pt-16">
                 <span className="text-caption text-muted">
-                  One codebase — web, desktop, Android and TV. The web app is live today;
-                  native builds ship from the same codebase with the v1.0 release.
+                  {t('app.settings.aboutPlatforms')}
                 </span>
                 <span className="font-mono text-[11px] text-muted">
                   <MonitorPlay size={12} strokeWidth={1.75} className="mr-6 inline text-cyan" />
@@ -1023,24 +1101,23 @@ export default function SettingsPage() {
       </div>
 
       {/* ── clear data confirm ── */}
-      <Modal open={clearOpen} onClose={() => setClearOpen(false)} title="Clear all Elitebox data?">
+      <Modal open={clearOpen} onClose={() => setClearOpen(false)} title={t('app.settings.clearTitle')}>
         <div className="flex flex-col gap-16">
           <p className="text-caption text-muted">
-            Profiles, libraries, addons and settings on this device are wiped. This cannot be undone
-            — export your configuration first if you want a backup.
+            {t('app.settings.clearBody')}
           </p>
           <div className="flex justify-end gap-12">
-            <ButtonGhost onClick={() => setClearOpen(false)}>Cancel</ButtonGhost>
+            <ButtonGhost onClick={() => setClearOpen(false)}>{t('app.profiles.cancel')}</ButtonGhost>
             <ButtonDanger
               onClick={() => {
                 resetAll();
                 setClearOpen(false);
                 refreshStorage();
-                toast('All Elitebox data cleared');
+                toast(t('app.settings.toastDataCleared'));
                 navigate('/app/onboarding');
               }}
             >
-              Clear everything
+              {t('app.settings.clearEverything')}
             </ButtonDanger>
           </div>
         </div>
@@ -1053,12 +1130,13 @@ export default function SettingsPage() {
           setResetOpen(false);
           setResetText('');
         }}
-        title="Reset Elitebox"
+        title={t('app.settings.resetRow')}
       >
         <div className="flex flex-col gap-16">
           <p className="text-caption text-muted">
-            Type <span className="font-mono text-error">RESET</span> to confirm. Everything on this
-            device is wiped and you'll land back on onboarding.
+            {t('app.settings.resetBody1')}{' '}
+            <span className="font-mono text-error">RESET</span>{' '}
+            {t('app.settings.resetBody2')}
           </p>
           <input
             value={resetText}
@@ -1074,7 +1152,7 @@ export default function SettingsPage() {
                 setResetText('');
               }}
             >
-              Cancel
+              {t('app.profiles.cancel')}
             </ButtonGhost>
             <ButtonDanger
               className={resetText !== 'RESET' ? 'opacity-50 pointer-events-none' : ''}
@@ -1082,11 +1160,11 @@ export default function SettingsPage() {
                 resetAll();
                 setResetOpen(false);
                 setResetText('');
-                toast('Elitebox reset');
+                toast(t('app.settings.toastReset'));
                 navigate('/app/onboarding');
               }}
             >
-              Reset everything
+              {t('app.settings.resetEverything')}
             </ButtonDanger>
           </div>
         </div>

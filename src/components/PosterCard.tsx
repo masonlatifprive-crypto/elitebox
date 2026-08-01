@@ -8,6 +8,7 @@ import { memo, useRef } from 'react';
 import { Link } from 'react-router';
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import { Badge, spring } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 import type { MetaItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ interface PosterCardProps {
 }
 
 const PosterCard = memo(function PosterCard({ item, progress, className }: PosterCardProps) {
+  const { t } = useT();
   const ref = useRef<HTMLAnchorElement>(null);
   const reduceMotion = useReducedMotion();
 
@@ -54,8 +56,12 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
   };
 
   const meta = [
-    item.upcoming ? (item.releaseLabel ?? 'Coming soon') : item.year,
-    item.type === 'channel' ? 'Channel' : item.type === 'series' ? 'Series' : 'Film',
+    item.upcoming ? (item.releaseLabel ?? t('app.poster.comingSoon')) : item.year,
+    item.type === 'channel'
+      ? t('app.poster.channel')
+      : item.type === 'series'
+        ? t('app.poster.series')
+        : t('app.poster.film'),
   ]
     .filter(Boolean)
     .join(' · ');
@@ -85,7 +91,9 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
         >
           <img
             src={item.poster}
-            alt={`${item.name}${item.year ? ` (${item.year})` : ''} — poster`}
+            alt={t('app.poster.posterAlt', {
+              name: `${item.name}${item.year ? ` (${item.year})` : ''}`,
+            })}
             loading="lazy"
             decoding="async"
             draggable={false}
@@ -104,7 +112,7 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
         <div className="absolute left-8 top-8 flex gap-6">
           {item.upcoming ? (
             <span className="rounded-full bg-deep/70 px-10 py-4 text-micro uppercase tracking-wider text-cyan ring-1 ring-cyan/50 backdrop-blur-sm">
-              Soon
+              {t('app.poster.soon')}
             </span>
           ) : item.live ? (
             <Badge kind="LIVE" />

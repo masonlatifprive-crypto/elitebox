@@ -4,18 +4,20 @@
  * device, no advertising trackers.
  */
 import { LegalDoc } from './LegalDoc';
+import { useT } from '@/i18n';
 
 export default function Privacy() {
+  const { t } = useT();
   return (
     <LegalDoc
-      eyebrow="Legal"
-      title="Privacy Policy"
+      eyebrow={t('marketing.legal.eyebrow')}
+      title={t('marketing.legal.privacy.title')}
       updated="July 31, 2026"
-      intro="Elitebox is built local-first: your library, watch history and settings live on your device, not on our servers. This policy explains exactly what is stored, what leaves your device, and what never does."
+      intro={t('marketing.legal.privacy.intro')}
       sections={[
         {
           id: 'what-we-store',
-          title: '1. What is stored, and where',
+          title: t('marketing.legal.privacy.s1'),
           body: (
             <>
               <p>
@@ -34,7 +36,7 @@ export default function Privacy() {
         },
         {
           id: 'addons',
-          title: '2. Addons and third-party requests',
+          title: t('marketing.legal.privacy.s2'),
           body: (
             <>
               <p>
@@ -53,7 +55,7 @@ export default function Privacy() {
         },
         {
           id: 'payments',
-          title: '3. Payments',
+          title: t('marketing.legal.privacy.s3'),
           body: (
             <p>
               Elitebox Premium is processed by Stripe or PayPal, depending on your choice at
@@ -65,7 +67,7 @@ export default function Privacy() {
         },
         {
           id: 'tracking',
-          title: '4. Tracking and analytics',
+          title: t('marketing.legal.privacy.s4'),
           body: (
             <p>
               Elitebox ships <strong>no advertising trackers, no third-party analytics beacons
@@ -76,7 +78,7 @@ export default function Privacy() {
         },
         {
           id: 'your-controls',
-          title: '5. Your controls',
+          title: t('marketing.legal.privacy.s5'),
           body: (
             <>
               <p>
@@ -93,7 +95,7 @@ export default function Privacy() {
         },
         {
           id: 'contact',
-          title: '6. Changes and contact',
+          title: t('marketing.legal.privacy.s6'),
           body: (
             <p>
               Material changes to this policy are noted on the Updates page with a new

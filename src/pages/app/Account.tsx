@@ -32,6 +32,7 @@ import {
   toast,
 } from '@/components/ui-elite';
 import { API_URL, hasAccessFor, useAuth } from '@/lib/auth';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const AVATARS = [
@@ -100,6 +101,7 @@ const sectionMotion = {
 };
 
 export default function Account() {
+  const { t } = useT();
   const navigate = useNavigate();
   const user = useAuth((s) => s.user);
   const subscription = useAuth((s) => s.subscription);
@@ -143,7 +145,7 @@ export default function Account() {
     setEditingName(false);
     if (trimmed.length >= 2 && trimmed !== user.name) {
       updateName(trimmed);
-      toast('Name updated.');
+      toast(t('app.account.toastNameUpdated'));
     }
   };
 
@@ -161,7 +163,7 @@ export default function Account() {
     cancelSubscription();
     setCancelBusy(false);
     setCancelOpen(false);
-    toast(`Premium will end ${renewsLabel}. The full catalog stays open until then.`);
+    toast(t('app.account.toastPremiumEnds', { date: renewsLabel }));
   };
 
   const onConfirmSignOut = async () => {
@@ -171,7 +173,7 @@ export default function Account() {
     setSignOutBusy(false);
     setSignOutOpen(false);
     navigate('/login');
-    toast('Signed out. See you soon.');
+    toast(t('app.account.toastSignedOut'));
   };
 
   const onConfirmDelete = async () => {
@@ -182,7 +184,7 @@ export default function Account() {
     setDeleteBusy(false);
     setDeleteOpen(false);
     navigate('/');
-    toast('Account deleted. Everything was removed.');
+    toast(t('app.account.toastDeleted'));
   };
 
   return (
@@ -193,8 +195,8 @@ export default function Account() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduce ? 0.15 : 0.35, ease: 'easeOut' }}
       >
-        <p className="text-micro uppercase tracking-[0.3em] text-cyan">Account</p>
-        <h1 className="mt-8 font-display text-display-xl text-ink">Your Elitebox.</h1>
+        <p className="text-micro uppercase tracking-[0.3em] text-cyan">{t('app.account.eyebrow')}</p>
+        <h1 className="mt-8 font-display text-display-xl text-ink">{t('app.account.headline')}</h1>
       </motion.header>
 
       <div className="grid grid-cols-1 gap-24 xl:grid-cols-[1.4fr_1fr]">
@@ -203,11 +205,11 @@ export default function Account() {
           {...sectionMotion}
           transition={{ ...spring.smooth, delay: 0.08 }}
           className="glass-2 flex flex-col items-center gap-20 rounded-xl p-24 text-center md:flex-row md:text-left"
-          aria-label="Profile"
+          aria-label={t('app.account.profileAria')}
         >
           <button
             type="button"
-            aria-label="Change avatar"
+            aria-label={t('app.account.changeAvatarAria')}
             onClick={() => {
               setAvatarDraft(avatar);
               setAvatarOpen(true);
@@ -235,7 +237,7 @@ export default function Account() {
                   if (e.key === 'Enter') commitName();
                   if (e.key === 'Escape') setEditingName(false);
                 }}
-                aria-label="Edit name"
+                aria-label={t('app.account.editNameAria')}
                 className="glass-1 w-full max-w-[320px] rounded-lg px-12 py-8 font-display text-title text-ink caret-cyan focus:border-cyan focus:outline-none focus:shadow-[0_0_0_2px_rgba(124,217,236,.9),0_0_24px_rgba(124,217,236,.45)] max-md:mx-auto"
               />
             ) : (
@@ -246,7 +248,7 @@ export default function Account() {
               <span className="truncate">{user.email}</span>
             </p>
             <p className="text-micro uppercase text-muted">
-              Member since {formatMonthYear(user.createdAt)}
+              {t('app.account.memberSince', { date: formatMonthYear(user.createdAt) })}
             </p>
           </div>
 
@@ -257,7 +259,7 @@ export default function Account() {
                 setEditingName(true);
               }}
             >
-              Edit name
+              {t('app.account.editName')}
             </ButtonGhost>
           )}
         </motion.section>
@@ -267,7 +269,7 @@ export default function Account() {
           {...sectionMotion}
           transition={{ ...spring.smooth, delay: 0.16 }}
           className="glass-3 relative flex flex-col gap-16 overflow-hidden rounded-xl p-28"
-          aria-label="Subscription"
+          aria-label={t('app.account.subscriptionAria')}
         >
           <span
             aria-hidden
@@ -278,7 +280,7 @@ export default function Account() {
           {access ? (
             <>
               <div className="flex flex-wrap items-center gap-12">
-                <p className="text-micro uppercase text-muted">Subscription</p>
+                <p className="text-micro uppercase text-muted">{t('app.account.subscription')}</p>
                 {active && (
                   <span className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-4">
                     <span
@@ -287,21 +289,21 @@ export default function Account() {
                         !reduce && 'animate-pulse',
                       )}
                     />
-                    <span className="text-caption font-semibold text-cyan">ACTIVE</span>
+                    <span className="text-caption font-semibold text-cyan">{t('app.account.statusActive')}</span>
                   </span>
                 )}
                 {canceled && (
                   <span className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-4">
                     <span className="h-8 w-8 rounded-full bg-muted" />
                     <span className="text-caption font-semibold text-muted">
-                      CANCELS {renewsLabel.toUpperCase()}
+                      {t('app.account.statusCancels', { date: renewsLabel })}
                     </span>
                   </span>
                 )}
                 {subscription?.demo && (
                   <span
                     className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-4"
-                    title="Demo mode — no real charge. Billing is simulated."
+                    title={t('app.account.demoTitle')}
                   >
                     <span className="h-8 w-8 rounded-full bg-warn" />
                     <span className="text-caption font-semibold text-warn">DEMO</span>
@@ -312,7 +314,7 @@ export default function Account() {
               <div>
                 <h2 className="font-display text-title text-ink">Elitebox Premium</h2>
                 <p className="mt-4 text-caption text-muted">
-                  $4.99/month · Every movie and series in the catalog. Completely.
+                  {t('app.account.premiumBlurb')}
                 </p>
               </div>
 
@@ -320,13 +322,13 @@ export default function Account() {
                 {subscription?.demo ? (
                   <span className="inline-flex items-center gap-8">
                     <Calendar size={14} strokeWidth={1.75} />
-                    Demo subscription — never renews, never charges.
+                    {t('app.account.demoNeverRenews')}
                   </span>
                 ) : (
                   renewsLabel && (
                     <span className="inline-flex items-center gap-8">
                       <Calendar size={14} strokeWidth={1.75} />
-                      Renews <span className="font-mono">{renewsLabel}</span>
+                      {t('app.account.renews')} <span className="font-mono">{renewsLabel}</span>
                     </span>
                   )
                 )}
@@ -337,7 +339,7 @@ export default function Account() {
                     ) : (
                       <CreditCard size={14} strokeWidth={1.75} />
                     )}
-                    Payment method: {subscription.method === 'paypal' ? 'PayPal' : 'Card'}
+                    {t('app.account.paymentMethod', { method: subscription.method === 'paypal' ? 'PayPal' : t('app.account.methodCard') })}
                   </span>
                 )}
               </div>
@@ -345,11 +347,11 @@ export default function Account() {
               <div className="mt-8 flex flex-col gap-12 md:flex-row md:justify-end">
                 {active && (
                   <>
-                    <ButtonNeon onClick={onManage}>Manage subscription</ButtonNeon>
-                    <ButtonDanger onClick={() => setCancelOpen(true)}>Cancel subscription</ButtonDanger>
+                    <ButtonNeon onClick={onManage}>{t('app.account.manageSubscription')}</ButtonNeon>
+                    <ButtonDanger onClick={() => setCancelOpen(true)}>{t('app.account.cancelSubscription')}</ButtonDanger>
                   </>
                 )}
-                {canceled && <ButtonNeon to="/subscribe">Resubscribe</ButtonNeon>}
+                {canceled && <ButtonNeon to="/subscribe">{t('app.account.resubscribe')}</ButtonNeon>}
               </div>
             </>
           ) : (
@@ -357,14 +359,13 @@ export default function Account() {
               <div className="glass-2 flex h-56 w-56 items-center justify-center rounded-full">
                 <Sparkles size={24} strokeWidth={1.75} className="text-cyan" />
               </div>
-              <h2 className="font-display text-title text-ink">Free browsing mode.</h2>
+              <h2 className="font-display text-title text-ink">{t('app.account.freeTitle')}</h2>
               <p className="text-caption text-muted">
-                You can explore the whole catalog. Press play on anything and Premium is one step
-                away — $4.99/month, every movie and series in the catalog, completely.
+                {t('app.account.freeBody')}
               </p>
               <div className="mt-8 flex flex-col gap-12 md:flex-row">
-                <ButtonPrimary to="/subscribe">See Premium</ButtonPrimary>
-                <ButtonGhost to="/app">Browse the catalog</ButtonGhost>
+                <ButtonPrimary to="/subscribe">{t('app.account.seePremium')}</ButtonPrimary>
+                <ButtonGhost to="/app">{t('app.account.browseCatalog')}</ButtonGhost>
               </div>
             </>
           )}
@@ -375,24 +376,23 @@ export default function Account() {
       <motion.section
         {...sectionMotion}
         transition={{ ...spring.smooth, delay: 0.24 }}
-        aria-label="Devices"
+        aria-label={t('app.account.devicesAria')}
       >
-        <h2 className="font-display text-title text-ink">Devices</h2>
-        <p className="mt-4 text-caption text-muted">Sessions currently signed in to your account.</p>
+        <h2 className="font-display text-title text-ink">{t('app.account.devices')}</h2>
+        <p className="mt-4 text-caption text-muted">{t('app.account.devicesSub')}</p>
         <div className="glass-2 mt-16 rounded-xl px-24">
           <div className="flex items-center gap-16 border-b border-white/[.06] py-16">
             <device.Icon size={20} strokeWidth={1.75} className="shrink-0 text-muted" />
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="truncate text-body text-ink">{device.name}</p>
-              <p className="font-mono text-caption text-muted">Last active now</p>
+              <p className="font-mono text-caption text-muted">{t('app.account.lastActiveNow')}</p>
             </div>
             <span className="glass-1 rounded-full px-12 py-4 text-micro uppercase text-cyan">
-              This device
+              {t('app.account.thisDevice')}
             </span>
           </div>
           <p className="py-16 text-caption text-muted">
-            No other devices are signed in. Multi-device session sync ships with the companion
-            server — your account already works on every screen.
+            {t('app.account.noOtherDevices')}
           </p>
         </div>
       </motion.section>
@@ -402,29 +402,28 @@ export default function Account() {
         {...sectionMotion}
         transition={{ ...spring.smooth, delay: 0.32 }}
         className="glass-2 max-w-[720px] rounded-xl border border-[rgba(255,77,109,.35)] p-24"
-        aria-label="Danger zone"
+        aria-label={t('app.account.dangerAria')}
       >
         <p className="flex items-center gap-12">
           <AlertTriangle size={20} strokeWidth={1.75} className="text-error" />
-          <span className="font-display text-title text-ink">Danger zone.</span>
+          <span className="font-display text-title text-ink">{t('app.account.dangerTitle')}</span>
         </p>
 
         <div className="mt-16 flex flex-col gap-16 border-t border-white/[.06] pt-16 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-body text-ink">Sign out</p>
-            <p className="text-caption text-muted">Ends this session. Your data stays on your account.</p>
+            <p className="text-body text-ink">{t('app.account.signOut')}</p>
+            <p className="text-caption text-muted">{t('app.account.signOutDesc')}</p>
           </div>
           <ButtonDanger onClick={() => setSignOutOpen(true)} className="shrink-0 hover:shadow-[0_0_18px_rgba(255,77,109,.35)]">
-            Sign out
+            {t('app.account.signOut')}
           </ButtonDanger>
         </div>
 
         <div className="mt-16 flex flex-col gap-16 border-t border-white/[.06] pt-16 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-body text-ink">Delete account</p>
+            <p className="text-body text-ink">{t('app.account.deleteAccount')}</p>
             <p className="max-w-[52ch] text-caption text-muted">
-              Permanently removes your account, profiles, library and watch history. This cannot be
-              undone.
+              {t('app.account.deleteAccountDesc')}
             </p>
           </div>
           <ButtonDanger
@@ -434,13 +433,13 @@ export default function Account() {
             }}
             className="shrink-0 hover:shadow-[0_0_18px_rgba(255,77,109,.35)]"
           >
-            Delete account
+            {t('app.account.deleteAccount')}
           </ButtonDanger>
         </div>
       </motion.section>
 
       {/* ── avatar picker modal ───────────────────────────────────────── */}
-      <Modal open={avatarOpen} onClose={() => setAvatarOpen(false)} title="Choose your orb">
+      <Modal open={avatarOpen} onClose={() => setAvatarOpen(false)} title={t('app.account.avatarTitle')}>
         <div className="grid grid-cols-4 gap-12 max-md:grid-cols-3">
           {AVATARS.map((src, i) => {
             const selected = avatarDraft === src;
@@ -448,7 +447,7 @@ export default function Account() {
               <motion.button
                 key={src}
                 type="button"
-                aria-label={`Avatar ${i + 1}`}
+                aria-label={t('app.onboarding.avatarAria', { n: i + 1 })}
                 aria-pressed={selected}
                 onClick={() => setAvatarDraft(src)}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -476,60 +475,58 @@ export default function Account() {
             onClick={() => {
               setAvatar(avatarDraft);
               setAvatarOpen(false);
-              toast('Avatar updated.');
+              toast(t('app.profiles.toastAvatar'));
             }}
           >
-            Done
+            {t('app.account.done')}
           </ButtonPrimary>
         </div>
       </Modal>
 
       {/* ── manage (demo explainer) ───────────────────────────────────── */}
-      <Modal open={manageOpen} onClose={() => setManageOpen(false)} title="Manage subscription">
+      <Modal open={manageOpen} onClose={() => setManageOpen(false)} title={t('app.account.manageSubscription')}>
         <p className="text-caption text-muted">
-          Demo mode — manage actions are simulated. In production this opens your payment provider's
-          billing portal.
+          {t('app.account.manageDemoBody')}
         </p>
         <div className="mt-24 flex justify-end">
-          <ButtonPrimary onClick={() => setManageOpen(false)}>Got it</ButtonPrimary>
+          <ButtonPrimary onClick={() => setManageOpen(false)}>{t('app.account.gotIt')}</ButtonPrimary>
         </div>
       </Modal>
 
       {/* ── cancel confirm ────────────────────────────────────────────── */}
-      <Modal open={cancelOpen} onClose={() => !cancelBusy && setCancelOpen(false)} title="Cancel Premium?">
+      <Modal open={cancelOpen} onClose={() => !cancelBusy && setCancelOpen(false)} title={t('app.account.cancelTitle')}>
         <p className="text-caption text-muted">
-          Your access continues until {renewsLabel}. After that, the catalog goes back to free
-          browsing — your library and progress are never deleted.
+          {t('app.account.cancelBody', { date: renewsLabel })}
         </p>
         <div className="mt-24 flex flex-col gap-12 sm:flex-row sm:justify-end">
-          <ButtonPrimary onClick={() => setCancelOpen(false)}>Keep Premium</ButtonPrimary>
+          <ButtonPrimary onClick={() => setCancelOpen(false)}>{t('app.account.keepPremium')}</ButtonPrimary>
           <ButtonDanger onClick={onConfirmCancel} className={cn(cancelBusy && 'opacity-60 pointer-events-none')}>
             {cancelBusy ? (
               <span className="inline-flex items-center gap-8">
-                <Spinner /> Canceling…
+                <Spinner /> {t('app.account.canceling')}
               </span>
             ) : (
-              'Confirm cancellation'
+              t('app.account.confirmCancel')
             )}
           </ButtonDanger>
         </div>
       </Modal>
 
       {/* ── sign out confirm ──────────────────────────────────────────── */}
-      <Modal open={signOutOpen} onClose={() => !signOutBusy && setSignOutOpen(false)} title="Sign out of Elitebox?">
+      <Modal open={signOutOpen} onClose={() => !signOutBusy && setSignOutOpen(false)} title={t('app.account.signOutTitle')}>
         <p className="text-caption text-muted">
-          Ends this session. Your data stays on your account.
+          {t('app.account.signOutDesc')}
         </p>
         <div className="mt-24 flex flex-col gap-12 sm:flex-row sm:justify-end">
-          <ButtonPrimary onClick={() => setSignOutOpen(false)}>Stay</ButtonPrimary>
+          <ButtonPrimary onClick={() => setSignOutOpen(false)}>{t('app.account.stay')}</ButtonPrimary>
           <ButtonDanger onClick={onConfirmSignOut} className={cn(signOutBusy && 'opacity-60 pointer-events-none')}>
             {signOutBusy ? (
               <span className="inline-flex items-center gap-8">
-                <Spinner /> Signing out…
+                <Spinner /> {t('app.account.signingOut')}
               </span>
             ) : (
               <span className="inline-flex items-center gap-8">
-                <LogOut size={16} strokeWidth={1.75} /> Sign out
+                <LogOut size={16} strokeWidth={1.75} /> {t('app.account.signOut')}
               </span>
             )}
           </ButtonDanger>
@@ -537,20 +534,22 @@ export default function Account() {
       </Modal>
 
       {/* ── delete typed-confirm ──────────────────────────────────────── */}
-      <Modal open={deleteOpen} onClose={() => !deleteBusy && setDeleteOpen(false)} title="Delete this account?">
+      <Modal open={deleteOpen} onClose={() => !deleteBusy && setDeleteOpen(false)} title={t('app.account.deleteTitle')}>
         <p className="text-caption text-muted">
-          Type <span className="font-mono font-semibold text-error">DELETE</span> to confirm.
+          {t('app.account.deleteBody1')}{' '}
+          <span className="font-mono font-semibold text-error">DELETE</span>{' '}
+          {t('app.account.deleteBody2')}
         </p>
         <input
           value={deleteDraft}
           onChange={(e) => setDeleteDraft(e.target.value)}
           placeholder="DELETE"
-          aria-label="Type DELETE to confirm account deletion"
+          aria-label={t('app.account.deleteInputAria')}
           autoComplete="off"
           className="glass-1 mt-16 w-full rounded-lg border-white/[.08] px-16 py-12 font-mono text-body text-ink caret-error placeholder:text-muted/50 focus:border-error focus:outline-none focus:shadow-[0_0_0_2px_rgba(255,77,109,.9),0_0_24px_rgba(255,77,109,.35)]"
         />
         <div className="mt-24 flex flex-col gap-12 sm:flex-row sm:justify-end">
-          <ButtonGhost onClick={() => setDeleteOpen(false)}>Keep my account</ButtonGhost>
+          <ButtonGhost onClick={() => setDeleteOpen(false)}>{t('app.account.keepAccount')}</ButtonGhost>
           <ButtonDanger
             onClick={onConfirmDelete}
             className={cn(
@@ -560,10 +559,10 @@ export default function Account() {
           >
             {deleteBusy ? (
               <span className="inline-flex items-center gap-8">
-                <Spinner /> Deleting your account…
+                <Spinner /> {t('app.account.deleting')}
               </span>
             ) : (
-              'Delete account'
+              t('app.account.deleteAccount')
             )}
           </ButtonDanger>
         </div>

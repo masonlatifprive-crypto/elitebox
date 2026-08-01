@@ -9,23 +9,22 @@ import { ButtonGhost, ButtonPrimary, spring } from '@/components/ui-elite';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES, useCurrency, usePremiumPrice } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
-const FEATURES = [
-  'Every movie and series in the catalog',
-  'HD and 4K playback where the source provides it',
-  'Web, Windows, Android and Android TV — one subscription',
-  'Cancel anytime. Access runs to the end of your paid month.',
-];
+const FEATURES = ['f1', 'f2', 'f3', 'f4'] as const;
 
 export default function PaywallCard({
-  title = "This one's for members.",
-  message = 'One subscription. Every movie and series in the catalog.',
+  title,
+  message,
   className,
 }: {
   title?: string;
   message?: string;
   className?: string;
 }) {
+  const { t } = useT();
+  const resolvedTitle = title ?? t('marketing.paywall.defaultTitle');
+  const resolvedMessage = message ?? t('marketing.paywall.defaultMessage');
   const demoMode = useAuth((s) => s.demoMode);
   const price = usePremiumPrice();
   const code = useCurrency((s) => s.code);
@@ -34,24 +33,24 @@ export default function PaywallCard({
   return (
     <motion.div
       role="dialog"
-      aria-label="Elitebox Premium"
+      aria-label={t('marketing.paywall.aria')}
       className={cn('glass-3 w-full max-w-[420px] rounded-2xl p-28 md:p-40', className)}
       initial={{ opacity: 0, scale: 0.95, y: 16 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={spring.smooth}
     >
       <div className="flex flex-col items-center gap-16 text-center">
-        <p className="text-micro uppercase tracking-[0.3em] text-cyan">Elitebox Premium</p>
+        <p className="text-micro uppercase tracking-[0.3em] text-cyan">{t('marketing.paywall.eyebrow')}</p>
 
         <div className="flex flex-col gap-8">
-          <h2 className="font-display text-title text-ink">{title}</h2>
-          <p className="text-caption text-muted">{message}</p>
+          <h2 className="font-display text-title text-ink">{resolvedTitle}</h2>
+          <p className="text-caption text-muted">{resolvedMessage}</p>
         </div>
 
         {/* chrome price lockup + currency choice */}
         <p className="font-display text-[2.5rem] leading-none font-extrabold tracking-[-0.03em]">
           <span className="text-chrome">{price.text}</span>
-          <span className="text-title text-muted">/month</span>
+          <span className="text-title text-muted">{t('marketing.paywall.perMonth')}</span>
         </p>
         <div className="flex items-center gap-6 rounded-full border border-white/[.10] p-4">
           {CURRENCIES.map((c) => (
@@ -70,13 +69,13 @@ export default function PaywallCard({
           ))}
         </div>
         {price.note && <p className="text-[11px] text-muted/70">{price.note}</p>}
-        <p className="text-body-l text-ink">Every movie and series in the catalog. One monthly price.</p>
+        <p className="text-body-l text-ink">{t('marketing.paywall.tagline')}</p>
 
         <ul className="flex flex-col gap-12 self-start text-left">
           {FEATURES.map((f) => (
             <li key={f} className="flex items-start gap-12 text-caption text-ink">
               <Check size={16} strokeWidth={2} className="mt-2 shrink-0 text-cyan" />
-              <span>{f}</span>
+              <span>{t(`marketing.paywall.${f}`)}</span>
             </li>
           ))}
         </ul>
@@ -84,16 +83,16 @@ export default function PaywallCard({
         {demoMode && (
           <p className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-6 text-micro uppercase text-warn">
             <FlaskConical size={14} strokeWidth={1.75} />
-            Demo mode — no real charge
+            {t('marketing.paywall.demo')}
           </p>
         )}
 
         <div className="flex w-full flex-col gap-12">
           <ButtonPrimary to="/subscribe" className="w-full py-14">
-            Subscribe — $4.99/month
+            {t('marketing.paywall.subscribe')}
           </ButtonPrimary>
           <ButtonGhost to="/login" className="w-full">
-            Sign in
+            {t('marketing.paywall.signIn')}
           </ButtonGhost>
         </div>
       </div>

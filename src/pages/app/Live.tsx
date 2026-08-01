@@ -14,6 +14,7 @@ import { addonEngine } from '@/lib/addons/engine';
 import { getShowcaseStreams } from '@/data/showcase';
 import { useAddons } from '@/lib/store';
 import type { AddonHealth, MetaItem } from '@/lib/types';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 /** Deterministic, honest now-playing: catalog movies rotate with the hour. */
@@ -35,6 +36,7 @@ function signalFor(health?: AddonHealth): 1 | 2 | 3 {
 }
 
 export default function Live() {
+  const { t } = useT();
   const { items, loading, reload } = useCatalogItems();
   const reduceMotion = useReducedMotion();
   const installed = useAddons((s) => s.installed);
@@ -107,20 +109,20 @@ export default function Live() {
     setProbing(null);
     toast(
       h.latencyMs && h.latencyMs > 0
-        ? `${c.name}: ${Math.round(h.latencyMs)}ms`
-        : `${c.name}: healthy`,
+        ? t('app.live.testToastMs', { name: c.name, ms: Math.round(h.latencyMs) })
+        : t('app.live.testToastHealthy', { name: c.name }),
     );
   };
 
   const copyStreamUrl = async (c: MetaItem) => {
     const url = getShowcaseStreams(c.id)[0]?.url;
     if (!url) {
-      toast.error(`No stream URL available for ${c.name}`);
+      toast.error(t('app.live.noStreamUrl', { name: c.name }));
       return;
     }
     try {
       await navigator.clipboard.writeText(url);
-      toast('Stream URL copied to clipboard');
+      toast(t('app.live.urlCopied'));
     } catch {
       toast(url);
     }
@@ -144,15 +146,15 @@ export default function Live() {
         transition={spring.smooth}
         className="flex flex-wrap items-center gap-12"
       >
-        <h1 className="font-display text-display-xl text-ink">Live TV</h1>
+        <h1 className="font-display text-display-xl text-ink">{t('app.live.title')}</h1>
         {channels.length > 0 && (
           <span className="inline-flex items-center gap-8 text-caption text-muted">
             <span className="h-8 w-8 rounded-full bg-cyan animate-live-pulse" />
-            {channels.length} channel{channels.length === 1 ? '' : 's'} broadcasting
+            {t('app.live.broadcasting', { count: channels.length })}
           </span>
         )}
         <span className="ml-auto font-mono text-micro uppercase text-muted" aria-live="polite">
-          checked {secondsAgo}s ago
+          {t('app.live.checkedAgo', { s: secondsAgo })}
         </span>
       </motion.header>
 
@@ -173,25 +175,25 @@ export default function Live() {
         /* S4 — no live sources */
         <EmptyState
           icon={Radio}
-          title="No live sources yet."
-          caption="Live channels come from addons. Install one and this room lights up."
-          action={<ButtonPrimary to="/store">Open Store</ButtonPrimary>}
+          title={t('app.live.emptyTitle')}
+          caption={t('app.live.emptyCaption')}
+          action={<ButtonPrimary to="/store">{t('app.discover.openStore')}</ButtonPrimary>}
         />
       ) : allUnhealthy ? (
         <EmptyState
           icon={Radio}
-          title="Every live addon is unreachable."
-          caption={liveAddons.map((a) => `${a.name}: circuit open`).join(' · ')}
+          title={t('app.live.allDownTitle')}
+          caption={liveAddons.map((a) => t('app.live.circuitOpen', { name: a.name })).join(' · ')}
           action={
             <div className="flex flex-wrap items-center justify-center gap-12">
-              <ButtonNeon to="/app/addons">Open Addon Health</ButtonNeon>
+              <ButtonNeon to="/app/addons">{t('app.live.openHealth')}</ButtonNeon>
               <ButtonPrimary
                 onClick={() => {
                   reload();
                   probe();
                 }}
               >
-                <RefreshCw size={14} strokeWidth={1.75} /> Retry all
+                <RefreshCw size={14} strokeWidth={1.75} /> {t('app.live.retryAll')}
               </ButtonPrimary>
             </div>
           }
@@ -206,7 +208,7 @@ export default function Live() {
               animate={{ opacity: 1, scale: 1 }}
               transition={spring.cinematic}
               className="relative w-full max-w-5xl rounded-2xl p-[1px] overflow-hidden"
-              aria-label={`Featured channel: ${featured.name}`}
+              aria-label={t('app.live.stageAria', { name: featured.name })}
             >
               {/* animated gradient border (6s rotation loop) */}
               <motion.div
@@ -247,12 +249,12 @@ export default function Live() {
                         <h2 className="font-display text-display-l text-ink">{featured.name}</h2>
                         <p className="text-caption text-muted">
                           {featuredSchedule
-                            ? `Now: ${featuredSchedule.now} · Next: ${featuredSchedule.next} · open content broadcast`
+                            ? t('app.live.nowNext', { now: featuredSchedule.now, next: featuredSchedule.next })
                             : featured.description}
                         </p>
                         <div className="flex flex-wrap items-center gap-12">
                           <ButtonPrimary to={`/app/player/channel/${featured.id}`}>
-                            <Play size={16} strokeWidth={1.75} fill="currentColor" /> Watch now
+                            <Play size={16} strokeWidth={1.75} fill="currentColor" /> {t('app.live.watchNow')}
                           </ButtonPrimary>
                           {featuredHealth && (
                             <span className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-6 text-caption text-muted">
@@ -288,7 +290,7 @@ export default function Live() {
                   <button
                     type="button"
                     onClick={() => setFeaturedId(c.id)}
-                    aria-label={`Feature ${c.name} on stage`}
+                    aria-label={t('app.live.featureAria', { name: c.name })}
                     className="focusable relative block aspect-video cursor-pointer overflow-hidden"
                   >
                     <img
@@ -330,7 +332,7 @@ export default function Live() {
                       <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
                         <button
                           type="button"
-                          aria-label={`Options for ${c.name}`}
+                          aria-label={t('app.home.optionsFor', { name: c.name })}
                           aria-expanded={menuFor === c.id}
                           onClick={() => setMenuFor(menuFor === c.id ? null : c.id)}
                           className="focusable cursor-pointer rounded-full p-6 text-muted hover:bg-white/[.06] hover:text-ink"
@@ -354,7 +356,7 @@ export default function Live() {
                                 }}
                                 className="focusable flex cursor-pointer items-center gap-8 rounded-lg px-12 py-8 text-left text-caption font-semibold text-ink hover:bg-white/[.06]"
                               >
-                                <RefreshCw size={14} strokeWidth={1.75} /> Test channel
+                                <RefreshCw size={14} strokeWidth={1.75} /> {t('app.live.testChannel')}
                               </button>
                               <button
                                 type="button"
@@ -364,13 +366,13 @@ export default function Live() {
                                 }}
                                 className="focusable flex cursor-pointer items-center gap-8 rounded-lg px-12 py-8 text-left text-caption font-semibold text-ink hover:bg-white/[.06]"
                               >
-                                <Copy size={14} strokeWidth={1.75} /> Copy stream URL
+                                <Copy size={14} strokeWidth={1.75} /> {t('app.live.copyUrl')}
                               </button>
                               <Link
                                 to="/app/addons"
                                 className="focusable flex items-center gap-8 rounded-lg px-12 py-8 text-caption font-semibold text-ink hover:bg-white/[.06]"
                               >
-                                <Radio size={14} strokeWidth={1.75} /> Manage source addon
+                                <Radio size={14} strokeWidth={1.75} /> {t('app.live.manageSource')}
                               </Link>
                             </motion.div>
                           )}
@@ -378,18 +380,18 @@ export default function Live() {
                       </div>
                     </div>
                     <p className="truncate text-caption text-muted">
-                      {schedule ? `Now: ${schedule.now}` : c.description}
+                      {schedule ? t('app.live.nowPrefix', { name: schedule.now }) : c.description}
                     </p>
                     <div className="mt-auto flex items-center justify-between gap-8 pt-4">
                       <ButtonNeon
                         to={`/app/player/channel/${c.id}`}
                         className="px-16 py-8 transition-transform duration-150 group-hover/ch:-translate-y-1"
                       >
-                        <Play size={14} strokeWidth={1.75} fill="currentColor" /> Watch
+                        <Play size={14} strokeWidth={1.75} fill="currentColor" /> {t('app.live.watch')}
                       </ButtonNeon>
                       <span
                         className="inline-flex items-center gap-4 text-cyan"
-                        title={h?.latencyMs ? `Signal strength · ${Math.round(h.latencyMs)}ms` : 'Signal strength'}
+                        title={h?.latencyMs ? t('app.live.signalMs', { ms: Math.round(h.latencyMs) }) : t('app.live.signal')}
                       >
                         <SignalIcon size={18} strokeWidth={1.75} />
                         <span className="font-mono text-[11px] text-muted">{signal}/3</span>
@@ -402,7 +404,7 @@ export default function Live() {
           </div>
 
           <p className={cn('text-micro uppercase text-muted', 'font-mono')}>
-            Tip: number keys 1–{Math.min(9, channels.length)} jump straight to a channel.
+            {t('app.live.tip', { max: Math.min(9, channels.length) })}
           </p>
         </>
       )}

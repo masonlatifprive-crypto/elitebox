@@ -32,6 +32,7 @@ import {
 import { SHOWCASE_CATALOG } from '@/data/showcase';
 import { toggleTVMode } from '@/lib/tvnav';
 import { toast } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const OPEN_EVENT = 'elitebox:command-palette';
@@ -60,6 +61,7 @@ function Kbd({ children }: { children: React.ReactNode }) {
 }
 
 export default function CommandPalette() {
+  const { t } = useT();
   const navigate = useNavigate();
   const location = useLocation();
   const reduce = useReducedMotion();
@@ -118,52 +120,52 @@ export default function CommandPalette() {
     const go = (to: string) => () => navigate(to);
     const goto: PaletteItem[] = inAppShell
       ? [
-          { id: 'go-home', group: 'Go to', label: 'Home', icon: Home, keywords: 'app', run: go('/app') },
-          { id: 'go-discover', group: 'Go to', label: 'Discover', icon: Compass, run: go('/app/discover') },
-          { id: 'go-movies', group: 'Go to', label: 'Movies', icon: Film, run: go('/app/movies') },
-          { id: 'go-series', group: 'Go to', label: 'Series', icon: MonitorPlay, run: go('/app/series') },
-          { id: 'go-live', group: 'Go to', label: 'Live TV', icon: Radio, keywords: 'channels sports', run: go('/app/live') },
-          { id: 'go-search', group: 'Go to', label: 'Search', icon: Search, run: go('/app/search') },
-          { id: 'go-library', group: 'Go to', label: 'Library', icon: LibraryBig, keywords: 'watchlist favorites history', run: go('/app/library') },
-          { id: 'go-addons', group: 'Go to', label: 'Addons', icon: Puzzle, run: go('/app/addons') },
-          { id: 'go-stats', group: 'Go to', label: 'Stats', icon: BarChart3, run: go('/app/stats') },
-          { id: 'go-settings', group: 'Go to', label: 'Settings', icon: Settings, run: go('/app/settings') },
-          { id: 'go-profiles', group: 'Go to', label: 'Profiles', icon: User, run: go('/app/profiles') },
-          { id: 'go-account', group: 'Go to', label: 'Account', icon: CreditCard, keywords: 'subscription billing', run: go('/app/account') },
+          { id: 'go-home', group: 'Go to', label: t('app.palette.goHome'), icon: Home, keywords: 'app', run: go('/app') },
+          { id: 'go-discover', group: 'Go to', label: t('app.palette.goDiscover'), icon: Compass, run: go('/app/discover') },
+          { id: 'go-movies', group: 'Go to', label: t('app.palette.goMovies'), icon: Film, run: go('/app/movies') },
+          { id: 'go-series', group: 'Go to', label: t('app.palette.goSeries'), icon: MonitorPlay, run: go('/app/series') },
+          { id: 'go-live', group: 'Go to', label: t('app.palette.goLive'), icon: Radio, keywords: 'channels sports', run: go('/app/live') },
+          { id: 'go-search', group: 'Go to', label: t('app.palette.goSearch'), icon: Search, run: go('/app/search') },
+          { id: 'go-library', group: 'Go to', label: t('app.palette.goLibrary'), icon: LibraryBig, keywords: 'watchlist favorites history', run: go('/app/library') },
+          { id: 'go-addons', group: 'Go to', label: t('app.palette.goAddons'), icon: Puzzle, run: go('/app/addons') },
+          { id: 'go-stats', group: 'Go to', label: t('app.palette.goStats'), icon: BarChart3, run: go('/app/stats') },
+          { id: 'go-settings', group: 'Go to', label: t('app.palette.goSettings'), icon: Settings, run: go('/app/settings') },
+          { id: 'go-profiles', group: 'Go to', label: t('app.palette.goProfiles'), icon: User, run: go('/app/profiles') },
+          { id: 'go-account', group: 'Go to', label: t('app.palette.goAccount'), icon: CreditCard, keywords: 'subscription billing', run: go('/app/account') },
         ]
       : [
-          { id: 'go-home', group: 'Go to', label: 'Home', icon: Home, keywords: 'movies shows', run: go('/') },
-          { id: 'go-sports', group: 'Go to', label: 'Live Sports', icon: Radio, run: go('/sports') },
-          { id: 'go-store', group: 'Go to', label: 'Store', icon: Store, keywords: 'addons plans', run: go('/store') },
-          { id: 'go-support', group: 'Go to', label: 'Support', icon: LifeBuoy, keywords: 'help faq', run: go('/support') },
-          { id: 'go-app', group: 'Go to', label: 'Open the app', icon: Play, keywords: 'elitebox player', run: go('/app') },
-          { id: 'go-subscribe', group: 'Go to', label: 'Subscribe', icon: CreditCard, keywords: 'premium 5 month', run: go('/subscribe') },
+          { id: 'go-home', group: 'Go to', label: t('app.palette.goHome'), icon: Home, keywords: 'movies shows', run: go('/') },
+          { id: 'go-sports', group: 'Go to', label: t('app.palette.goSports'), icon: Radio, run: go('/sports') },
+          { id: 'go-store', group: 'Go to', label: t('app.palette.goStore'), icon: Store, keywords: 'addons plans', run: go('/store') },
+          { id: 'go-support', group: 'Go to', label: t('app.palette.goSupport'), icon: LifeBuoy, keywords: 'help faq', run: go('/support') },
+          { id: 'go-app', group: 'Go to', label: t('app.palette.goOpenApp'), icon: Play, keywords: 'elitebox player', run: go('/app') },
+          { id: 'go-subscribe', group: 'Go to', label: t('app.palette.goSubscribe'), icon: CreditCard, keywords: 'premium 5 month', run: go('/subscribe') },
         ];
 
     const catalog: PaletteItem[] = SHOWCASE_CATALOG.map((m) => ({
       id: `cat-${m.id}`,
       group: 'Catalog',
       label: m.name,
-      hint: m.type === 'channel' ? 'Live channel' : m.type === 'series' ? 'Series' : 'Movie',
+      hint: m.type === 'channel' ? t('app.palette.liveChannel') : m.type === 'series' ? t('app.poster.series') : t('app.palette.movie'),
       icon: m.type === 'channel' ? Radio : m.type === 'series' ? MonitorPlay : Clapperboard,
       keywords: `${m.type} ${m.genres.join(' ')}`,
       run: () => navigate(`/app/detail/${m.type}/${m.id}`),
     }));
 
     const actions: PaletteItem[] = [
-      { id: 'act-subscribe', group: 'Actions', label: 'Open Subscribe', hint: '$5 a month', icon: CreditCard, keywords: 'premium pay billing', run: () => navigate('/subscribe') },
+      { id: 'act-subscribe', group: 'Actions', label: t('app.palette.openSubscribe'), hint: t('app.palette.subscribeHint'), icon: CreditCard, keywords: 'premium pay billing', run: () => navigate('/subscribe') },
       {
         id: 'act-tv',
         group: 'Actions',
-        label: 'Toggle TV mode',
+        label: t('app.palette.toggleTv'),
         icon: Tv,
         keywords: '10-foot remote leanback',
         run: () => {
           const on = toggleTVMode();
-          toast(on ? 'TV mode on' : 'TV mode off');
+          toast(on ? t('app.palette.tvOn') : t('app.palette.tvOff'));
         },
       },
-      { id: 'act-addon', group: 'Actions', label: 'Install addon by URL', icon: Puzzle, keywords: 'manifest addon install', run: () => navigate('/app/addons') },
+      { id: 'act-addon', group: 'Actions', label: t('app.palette.installAddon'), icon: Puzzle, keywords: 'manifest addon install', run: () => navigate('/app/addons') },
     ];
 
     const q = query.trim().toLowerCase();
@@ -173,7 +175,7 @@ export default function CommandPalette() {
     const match = (i: PaletteItem) =>
       i.label.toLowerCase().includes(q) || (i.keywords ?? '').toLowerCase().includes(q);
     return [...goto.filter(match), ...catalog.filter(match).slice(0, 6), ...actions.filter(match)];
-  }, [query, inAppShell, navigate]);
+  }, [query, inAppShell, navigate, t]);
 
   /* keep selection in range as the list changes */
   useEffect(() => {
@@ -220,11 +222,15 @@ export default function CommandPalette() {
 
   /* group boundaries for section labels */
   const groups = useMemo(() => {
-    const order: Array<PaletteItem['group']> = ['Go to', 'Catalog', 'Actions'];
+    const order: Array<{ group: PaletteItem['group']; name: string }> = [
+      { group: 'Go to', name: t('app.palette.groupGoTo') },
+      { group: 'Catalog', name: t('app.palette.groupCatalog') },
+      { group: 'Actions', name: t('app.palette.groupActions') },
+    ];
     return order
-      .map((g) => ({ name: g, start: items.findIndex((i) => i.group === g) }))
+      .map((g) => ({ name: g.name, start: items.findIndex((i) => i.group === g.group) }))
       .filter((g) => g.start !== -1);
-  }, [items]);
+  }, [items, t]);
 
   return (
     <AnimatePresence>
@@ -245,7 +251,7 @@ export default function CommandPalette() {
             ref={panelRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Command palette"
+            aria-label={t('app.palette.title')}
             data-modal-open
             className="glass-solid relative z-10 flex w-full max-w-[560px] flex-col overflow-hidden rounded-2xl shadow-panel"
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
@@ -263,8 +269,8 @@ export default function CommandPalette() {
                   setQuery(e.target.value);
                   setActive(0);
                 }}
-                placeholder="Search pages, titles, actions"
-                aria-label="Search pages, titles, and actions"
+                placeholder={t('app.palette.placeholder')}
+                aria-label={t('app.palette.inputAria')}
                 className="w-full bg-transparent text-body text-ink caret-cyan placeholder:text-muted/60 focus:outline-none"
               />
               <span className="hidden shrink-0 items-center gap-4 sm:flex">
@@ -273,10 +279,10 @@ export default function CommandPalette() {
             </div>
 
             {/* results */}
-            <ul role="listbox" aria-label="Commands" className="max-h-[46dvh] overflow-y-auto py-8">
+            <ul role="listbox" aria-label={t('app.palette.resultsAria')} className="max-h-[46dvh] overflow-y-auto py-8">
               {items.length === 0 && (
                 <li className="px-16 py-24 text-center text-caption text-muted">
-                  Nothing matches “{query}”.
+                  {t('app.palette.noMatch', { query })}
                 </li>
               )}
               {items.map((item, i) => {
@@ -319,13 +325,13 @@ export default function CommandPalette() {
             {/* footer hints */}
             <div className="flex items-center gap-12 border-t border-white/[.08] px-16 py-8 text-muted">
               <span className="flex items-center gap-4 text-[11px]">
-                <Kbd>↑↓</Kbd> Move
+                <Kbd>↑↓</Kbd> {t('app.palette.hintMove')}
               </span>
               <span className="flex items-center gap-4 text-[11px]">
-                <Kbd>Enter</Kbd> Open
+                <Kbd>Enter</Kbd> {t('app.palette.hintOpen')}
               </span>
               <span className="ml-auto flex items-center gap-4 text-[11px]">
-                <Kbd>Ctrl K</Kbd> Close
+                <Kbd>Ctrl K</Kbd> {t('app.palette.hintClose')}
               </span>
             </div>
           </motion.div>

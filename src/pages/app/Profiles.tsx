@@ -24,6 +24,8 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
+import type { TFunction } from '@/i18n';
 import { scopedKey, switchProfile, useProfiles } from '@/lib/store';
 import type { Profile } from '@/lib/store';
 import { LogoMark } from '@/components/Logo';
@@ -66,18 +68,19 @@ function profileStats(id: string): { library: number; inProgress: number } {
   }
 }
 
-function statsLine(id: string): string {
+function statsLine(id: string, t: TFunction): string {
   const { library, inProgress } = profileStats(id);
-  if (library === 0 && inProgress === 0) return 'Nothing watched yet — press play on something great.';
+  if (library === 0 && inProgress === 0) return t('app.profiles.statsEmpty');
   const parts: string[] = [];
-  if (library > 0) parts.push(`${library} in library`);
-  if (inProgress > 0) parts.push(`${inProgress} in progress`);
+  if (library > 0) parts.push(t('app.profiles.statsLibrary', { n: library }));
+  if (inProgress > 0) parts.push(t('app.profiles.statsInProgress', { n: inProgress }));
   return parts.join(' · ');
 }
 
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function Profiles() {
+  const { t } = useT();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const profiles = useProfiles((s) => s.profiles);
@@ -142,7 +145,7 @@ export default function Profiles() {
   const resetPin = () => {
     if (!pinTarget) return;
     useProfiles.getState().updateProfile(pinTarget.id, { pin: undefined });
-    toast(`PIN reset — “${pinTarget.name}” is unlocked.`);
+    toast(t('app.profiles.toastPinReset', { name: pinTarget.name }));
     setPinTarget(null);
     setPinRecovery(false);
     setPinStatus('idle');
@@ -153,7 +156,7 @@ export default function Profiles() {
     const name = renameValue.trim().slice(0, 20);
     if (name) {
       useProfiles.getState().updateProfile(renamingId, { name });
-      toast('Profile renamed.');
+      toast(t('app.profiles.toastRenamed'));
     }
     setRenamingId(null);
   };
@@ -164,7 +167,7 @@ export default function Profiles() {
     const wasActive = deleteFor.id === activeProfileId;
     useProfiles.getState().removeProfile(deleteFor.id);
     if (wasActive) switchProfile(null);
-    toast(`Profile “${deleteFor.name}” deleted.`);
+    toast(t('app.profiles.toastDeleted', { name: deleteFor.name }));
     setDeleteFor(null);
     setDeleteConfirm('');
   };
@@ -193,7 +196,7 @@ export default function Profiles() {
         animate: { opacity: 1, scale: 1, transition: spring.snappy },
       };
 
-  const titleWords = "Who's watching?".split(' ');
+  const titleWords = t('app.profiles.whosWatching').split(' ');
 
   return (
     <div className="relative min-h-[70dvh] py-24">
@@ -207,7 +210,7 @@ export default function Profiles() {
             <LogoMark height={44} glow />
 
             <h1
-              aria-label="Who's watching?"
+              aria-label={t('app.profiles.whosWatching')}
               className="text-chrome font-display text-display-l md:text-display-xl"
             >
               {titleWords.map((w, i) => (
@@ -241,7 +244,7 @@ export default function Profiles() {
                     if (p.pin && /^[0-9]$/.test(e.key)) pick(p);
                   }}
                   className="focusable group flex w-104 cursor-pointer flex-col items-center gap-12 rounded-xl p-8 xl:w-128"
-                  aria-label={p.pin ? `${p.name} (PIN locked)` : p.name}
+                  aria-label={p.pin ? t('app.profiles.tileLockedAria', { name: p.name }) : p.name}
                 >
                   <motion.span
                     whileHover={{ scale: 1.08 }}
@@ -273,7 +276,7 @@ export default function Profiles() {
                   type="button"
                   onClick={() => setAddOpen(true)}
                   className="focusable group flex w-104 cursor-pointer flex-col items-center gap-12 rounded-xl p-8 xl:w-128"
-                  aria-label="Add profile"
+                  aria-label={t('app.profiles.addProfile')}
                 >
                   <motion.span
                     whileHover={{ scale: 1.08 }}
@@ -284,40 +287,40 @@ export default function Profiles() {
                     <Plus size={28} strokeWidth={1.75} />
                   </motion.span>
                   <span className="text-caption text-muted transition-colors duration-150 group-hover:text-ink">
-                    Add profile
+                    {t('app.profiles.addProfile')}
                   </span>
                 </motion.button>
               )}
             </motion.div>
 
             <p className="max-w-[52ch] px-16 text-micro uppercase text-muted">
-              Libraries, progress and settings stay separate per profile.
+              {t('app.profiles.gateNote')}
             </p>
 
             <ButtonGhost onClick={() => setMode('manage')}>
               <SlidersHorizontal size={16} strokeWidth={1.75} />
-              Manage profiles
+              {t('app.profiles.manageProfiles')}
             </ButtonGhost>
           </motion.section>
         ) : (
           <motion.section key="manage" {...viewMotion} className="mx-auto flex max-w-2xl flex-col gap-24">
             <div className="flex flex-wrap items-center justify-between gap-16">
               <div className="flex flex-col gap-4">
-                <h1 className="font-display text-display-l text-ink md:text-display-xl">Profiles</h1>
+                <h1 className="font-display text-display-l text-ink md:text-display-xl">{t('app.profiles.title')}</h1>
                 <p className="text-caption text-muted">
                   {profiles.length <= 1
-                    ? 'One universe so far. Add profiles for family, moods or marathons.'
-                    : `${profiles.length} of ${MAX_PROFILES} profiles in use.`}
+                    ? t('app.profiles.oneProfile')
+                    : t('app.profiles.countProfiles', { count: profiles.length, max: MAX_PROFILES })}
                 </p>
               </div>
               <div className="flex items-center gap-12">
-                <ButtonGhost onClick={() => setMode('gate')}>Back to gate</ButtonGhost>
+                <ButtonGhost onClick={() => setMode('gate')}>{t('app.profiles.backToGate')}</ButtonGhost>
                 <SilverButton
                   onClick={() => setAddOpen(true)}
                   disabled={profiles.length >= MAX_PROFILES}
                 >
                   <Plus size={16} strokeWidth={2} />
-                  New profile
+                  {t('app.profiles.newProfile')}
                 </SilverButton>
               </div>
             </div>
@@ -325,9 +328,9 @@ export default function Profiles() {
             {profiles.length === 0 ? (
               <EmptyState
                 icon={UserRound}
-                title="No profiles yet"
-                caption="Create one to start your own library, progress and settings universe."
-                action={<SilverButton onClick={() => setAddOpen(true)}>New profile</SilverButton>}
+                title={t('app.profiles.emptyTitle')}
+                caption={t('app.profiles.emptyCaption')}
+                action={<SilverButton onClick={() => setAddOpen(true)}>{t('app.profiles.newProfile')}</SilverButton>}
                 className="py-48"
               />
             ) : (
@@ -366,19 +369,19 @@ export default function Profiles() {
                               onChange={(e) => setRenameValue(e.target.value.slice(0, 20))}
                               maxLength={20}
                               autoFocus
-                              aria-label="Profile name"
+                              aria-label={t('app.profiles.nameAria')}
                               className="glass-1 w-full max-w-[200px] rounded-md px-12 py-6 text-caption text-ink focus:border-cyan/50 focus:outline-none"
                             />
                             <button
                               type="submit"
-                              aria-label="Save name"
+                              aria-label={t('app.profiles.saveNameAria')}
                               className="focusable cursor-pointer rounded-full p-6 text-cyan hover:bg-white/[.06]"
                             >
                               <Check size={16} strokeWidth={2} />
                             </button>
                             <button
                               type="button"
-                              aria-label="Cancel rename"
+                              aria-label={t('app.profiles.cancelRenameAria')}
                               onClick={() => setRenamingId(null)}
                               className="focusable cursor-pointer rounded-full p-6 text-muted hover:text-ink hover:bg-white/[.06]"
                             >
@@ -390,26 +393,26 @@ export default function Profiles() {
                             <p className="truncate font-display text-title text-ink">{p.name}</p>
                             {p.id === activeProfileId && (
                               <span className="glass-1 rounded-md px-8 py-2 text-micro uppercase text-cyan">
-                                Active
+                                {t('app.profiles.active')}
                               </span>
                             )}
                             {p.pin && (
                               <span className="glass-1 inline-flex items-center gap-4 rounded-md px-8 py-2 text-micro uppercase text-muted">
-                                <Lock size={10} strokeWidth={2} /> Locked
+                                <Lock size={10} strokeWidth={2} /> {t('app.profiles.locked')}
                               </span>
                             )}
                           </div>
                         )}
-                        <p className="text-caption text-muted">{statsLine(p.id)}</p>
+                        <p className="text-caption text-muted">{statsLine(p.id, t)}</p>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-8">
                         <ButtonNeon onClick={() => pick(p)} className="px-16 py-8">
-                          Switch
+                          {t('app.profiles.switch')}
                         </ButtonNeon>
                         <button
                           type="button"
-                          aria-label={`Rename ${p.name}`}
+                          aria-label={t('app.profiles.renameAria', { name: p.name })}
                           onClick={() => {
                             setRenamingId(p.id);
                             setRenameValue(p.name);
@@ -420,7 +423,7 @@ export default function Profiles() {
                         </button>
                         <button
                           type="button"
-                          aria-label={`Change avatar for ${p.name}`}
+                          aria-label={t('app.profiles.avatarAria', { name: p.name })}
                           onClick={() => setAvatarFor(p)}
                           className="focusable cursor-pointer rounded-full p-8 text-muted hover:text-ink hover:bg-white/[.06]"
                         >
@@ -428,7 +431,7 @@ export default function Profiles() {
                         </button>
                         <button
                           type="button"
-                          aria-label={p.pin ? `Change or remove PIN for ${p.name}` : `Set a PIN for ${p.name}`}
+                          aria-label={p.pin ? t('app.profiles.changePinAria', { name: p.name }) : t('app.profiles.setPinAria', { name: p.name })}
                           onClick={() => {
                             setPinFor(p);
                             setPinSetStatus('idle');
@@ -440,7 +443,7 @@ export default function Profiles() {
                         {profiles.length > 1 && (
                           <button
                             type="button"
-                            aria-label={`Delete ${p.name}`}
+                            aria-label={t('app.profiles.deleteAria', { name: p.name })}
                             onClick={() => {
                               setDeleteFor(p);
                               setDeleteConfirm('');
@@ -458,7 +461,7 @@ export default function Profiles() {
             )}
 
             <p className="text-center text-micro uppercase text-muted">
-              Each profile has its own library, continue watching and settings.
+              {t('app.profiles.manageNote')}
             </p>
           </motion.section>
         )}
@@ -472,7 +475,7 @@ export default function Profiles() {
           setPinRecovery(false);
           setPinStatus('idle');
         }}
-        title={pinRecovery ? 'Reset PIN' : pinTarget ? `Enter PIN for ${pinTarget.name}` : undefined}
+        title={pinRecovery ? t('app.profiles.resetPin') : pinTarget ? t('app.profiles.enterPin', { name: pinTarget.name }) : undefined}
         className="max-w-sm"
       >
         {pinTarget && !pinRecovery && (
@@ -491,30 +494,28 @@ export default function Profiles() {
             />
             <PinEntry status={pinStatus} onComplete={verifyPin} />
             <p className="text-center text-micro uppercase text-muted">
-              Stored on this device only, with a simple hash — keeps curious eyes out, not
-              determined attackers.
+              {t('app.profiles.pinStoredNote')}
             </p>
-            <ButtonGhost onClick={() => setPinRecovery(true)}>Forgot PIN?</ButtonGhost>
+            <ButtonGhost onClick={() => setPinRecovery(true)}>{t('app.profiles.forgotPin')}</ButtonGhost>
           </div>
         )}
         {pinTarget && pinRecovery && (
           <div className="flex flex-col items-center gap-16 text-center">
             <p className="text-caption text-muted">
-              Reset clears this profile's PIN only. Library, progress and settings for “
-              {pinTarget.name}” stay exactly as they are.
+              {t('app.profiles.resetPinBody', { name: pinTarget.name })}
             </p>
             <div className="flex items-center gap-12">
-              <ButtonGhost onClick={() => setPinRecovery(false)}>Back</ButtonGhost>
-              <ButtonDanger onClick={resetPin}>Reset PIN</ButtonDanger>
+              <ButtonGhost onClick={() => setPinRecovery(false)}>{t('app.profiles.back')}</ButtonGhost>
+              <ButtonDanger onClick={resetPin}>{t('app.profiles.resetPin')}</ButtonDanger>
             </div>
           </div>
         )}
       </Modal>
 
       {/* ── add profile modal ── */}
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="New profile" className="max-w-lg">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title={t('app.profiles.newProfile')} className="max-w-lg">
         <ProfileForm
-          submitLabel="Create profile"
+          submitLabel={t('app.profiles.createProfile')}
           autoFocus={false}
           onSubmit={(pending) => {
             useProfiles.getState().addProfile({
@@ -523,7 +524,7 @@ export default function Profiles() {
               avatar: pending.avatar,
               pin: pending.pin,
             });
-            toast(`Profile “${pending.name}” created.`);
+            toast(t('app.profiles.toastCreated', { name: pending.name }));
             setAddOpen(false);
           }}
         />
@@ -533,7 +534,7 @@ export default function Profiles() {
       <Modal
         open={avatarFor !== null}
         onClose={() => setAvatarFor(null)}
-        title={avatarFor ? `Avatar for ${avatarFor.name}` : undefined}
+        title={avatarFor ? t('app.profiles.avatarFor', { name: avatarFor.name }) : undefined}
         className="max-w-md"
       >
         {avatarFor && (
@@ -541,7 +542,7 @@ export default function Profiles() {
             value={avatarFor.avatar}
             onChange={(avatar) => {
               useProfiles.getState().updateProfile(avatarFor.id, { avatar });
-              toast('Avatar updated.');
+              toast(t('app.profiles.toastAvatar'));
               setAvatarFor(null);
             }}
           />
@@ -552,22 +553,22 @@ export default function Profiles() {
       <Modal
         open={pinFor !== null}
         onClose={() => setPinFor(null)}
-        title={pinFor?.pin ? 'Change PIN' : 'Set a PIN'}
+        title={pinFor?.pin ? t('app.profiles.changePin') : t('app.profiles.setPin')}
         className="max-w-sm"
       >
         {pinFor && (
           <div className="flex flex-col items-center gap-24">
             <p className="text-center text-caption text-muted">
               {pinFor.pin
-                ? `Enter a new 4-digit PIN for “${pinFor.name}”.`
-                : `Choose a 4-digit PIN for “${pinFor.name}”.`}
+                ? t('app.profiles.enterNewPin', { name: pinFor.name })
+                : t('app.profiles.choosePin', { name: pinFor.name })}
             </p>
             <PinEntry
               status={pinSetStatus}
               onComplete={(pin) => {
                 useProfiles.getState().updateProfile(pinFor.id, { pin: hashPin(pin) });
                 setPinSetStatus('ok');
-                toast('PIN saved.');
+                toast(t('app.profiles.toastPinSaved'));
                 window.setTimeout(() => setPinFor(null), 350);
               }}
             />
@@ -575,11 +576,11 @@ export default function Profiles() {
               <ButtonDanger
                 onClick={() => {
                   useProfiles.getState().updateProfile(pinFor.id, { pin: undefined });
-                  toast('PIN removed.');
+                  toast(t('app.profiles.toastPinRemoved'));
                   setPinFor(null);
                 }}
               >
-                Remove PIN
+                {t('app.profiles.removePin')}
               </ButtonDanger>
             )}
           </div>
@@ -590,7 +591,7 @@ export default function Profiles() {
       <Modal
         open={deleteFor !== null}
         onClose={() => setDeleteFor(null)}
-        title={deleteFor ? `Delete "${deleteFor.name}"?` : undefined}
+        title={deleteFor ? t('app.profiles.deleteTitle', { name: deleteFor.name }) : undefined}
         className="max-w-md"
       >
         {deleteFor && (
@@ -602,12 +603,11 @@ export default function Profiles() {
             }}
           >
             <p className="text-caption text-muted">
-              Library, progress and stats for this profile are removed permanently. This cannot be
-              undone.
+              {t('app.profiles.deleteBody')}
             </p>
             <div>
               <label htmlFor="delete-confirm" className="mb-8 block text-micro uppercase text-muted">
-                Type {deleteFor.name} to confirm
+                {t('app.profiles.deleteConfirmLabel', { name: deleteFor.name })}
               </label>
               <input
                 id="delete-confirm"
@@ -618,12 +618,12 @@ export default function Profiles() {
               />
             </div>
             <div className="flex items-center justify-end gap-12">
-              <ButtonGhost onClick={() => setDeleteFor(null)}>Cancel</ButtonGhost>
+              <ButtonGhost onClick={() => setDeleteFor(null)}>{t('app.profiles.cancel')}</ButtonGhost>
               <ButtonDanger
                 onClick={confirmDelete}
                 className={deleteConfirm.trim() !== deleteFor.name ? 'pointer-events-none opacity-50' : undefined}
               >
-                Delete
+                {t('app.profiles.delete')}
               </ButtonDanger>
             </div>
           </form>

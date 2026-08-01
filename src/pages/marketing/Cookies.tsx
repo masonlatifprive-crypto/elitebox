@@ -3,18 +3,20 @@
  * the only storage it uses is on-device app data, listed plainly.
  */
 import { LegalDoc } from './LegalDoc';
+import { useT } from '@/i18n';
 
 export default function Cookies() {
+  const { t } = useT();
   return (
     <LegalDoc
-      eyebrow="Legal"
-      title="Cookie & Storage Notice"
+      eyebrow={t('marketing.legal.eyebrow')}
+      title={t('marketing.legal.cookies.title')}
       updated="August 1, 2026"
-      intro="Short version: Elitebox sets no advertising cookies, no analytics cookies and no tracking pixels — nothing. The only things stored on your device are the app's own data, which you control."
+      intro={t('marketing.legal.cookies.intro')}
       sections={[
         {
           id: 'what-we-store',
-          title: '1. What Elitebox stores on your device',
+          title: t('marketing.legal.cookies.s1'),
           body: (
             <>
               <p>
@@ -32,7 +34,7 @@ export default function Cookies() {
         },
         {
           id: 'what-we-dont',
-          title: '2. What we never store or set',
+          title: t('marketing.legal.cookies.s2'),
           body: (
             <p>
               No advertising cookies. No analytics beacons. No session recording. No fingerprinting.
@@ -43,7 +45,7 @@ export default function Cookies() {
         },
         {
           id: 'third-parties',
-          title: '3. Third-party requests',
+          title: t('marketing.legal.cookies.s3'),
           body: (
             <p>
               Addons you install contact their own servers directly from your device, and streaming
@@ -54,7 +56,7 @@ export default function Cookies() {
         },
         {
           id: 'control',
-          title: '4. Your controls',
+          title: t('marketing.legal.cookies.s4'),
           body: (
             <p>
               Settings → Data lets you export everything, import it elsewhere, or wipe it

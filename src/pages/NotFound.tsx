@@ -10,10 +10,12 @@ import { motion, useReducedMotion } from 'framer-motion';
 import AmbienceCanvas from '@/components/AmbienceCanvas';
 import { LogoMark } from '@/components/Logo';
 import { ButtonGhost, ButtonNeon, ButtonPrimary, spring } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 
 const OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function NotFound() {
+  const { t } = useT();
   const navigate = useNavigate();
   const location = useLocation();
   const reduceMotion = useReducedMotion();
@@ -59,7 +61,7 @@ export default function NotFound() {
           >
             <img
               src="/art/poster-cosmos-laundromat.jpg"
-              alt="A poster that drifted out of orbit"
+              alt={t('marketing.notFound.posterAlt')}
               className="aspect-[2/3] w-full object-cover"
             />
           </div>
@@ -116,7 +118,7 @@ export default function NotFound() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.45, ease: OUT_EXPO }}
         >
-          This page drifted out of orbit.
+          {t('marketing.notFound.title')}
         </motion.h1>
         <motion.p
           className="max-w-md text-caption text-muted"
@@ -124,8 +126,7 @@ export default function NotFound() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.45, ease: OUT_EXPO }}
         >
-          The route you asked for doesn't exist in this universe. It may have moved, or never
-          existed at all.
+          {t('marketing.notFound.copy')}
         </motion.p>
 
         {/* actions */}
@@ -140,7 +141,7 @@ export default function NotFound() {
             variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: spring.snappy } }}
           >
             <ButtonPrimary onClick={goBack} className="max-sm:w-full">
-              Back to safety
+              {t('marketing.notFound.back')}
             </ButtonPrimary>
           </motion.span>
           <motion.span
@@ -148,7 +149,7 @@ export default function NotFound() {
             variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: spring.snappy } }}
           >
             <ButtonNeon to="/app/discover" className="max-sm:w-full">
-              Open Discover
+              {t('marketing.notFound.discover')}
             </ButtonNeon>
           </motion.span>
           <motion.span
@@ -156,7 +157,7 @@ export default function NotFound() {
             variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: spring.snappy } }}
           >
             <ButtonGhost to="/" className="max-sm:w-full">
-              Go to homepage
+              {t('marketing.notFound.home')}
             </ButtonGhost>
           </motion.span>
         </motion.nav>

@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { Eyebrow } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 
 export interface LegalSection {
   id: string;
@@ -26,6 +27,7 @@ export function LegalDoc({
   intro: string;
   sections: LegalSection[];
 }) {
+  const { t } = useT();
   return (
     <div className="relative z-10 mx-auto flex w-full max-w-[880px] flex-col gap-40 px-16 pb-128 pt-160 md:px-24">
       <motion.header
@@ -36,11 +38,11 @@ export function LegalDoc({
       >
         <Eyebrow>{eyebrow}</Eyebrow>
         <h1 className="font-display text-display-xl text-ink">{title}</h1>
-        <p className="text-caption text-muted">Last updated: {updated}</p>
+        <p className="text-caption text-muted">{t('marketing.legal.lastUpdated', { date: updated })}</p>
         <p className="max-w-[64ch] text-body text-muted">{intro}</p>
       </motion.header>
 
-      <nav aria-label="On this page" className="glass-2 flex flex-wrap gap-8 rounded-xl p-16">
+      <nav aria-label={t('marketing.legal.onThisPage')} className="glass-2 flex flex-wrap gap-8 rounded-xl p-16">
         {sections.map((s) => (
           <a
             key={s.id}

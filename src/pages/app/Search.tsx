@@ -10,10 +10,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Clock3, Play, Search as SearchIcon, SearchX, X } from 'lucide-react';
 import PosterCard from '@/components/PosterCard';
 import { ButtonGhost, EmptyState, spring, toast } from '@/components/ui-elite';
+import { MagnetPasteField, presentMagnetUri } from '@/components/MagnetDrop';
 import { FilterChip, sourceForItem, useCatalogItems } from '@/pages/app/Discover';
 import { addonEngine } from '@/lib/addons/engine';
-import { scopedKey, useAddons, useLibrary } from '@/lib/store';
+import { isMagnetUri } from '@/lib/magnet';
+import { scopedKey, useAddons, useLibrary, useSettings } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const MAX_RECENTS = 8;
@@ -43,10 +46,11 @@ function writeRecents(list: string[]): void {
 /* ── idle: jump back in card ───────────────────────────────────────────── */
 
 function JumpBackInCard({ item, progress }: { item: MetaItem; progress?: number }) {
+  const { t } = useT();
   return (
     <Link
       to={`/app/player/${item.type}/${item.id}`}
-      aria-label={`Resume ${item.name}`}
+      aria-label={t('app.library.resumeShortAria', { name: item.name })}
       className="focusable group/jb relative block w-[240px] shrink-0 snap-start overflow-hidden rounded-lg ring-1 ring-white/[.08] bg-navy hover:shadow-focus-glow focus-visible:shadow-focus-glow"
     >
       <img
@@ -73,11 +77,13 @@ function JumpBackInCard({ item, progress }: { item: MetaItem; progress?: number 
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function Search() {
+  const { t } = useT();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const { items } = useCatalogItems();
   const installed = useAddons((s) => s.installed);
   const continueWatching = useLibrary((s) => s.continueWatching);
+  const torrentEnabled = useSettings((s) => s.settings.streaming.torrentProfile !== 'off');
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -138,6 +144,16 @@ export default function Search() {
       setSearching(false);
       return;
     }
+    // A pasted magnet URI never becomes a catalog search: route it to the
+    // shared magnet result sheet instead (valid → details, invalid → honest
+    // error). Torrent profile "off" → treated as plain text, untouched path.
+    if (torrentEnabled && isMagnetUri(debounced)) {
+      setResults([]);
+      setSearched(false);
+      setSearching(false);
+      presentMagnetUri(debounced);
+      return;
+    }
     let alive = true;
     setSearching(true);
     addonEngine
@@ -158,7 +174,7 @@ export default function Search() {
     return () => {
       alive = false;
     };
-  }, [debounced]);
+  }, [debounced, torrentEnabled]);
 
   const recordRecent = useCallback((q: string) => {
     const trimmed = q.trim();
@@ -173,7 +189,7 @@ export default function Search() {
   const clearRecents = () => {
     setRecents([]);
     writeRecents([]);
-    toast('Recent searches cleared');
+    toast(t('app.search.toastRecentsCleared'));
   };
 
   // Results grouped by source addon.
@@ -224,7 +240,7 @@ export default function Search() {
         transition={spring.smooth}
         className="mx-auto flex w-full max-w-2xl flex-col gap-16 pt-48"
       >
-        <h1 className="text-center font-display text-display-xl text-ink">Search everything.</h1>
+        <h1 className="text-center font-display text-display-xl text-ink">{t('app.search.headline')}</h1>
 
         <div className="relative">
           {/* breathing glow under the input */}
@@ -244,8 +260,8 @@ export default function Search() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') openFirst();
               }}
-              placeholder="Titles, genres, channels…"
-              aria-label="Search the catalog"
+              placeholder={t('app.search.placeholder')}
+              aria-label={t('app.search.inputAria')}
               autoComplete="off"
               spellCheck={false}
               className="w-full bg-transparent text-body-l text-ink caret-[#7CD9EC] outline-none placeholder:text-muted"
@@ -253,7 +269,7 @@ export default function Search() {
             {query && (
               <button
                 type="button"
-                aria-label="Clear search"
+                aria-label={t('app.search.clearAria')}
                 onClick={() => {
                   setQuery('');
                   inputRef.current?.focus();
@@ -273,7 +289,7 @@ export default function Search() {
         </div>
 
         <p className="text-center font-mono text-micro uppercase text-muted" aria-live="polite">
-          Searching {searchAddons.map((a) => a.name).join(' · ') || 'no catalog addons'}
+          {t('app.search.searchingSources', { sources: searchAddons.map((a) => a.name).join(' · ') || t('app.search.noCatalogAddons') })}
         </p>
 
         {/* genre quick chips */}
@@ -294,8 +310,8 @@ export default function Search() {
           {recents.length > 0 && (
             <section className="flex flex-col gap-12">
               <div className="flex items-baseline justify-between gap-16">
-                <h2 className="font-display text-title text-ink">Recent searches</h2>
-                <ButtonGhost onClick={clearRecents}>Clear</ButtonGhost>
+                <h2 className="font-display text-title text-ink">{t('app.search.recents')}</h2>
+                <ButtonGhost onClick={clearRecents}>{t('app.search.clear')}</ButtonGhost>
               </div>
               <div className="flex flex-wrap gap-8">
                 <AnimatePresence mode="popLayout">
@@ -320,7 +336,7 @@ export default function Search() {
 
           {jumpBackIn.length > 0 && (
             <section className="flex flex-col gap-12">
-              <h2 className="font-display text-title text-ink">Jump back in</h2>
+              <h2 className="font-display text-title text-ink">{t('app.search.jumpBackIn')}</h2>
               <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
                 {jumpBackIn.map(({ entry, item }, i) => (
                   <motion.div
@@ -342,11 +358,18 @@ export default function Search() {
           )}
 
           <section className="flex flex-wrap items-center gap-12">
-            <span className="text-caption text-muted">Browse instead:</span>
-            <ButtonGhost to="/app/movies" className="glass-1">Movies</ButtonGhost>
-            <ButtonGhost to="/app/series" className="glass-1">Series</ButtonGhost>
-            <ButtonGhost to="/app/live" className="glass-1">Live</ButtonGhost>
+            <span className="text-caption text-muted">{t('app.search.browseInstead')}</span>
+            <ButtonGhost to="/app/movies" className="glass-1">{t('app.rail.movies')}</ButtonGhost>
+            <ButtonGhost to="/app/series" className="glass-1">{t('app.rail.series')}</ButtonGhost>
+            <ButtonGhost to="/app/live" className="glass-1">{t('app.discover.tabLive')}</ButtonGhost>
           </section>
+
+          {torrentEnabled && (
+            <section className="mx-auto flex w-full max-w-xl flex-col gap-8">
+              <h2 className="text-center font-display text-title text-ink">{t('app.search.haveMagnet')}</h2>
+              <MagnetPasteField />
+            </section>
+          )}
         </div>
       )}
 
@@ -376,7 +399,7 @@ export default function Search() {
                       }}
                     />
                   )}
-                  <h2 className="font-display text-title text-ink">{addon?.name ?? 'Results'}</h2>
+                  <h2 className="font-display text-title text-ink">{addon?.name ?? t('app.search.resultsFallback')}</h2>
                   <span className="glass-1 rounded-full px-10 py-2 text-micro uppercase text-cyan">{metas.length}</span>
                 </motion.div>
                 <div className="grid grid-cols-3 gap-20 sm:grid-cols-4 lg:grid-cols-6">
@@ -427,12 +450,12 @@ export default function Search() {
       {!idle && searched && results.length === 0 && !searching && (
         <EmptyState
           icon={SearchX}
-          title={`Nothing found for “${debounced}”.`}
-          caption="No installed addon has a match. Try a shorter query or one of these real titles."
+          title={t('app.search.nothingFound', { query: debounced })}
+          caption={t('app.search.nothingFoundCaption')}
           action={
             suggestions.length > 0 ? (
               <div className="flex flex-wrap items-center justify-center gap-8">
-                <span className="text-caption text-muted">Did you mean:</span>
+                <span className="text-caption text-muted">{t('app.search.didYouMean')}</span>
                 {suggestions.map((s) => (
                   <FilterChip key={s} active={false} onClick={() => setQuery(s)}>
                     {s}
@@ -440,7 +463,7 @@ export default function Search() {
                 ))}
               </div>
             ) : (
-              <ButtonGhost onClick={() => setQuery('')}>Clear search</ButtonGhost>
+              <ButtonGhost onClick={() => setQuery('')}>{t('app.search.clearSearch')}</ButtonGhost>
             )
           }
         />
@@ -448,7 +471,7 @@ export default function Search() {
 
       {/* still searching placeholder */}
       {!idle && searching && results.length === 0 && (
-        <p className={cn('py-32 text-center text-caption text-muted')}>Searching your addons…</p>
+        <p className={cn('py-32 text-center text-caption text-muted')}>{t('app.search.searchingYourAddons')}</p>
       )}
     </div>
   );

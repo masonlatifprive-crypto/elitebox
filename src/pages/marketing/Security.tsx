@@ -3,18 +3,20 @@
  * addon sandboxing, disclosure.
  */
 import { LegalDoc } from './LegalDoc';
+import { useT } from '@/i18n';
 
 export default function Security() {
+  const { t } = useT();
   return (
     <LegalDoc
-      eyebrow="Legal"
-      title="Security at Elitebox"
+      eyebrow={t('marketing.legal.eyebrow')}
+      title={t('marketing.legal.security.title')}
       updated="July 31, 2026"
-      intro="Security decisions you can verify: what Elitebox does to protect your device, your account and your payment — and where the boundaries honestly are."
+      intro={t('marketing.legal.security.intro')}
       sections={[
         {
           id: 'secrets',
-          title: '1. Secrets and keys',
+          title: t('marketing.legal.security.s1'),
           body: (
             <>
               <p>
@@ -32,7 +34,7 @@ export default function Security() {
         },
         {
           id: 'addon-safety',
-          title: '2. Addon safety model',
+          title: t('marketing.legal.security.s2'),
           body: (
             <>
               <p>
@@ -52,7 +54,7 @@ export default function Security() {
         },
         {
           id: 'local-data',
-          title: '3. Your data on the device',
+          title: t('marketing.legal.security.s3'),
           body: (
             <p>
               Library and history data live in browser storage scoped per profile. PIN-locked
@@ -63,7 +65,7 @@ export default function Security() {
         },
         {
           id: 'transport',
-          title: '4. Transport and content',
+          title: t('marketing.legal.security.s4'),
           body: (
             <p>
               The app is served over HTTPS. Showcase media streams from the official Blender
@@ -74,7 +76,7 @@ export default function Security() {
         },
         {
           id: 'disclosure',
-          title: '5. Reporting a vulnerability',
+          title: t('marketing.legal.security.s5'),
           body: (
             <p>
               Found something? Report it through the Support page with &quot;security&quot; in

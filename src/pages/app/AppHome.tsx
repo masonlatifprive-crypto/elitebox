@@ -27,6 +27,7 @@ import { COLLECTIONS, useCatalogItems } from '@/pages/app/Discover';
 import { selectProgress, useLibrary } from '@/lib/store';
 import type { ContinueWatchingEntry } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const EXCLUSIVE_IDS = ['cosmos-laundromat', 'charge', 'wing-it', 'sprite-fright'];
@@ -44,6 +45,7 @@ function metaFor(items: MetaItem[], id: string): MetaItem | undefined {
 /* ── S1 — Hero carousel ────────────────────────────────────────────────── */
 
 function HeroCarousel({ items }: { items: MetaItem[] }) {
+  const { t } = useT();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -108,7 +110,7 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
     <section
       ref={stageRef}
       aria-roledescription="carousel"
-      aria-label="Featured titles"
+      aria-label={t('app.home.featuredAria')}
       tabIndex={0}
       onKeyDown={onKeyDown}
       onPointerEnter={() => setPaused(true)}
@@ -156,7 +158,7 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
               transition={{ duration: 0.25 }}
               className="text-micro uppercase tracking-[0.3em] text-cyan"
             >
-              Trending #{index + 1}
+              {t('app.home.trendingRank', { rank: index + 1 })}
             </motion.p>
             <h1 className="font-display text-display-xl">
               {item.name.split(' ').map((w, i) => (
@@ -205,16 +207,18 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
             >
               <ButtonPrimary to={`/app/player/${item.type}/${item.id}`}>
                 <Play size={16} strokeWidth={1.75} fill="currentColor" />
-                {resume ? `Resume ${fmtClock(entry!.progressSec)}` : 'Play'}
+                {resume ? t('app.home.resumeAt', { time: fmtClock(entry!.progressSec) }) : t('app.home.play')}
               </ButtonPrimary>
-              <ButtonNeon to={`/app/detail/${item.type}/${item.id}`}>Details</ButtonNeon>
+              <ButtonNeon to={`/app/detail/${item.type}/${item.id}`}>{t('app.home.details')}</ButtonNeon>
               <button
                 type="button"
                 aria-pressed={saved}
-                title={saved ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                title={saved ? t('app.home.removeFromWatchlist') : t('app.home.addToWatchlist')}
                 onClick={() => {
                   toggleWatchlist(item.id);
-                  toast(saved ? `Removed “${item.name}” from Watchlist` : `Added “${item.name}” to Watchlist`);
+                  toast(saved
+                    ? t('app.home.toastRemovedWatchlist', { name: item.name })
+                    : t('app.home.toastAddedWatchlist', { name: item.name }));
                 }}
                 className={cn(
                   'focusable inline-flex cursor-pointer items-center gap-8 rounded-full px-16 py-12 text-caption font-semibold transition-colors',
@@ -222,7 +226,7 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
                 )}
               >
                 {saved ? <BookmarkCheck size={18} strokeWidth={1.75} /> : <BookmarkPlus size={18} strokeWidth={1.75} />}
-                <span className="hidden sm:inline">{saved ? 'In Watchlist' : '+ Watchlist'}</span>
+                <span className="hidden sm:inline">{saved ? t('app.home.inWatchlist') : t('app.home.plusWatchlist')}</span>
               </button>
             </motion.div>
           </motion.div>
@@ -255,7 +259,7 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
         <>
           <button
             type="button"
-            aria-label="Previous featured title"
+            aria-label={t('app.home.prevFeatured')}
             onClick={() => {
               go(-1);
               setPaused(true);
@@ -266,7 +270,7 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
           </button>
           <button
             type="button"
-            aria-label="Next featured title"
+            aria-label={t('app.home.nextFeatured')}
             onClick={() => {
               go(1);
               setPaused(true);
@@ -281,17 +285,17 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
       {/* dots + Surprise Me */}
       <div className="absolute bottom-16 right-24 flex items-center gap-12 md:right-48">
         <ButtonGhost onClick={surprise} className="glass-1">
-          <Shuffle size={16} strokeWidth={1.75} /> Surprise me
+          <Shuffle size={16} strokeWidth={1.75} /> {t('app.home.surprise')}
         </ButtonGhost>
         {count > 1 && (
-          <div className="flex items-center gap-8" role="tablist" aria-label="Featured slides">
+          <div className="flex items-center gap-8" role="tablist" aria-label={t('app.home.slidesAria')}>
             {items.map((m, i) => (
               <button
                 key={m.id}
                 type="button"
                 role="tab"
                 aria-selected={i === index}
-                aria-label={`Show ${m.name}`}
+                aria-label={t('app.home.showSlide', { name: m.name })}
                 onClick={() => {
                   setIndex(i);
                   setPaused(true);
@@ -327,6 +331,7 @@ function ContinueWatchingCard({
   item: MetaItem;
   onRemove: (id: string) => void;
 }) {
+  const { t } = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const progress = entry.durationSec > 0 ? entry.progressSec / entry.durationSec : 0;
@@ -351,7 +356,7 @@ function ContinueWatchingCard({
       <div className="group/cw relative overflow-hidden rounded-lg ring-1 ring-white/[.08] bg-navy">
         <Link
           to={`/app/player/${entry.type}/${entry.id}`}
-          aria-label={`Resume ${item.name} — ${remainMin} min left`}
+          aria-label={t('app.home.resumeAria', { name: item.name, min: remainMin })}
           className="focusable block aspect-video"
         >
           <img
@@ -371,7 +376,7 @@ function ContinueWatchingCard({
             <div className="flex min-w-0 flex-col gap-2">
               <span className="truncate text-caption text-ink">{item.name}</span>
               <span className="glass-1 inline-flex w-fit items-center gap-4 rounded-md px-8 py-2 text-micro uppercase text-cyan">
-                <Clock3 size={12} strokeWidth={1.75} /> {remainMin} min left
+                <Clock3 size={12} strokeWidth={1.75} /> {t('app.home.minLeft', { min: remainMin })}
               </span>
             </div>
           </div>
@@ -391,7 +396,7 @@ function ContinueWatchingCard({
         <div ref={menuRef} className="absolute right-8 top-8">
           <button
             type="button"
-            aria-label={`Options for ${item.name}`}
+            aria-label={t('app.home.optionsFor', { name: item.name })}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
             className="focusable glass-1 cursor-pointer rounded-full p-6 text-muted hover:text-ink"
@@ -412,14 +417,14 @@ function ContinueWatchingCard({
                   onClick={() => setMenuOpen(false)}
                   className="focusable rounded-lg px-12 py-8 text-left text-caption font-semibold text-ink hover:bg-white/[.06]"
                 >
-                  Resume
+                  {t('app.home.resume')}
                 </Link>
                 <Link
                   to={`/app/detail/${entry.type}/${entry.id}`}
                   onClick={() => setMenuOpen(false)}
                   className="focusable rounded-lg px-12 py-8 text-left text-caption font-semibold text-ink hover:bg-white/[.06]"
                 >
-                  View details
+                  {t('app.home.viewDetails')}
                 </Link>
                 <button
                   type="button"
@@ -429,7 +434,7 @@ function ContinueWatchingCard({
                   }}
                   className="focusable cursor-pointer rounded-lg px-12 py-8 text-left text-caption font-semibold text-error hover:bg-white/[.06]"
                 >
-                  Remove from row
+                  {t('app.home.removeFromRow')}
                 </button>
               </motion.div>
             )}
@@ -441,6 +446,7 @@ function ContinueWatchingCard({
 }
 
 function ContinueWatchingSection({ items }: { items: MetaItem[] }) {
+  const { t } = useT();
   const continueWatching = useLibrary((s) => s.continueWatching);
   const clearProgress = useLibrary((s) => s.clearProgress);
 
@@ -459,7 +465,7 @@ function ContinueWatchingSection({ items }: { items: MetaItem[] }) {
       transition={spring.smooth}
       className="flex flex-col gap-16"
     >
-      <h2 className="font-display text-title text-ink">Continue Watching</h2>
+      <h2 className="font-display text-title text-ink">{t('app.home.continueWatching')}</h2>
       <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto overscroll-x-contain px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
         <AnimatePresence mode="popLayout">
           {rows.map(({ entry, item }) => (
@@ -469,7 +475,7 @@ function ContinueWatchingSection({ items }: { items: MetaItem[] }) {
               item={item}
               onRemove={(id) => {
                 clearProgress(id);
-                toast('Removed from Continue Watching');
+                toast(t('app.home.toastRemovedCw'));
               }}
             />
           ))}
@@ -482,6 +488,7 @@ function ContinueWatchingSection({ items }: { items: MetaItem[] }) {
 /* ── S3 — Trending Now (chrome outline rank numerals) ──────────────────── */
 
 function TrendingSection({ items }: { items: MetaItem[] }) {
+  const { t } = useT();
   const trending = useMemo(
     () =>
       items
@@ -494,12 +501,12 @@ function TrendingSection({ items }: { items: MetaItem[] }) {
   return (
     <section className="flex flex-col gap-16">
       <div className="flex items-baseline justify-between gap-16">
-        <h2 className="font-display text-title text-ink">Trending Now</h2>
+        <h2 className="font-display text-title text-ink">{t('app.home.trendingNow')}</h2>
         <Link
           to="/app/discover?sort=trending"
           className="focusable rounded-full px-8 py-4 text-caption font-semibold text-muted hover:text-cyan transition-colors"
         >
-          See all <ArrowRight size={14} strokeWidth={1.75} className="inline" />
+          {t('app.shelf.seeAll')} <ArrowRight size={14} strokeWidth={1.75} className="inline" />
         </Link>
       </div>
       <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto overscroll-x-contain px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
@@ -536,13 +543,14 @@ function TrendingSection({ items }: { items: MetaItem[] }) {
 /* ── S3.5 — Upcoming & Originals (wide cinematic cards, coming soon) ───── */
 
 function UpcomingSection({ items }: { items: MetaItem[] }) {
+  const { t } = useT();
   const upcoming = useMemo(() => items.filter((m) => m.upcoming), [items]);
   if (upcoming.length === 0) return null;
   return (
     <section className="flex flex-col gap-16">
       <div className="flex flex-wrap items-baseline justify-between gap-16">
-        <h2 className="font-display text-title text-ink">Upcoming &amp; Originals</h2>
-        <span className="text-micro uppercase text-muted">Elitebox Originals · in preparation</span>
+        <h2 className="font-display text-title text-ink">{t('app.home.upcomingTitle')}</h2>
+        <span className="text-micro uppercase text-muted">{t('app.home.upcomingNote')}</span>
       </div>
       <div className="grid gap-16 md:grid-cols-2">
         {upcoming.map((item, i) => (
@@ -555,7 +563,10 @@ function UpcomingSection({ items }: { items: MetaItem[] }) {
           >
             <Link
               to={`/app/detail/${item.type}/${item.id}`}
-              aria-label={`${item.name} — ${item.releaseLabel ?? 'Coming soon'} · Elitebox Original`}
+              aria-label={t('app.home.upcomingAria', {
+                name: item.name,
+                release: item.releaseLabel ?? t('app.poster.comingSoon'),
+              })}
               className="focusable group/up relative block aspect-video overflow-hidden rounded-xl ring-1 ring-white/[.1] bg-navy hover:shadow-focus-glow focus-visible:shadow-focus-glow"
             >
               <img
@@ -568,12 +579,12 @@ function UpcomingSection({ items }: { items: MetaItem[] }) {
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(3,6,18,.92)] via-[rgba(3,6,18,.22)] to-transparent" />
               <span className="absolute left-12 top-12 inline-flex items-center gap-6 rounded-full bg-deep/70 px-12 py-6 text-micro uppercase tracking-wider text-cyan ring-1 ring-cyan/50 backdrop-blur-sm">
                 <Sparkles size={12} strokeWidth={1.75} />
-                {item.releaseLabel ?? 'Coming soon'}
+                {item.releaseLabel ?? t('app.poster.comingSoon')}
               </span>
               <div className="absolute bottom-14 left-16 right-16 flex flex-col gap-4">
                 <span className="font-display text-title text-chrome">{item.name}</span>
                 <span className="text-micro uppercase text-muted">
-                  Elitebox Original · {item.genres.slice(0, 2).join(' · ')}
+                  {t('app.home.originalTag')} · {item.genres.slice(0, 2).join(' · ')}
                 </span>
               </div>
             </Link>
@@ -587,13 +598,14 @@ function UpcomingSection({ items }: { items: MetaItem[] }) {
 /* ── S4 — Elitebox Exclusives (16:9 backdrop cards) ────────────────────── */
 
 function ExclusivesSection({ items }: { items: MetaItem[] }) {
+  const { t } = useT();
   const exclusives = EXCLUSIVE_IDS.map((id) => metaFor(items, id)).filter(
     (m): m is MetaItem => Boolean(m),
   );
   if (exclusives.length === 0) return null;
   return (
     <section className="flex flex-col gap-16">
-      <h2 className="font-display text-title text-ink">Elitebox Exclusives</h2>
+      <h2 className="font-display text-title text-ink">{t('app.home.exclusives')}</h2>
       <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto overscroll-x-contain px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
         {exclusives.map((item, i) => (
           <motion.div
@@ -606,7 +618,7 @@ function ExclusivesSection({ items }: { items: MetaItem[] }) {
           >
             <Link
               to={`/app/detail/${item.type}/${item.id}`}
-              aria-label={`${item.name} — Elitebox Exclusive`}
+              aria-label={t('app.home.exclusiveAria', { name: item.name })}
               className="focusable group/ex relative block aspect-video overflow-hidden rounded-lg ring-1 ring-white/[.08] bg-navy hover:shadow-focus-glow focus-visible:shadow-focus-glow"
             >
               <img
@@ -624,7 +636,7 @@ function ExclusivesSection({ items }: { items: MetaItem[] }) {
                 transition={{ ...spring.snappy, delay: Math.min(i, 6) * 0.06 + 0.15 }}
                 className="glass-1 absolute left-8 top-8 rounded-md px-8 py-2 text-micro uppercase text-gradient-signature"
               >
-                Exclusive
+                {t('app.home.exclusiveBadge')}
               </motion.span>
               <div className="absolute bottom-10 left-12 right-12 flex flex-col gap-2">
                 <span className="text-caption text-ink">{item.name}</span>
@@ -643,13 +655,14 @@ function ExclusivesSection({ items }: { items: MetaItem[] }) {
 /* ── S6 — Smart Collections ────────────────────────────────────────────── */
 
 function CollectionsSection({ items }: { items: MetaItem[] }) {
+  const { t } = useT();
   const collections = COLLECTIONS.map((c) => ({ def: c, matches: items.filter(c.match) })).filter(
     (c) => c.matches.length >= 3,
   );
   if (collections.length === 0) return null;
   return (
     <section className="flex flex-col gap-16">
-      <h2 className="font-display text-title text-ink">Made for you</h2>
+      <h2 className="font-display text-title text-ink">{t('app.home.madeForYou')}</h2>
       <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto overscroll-x-contain px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
         {collections.map(({ def, matches }, i) => (
           <motion.div
@@ -662,7 +675,7 @@ function CollectionsSection({ items }: { items: MetaItem[] }) {
           >
             <Link
               to={`/app/discover?collection=${def.id}`}
-              aria-label={`${def.name} — ${matches.length} titles · ${def.caption}`}
+              aria-label={`${t(def.nameKey)} — ${t('app.home.titlesCount', { count: matches.length })} · ${t(def.captionKey)}`}
               className="focusable glass-2 group/col relative block aspect-video overflow-hidden rounded-lg hover:shadow-focus-glow focus-visible:shadow-focus-glow"
             >
               {/* 3 mini-poster collage, fans out on hover */}
@@ -685,9 +698,9 @@ function CollectionsSection({ items }: { items: MetaItem[] }) {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(3,6,18,.95)] via-[rgba(3,6,18,.35)] to-transparent" />
               <div className="absolute bottom-10 left-12 right-12 flex flex-col gap-2">
-                <span className="font-display text-title text-ink">{def.name}</span>
+                <span className="font-display text-title text-ink">{t(def.nameKey)}</span>
                 <span className="text-micro uppercase text-cyan">
-                  {matches.length} titles · {def.caption}
+                  {t('app.home.titlesCount', { count: matches.length })} · {t(def.captionKey)}
                 </span>
               </div>
             </Link>
@@ -701,6 +714,7 @@ function CollectionsSection({ items }: { items: MetaItem[] }) {
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function AppHome() {
+  const { t } = useT();
   const { items, loading } = useCatalogItems();
   const watchlist = useLibrary((s) => s.watchlist);
   const favorites = useLibrary((s) => s.favorites);
@@ -738,12 +752,13 @@ export default function AppHome() {
       <ContinueWatchingSection items={items} />
       <ForYouShelf items={items} lookup={(id) => metaFor(items, id)} />
       <TrendingSection items={items} />
+      <UpcomingSection items={items} />
       <ExclusivesSection items={items} />
 
       {/* S5 — My Library (hidden entirely when empty) */}
       {libraryItems.length > 0 && (
         <Shelf
-          title={`My Library · ${libraryItems.length}`}
+          title={t('app.home.myLibrary', { count: libraryItems.length })}
           items={libraryItems}
           seeAllTo="/app/library"
           progressFor={progressFor}
@@ -758,10 +773,10 @@ export default function AppHome() {
           <span className="font-mono text-micro uppercase text-muted">Elitebox v1.0.0</span>
           <span className="inline-flex items-center gap-6 text-micro uppercase text-muted">
             <span className="inline-block h-6 w-6 rounded-full bg-ok shadow-[0_0_8px_rgba(124,217,236,.7)]" />
-            Showcase addon · healthy
+            {t('app.home.addonHealthy')}
           </span>
           <ButtonGhost to="/app/settings" className="ml-auto">
-            Settings
+            {t('app.rail.settings')}
           </ButtonGhost>
         </div>
       </footer>

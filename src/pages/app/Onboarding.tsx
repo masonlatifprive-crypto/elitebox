@@ -30,6 +30,7 @@ import { switchProfile, useAddons, useProfiles, useSettings } from '@/lib/store'
 import { LogoMark } from '@/components/Logo';
 import MovieWall from '@/components/MovieWall';
 import { ButtonGhost, GlassPanel, spring, toast } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 
 /* ── shared profile helpers (also used by Profiles.tsx) ────────────────── */
 
@@ -99,8 +100,9 @@ export function AvatarOrbGrid({
   orbSize?: number;
   className?: string;
 }) {
+  const { t } = useT();
   return (
-    <div className={cn('grid grid-cols-4 justify-items-center gap-16', className)} role="radiogroup" aria-label="Choose an avatar">
+    <div className={cn('grid grid-cols-4 justify-items-center gap-16', className)} role="radiogroup" aria-label={t('app.onboarding.chooseAvatar')}>
       {AVATARS.map((src, i) => {
         const selected = src === value;
         return (
@@ -109,7 +111,7 @@ export function AvatarOrbGrid({
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={`Avatar ${i + 1}`}
+            aria-label={t('app.onboarding.avatarAria', { n: i + 1 })}
             onClick={() => onChange(src)}
             initial={{ opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: selected ? 1.1 : 1 }}
@@ -153,6 +155,7 @@ export function PinEntry({
   onComplete: (pin: string) => void;
   className?: string;
 }) {
+  const { t } = useT();
   const reduceMotion = useReducedMotion();
   const [digits, setDigits] = useState('');
   const doneRef = useRef(false);
@@ -239,7 +242,7 @@ export function PinEntry({
         </button>
         <button
           type="button"
-          aria-label="Delete last digit"
+          aria-label={t('app.onboarding.deleteDigitAria')}
           onClick={() => setDigits((prev) => prev.slice(0, -1))}
           className="focusable glass-1 flex h-56 w-56 cursor-pointer items-center justify-center rounded-full text-muted hover:text-ink hover:bg-white/[.08] active:scale-[0.94]"
         >
@@ -290,6 +293,7 @@ function PinToggle({
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const { t } = useT();
   return (
     <button
       type="button"
@@ -313,7 +317,7 @@ function PinToggle({
           )}
         />
       </span>
-      <span className="text-caption text-ink">Lock with a 4-digit PIN</span>
+      <span className="text-caption text-ink">{t('app.onboarding.lockWithPin')}</span>
     </button>
   );
 }
@@ -329,6 +333,7 @@ export function ProfileForm({
   secondary?: ReactNode;
   autoFocus?: boolean;
 }) {
+  const { t } = useT();
   const reduceMotion = useReducedMotion();
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
@@ -371,15 +376,15 @@ export function ProfileForm({
           className="h-56 w-56 rounded-full object-cover ring-2 ring-cyan/60 shadow-focus-glow"
         />
         <div className="flex min-w-0 flex-col gap-2">
-          <p className="truncate font-display text-title text-ink">{name.trim() || 'Your name'}</p>
-          <p className="text-micro uppercase text-muted">Profile preview</p>
+          <p className="truncate font-display text-title text-ink">{name.trim() || t('app.onboarding.yourName')}</p>
+          <p className="text-micro uppercase text-muted">{t('app.onboarding.profilePreview')}</p>
         </div>
       </div>
 
       {/* name input */}
       <motion.div animate={shake}>
         <label htmlFor="profile-name" className="mb-8 block text-micro uppercase text-muted">
-          Profile name
+          {t('app.onboarding.profileName')}
         </label>
         <input
           id="profile-name"
@@ -388,7 +393,7 @@ export function ProfileForm({
           onChange={(e) => setName(e.target.value.slice(0, 20))}
           maxLength={20}
           autoFocus={autoFocus}
-          placeholder="e.g. Nova"
+          placeholder={t('app.onboarding.namePlaceholder')}
           autoComplete="off"
           className="focusable glass-1 w-full rounded-lg px-16 py-12 text-body-l text-ink placeholder:text-muted/60 focus:border-cyan/50 focus:outline-none"
         />
@@ -396,7 +401,7 @@ export function ProfileForm({
 
       {/* avatar grid */}
       <div>
-        <p className="mb-12 text-micro uppercase text-muted">Pick an avatar</p>
+        <p className="mb-12 text-micro uppercase text-muted">{t('app.onboarding.pickAvatar')}</p>
         <AvatarOrbGrid value={avatar} onChange={setAvatar} />
       </div>
 
@@ -421,15 +426,15 @@ export function ProfileForm({
               {pin ? (
                 <div className="flex items-center justify-center gap-16 py-8">
                   <span className="flex items-center gap-8 text-caption text-cyan">
-                    <CheckCircle2 size={16} strokeWidth={1.75} /> PIN saved
+                    <CheckCircle2 size={16} strokeWidth={1.75} /> {t('app.profiles.toastPinSaved')}
                   </span>
-                  <ButtonGhost onClick={() => setPin('')}>Change PIN</ButtonGhost>
+                  <ButtonGhost onClick={() => setPin('')}>{t('app.profiles.changePin')}</ButtonGhost>
                 </div>
               ) : (
                 <PinEntry status="idle" onComplete={setPin} />
               )}
               <p className="mt-8 text-center text-micro uppercase text-muted">
-                Stored on this device only, simply hashed — never transmitted
+                {t('app.onboarding.pinStoredNote')}
               </p>
             </motion.div>
           )}
@@ -452,10 +457,10 @@ export function ProfileForm({
 const STEP_KEY = 'elitebox.v1.onboarding.step';
 
 const FEATURES = [
-  { icon: Puzzle, label: 'Addon Engine' },
-  { icon: Activity, label: 'Health Monitor' },
-  { icon: Users, label: 'Multi-Profile' },
-  { icon: Tv, label: 'TV mode' },
+  { icon: Puzzle, labelKey: 'app.onboarding.featAddons' },
+  { icon: Activity, labelKey: 'app.onboarding.featHealth' },
+  { icon: Users, labelKey: 'app.onboarding.featProfiles' },
+  { icon: Tv, labelKey: 'app.onboarding.featTv' },
 ] as const;
 
 const SUGGESTED_ADDONS: AddonInfo[] = [
@@ -509,6 +514,7 @@ function SplitHeadline({ text, className }: { text: string; className?: string }
 }
 
 export default function Onboarding() {
+  const { t } = useT();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const profiles = useProfiles((s) => s.profiles);
@@ -551,7 +557,7 @@ export default function Onboarding() {
 
   const addSuggested = (info: AddonInfo) => {
     installAddon(info);
-    toast('Addon added — see it in Addons.');
+    toast(t('app.onboarding.toastAddonAdded'));
   };
 
   // Returning users with ≥1 profile never see onboarding again.
@@ -585,7 +591,7 @@ export default function Onboarding() {
     <div className="relative flex min-h-[80dvh] flex-col items-center justify-center py-32">
       {/* skip — always available */}
       <div className="absolute right-0 top-0">
-        <ButtonGhost onClick={finish}>Skip</ButtonGhost>
+        <ButtonGhost onClick={finish}>{t('app.onboarding.skip')}</ButtonGhost>
       </div>
 
       <AnimatePresence mode="wait">
@@ -617,26 +623,26 @@ export default function Onboarding() {
               </motion.div>
 
               <SplitHeadline
-                text="Media control that feels alive."
+                text={t('app.onboarding.headline')}
                 className="text-chrome font-display text-display-l md:text-display-xl"
               />
 
               <motion.p variants={rise} className="max-w-md text-body-l text-muted">
-                Your movies, series and live channels — organized by an engine that heals itself.
+                {t('app.onboarding.sub')}
               </motion.p>
 
               <motion.div variants={rise} className="flex flex-wrap items-center justify-center gap-12">
-                {FEATURES.map(({ icon: Icon, label }) => (
-                  <span key={label} className="glass-1 inline-flex items-center gap-8 rounded-full px-16 py-8 text-caption text-ink">
+                {FEATURES.map(({ icon: Icon, labelKey }) => (
+                  <span key={labelKey} className="glass-1 inline-flex items-center gap-8 rounded-full px-16 py-8 text-caption text-ink">
                     <Icon size={16} strokeWidth={1.75} className="text-cyan" />
-                    {label}
+                    {t(labelKey)}
                   </span>
                 ))}
               </motion.div>
 
               <motion.div variants={rise}>
                 <SilverButton onClick={() => setStep(1)} className="px-32 py-14 text-body-l">
-                  Begin
+                  {t('app.onboarding.begin')}
                 </SilverButton>
               </motion.div>
             </motion.div>
@@ -647,19 +653,19 @@ export default function Onboarding() {
           <motion.section key="step-profile" {...stepMotion} className="w-full max-w-lg px-16">
             <GlassPanel level={2} className="p-24 md:p-32">
               <div className="mb-24 flex flex-col gap-8">
-                <h2 className="font-display text-title text-ink">Who's watching?</h2>
+                <h2 className="font-display text-title text-ink">{t('app.profiles.whosWatching')}</h2>
                 <p className="text-caption text-muted">
-                  Profiles keep libraries, progress and settings apart — like separate universes.
+                  {t('app.onboarding.profileStepCaption')}
                 </p>
               </div>
               <ProfileForm
-                submitLabel="Create profile"
+                submitLabel={t('app.profiles.createProfile')}
                 onSubmit={(p) => {
                   setPending(p);
                   setStep(2);
                 }}
                 secondary={
-                  <ButtonGhost onClick={() => setStep(2)}>Add another later</ButtonGhost>
+                  <ButtonGhost onClick={() => setStep(2)}>{t('app.onboarding.addAnotherLater')}</ButtonGhost>
                 }
               />
             </GlassPanel>
@@ -673,10 +679,9 @@ export default function Onboarding() {
             className="flex w-full max-w-xl flex-col gap-24 px-16"
           >
             <div className="flex flex-col gap-8 text-center">
-              <h2 className="font-display text-display-l text-ink">Power up with addons.</h2>
+              <h2 className="font-display text-display-l text-ink">{t('app.onboarding.addonsTitle')}</h2>
               <p className="text-caption text-muted">
-                The Showcase addon is already installed — real films, ready to play. Add more any
-                time from the Store.
+                {t('app.onboarding.addonsCaption')}
               </p>
             </div>
 
@@ -707,10 +712,10 @@ export default function Onboarding() {
                       <CheckCircle2 size={18} strokeWidth={1.75} />
                     </motion.span>
                   </div>
-                  <p className="text-caption text-muted">12 open films · 3 live channels · subtitles</p>
+                  <p className="text-caption text-muted">{t('app.onboarding.showcaseBlurb')}</p>
                 </div>
                 <span className="glass-1 shrink-0 rounded-md px-8 py-2 text-micro uppercase text-cyan">
-                  Installed
+                  {t('app.addons.installed')}
                 </span>
               </GlassPanel>
             </motion.div>
@@ -741,7 +746,7 @@ export default function Onboarding() {
                       </div>
                       {added ? (
                         <span className="inline-flex shrink-0 items-center gap-6 rounded-full border-[1.5px] border-cyan/50 px-16 py-8 text-caption font-semibold text-cyan">
-                          <Check size={14} strokeWidth={2.5} /> Added
+                          <Check size={14} strokeWidth={2.5} /> {t('app.onboarding.added')}
                         </span>
                       ) : (
                         <button
@@ -749,7 +754,7 @@ export default function Onboarding() {
                           onClick={() => addSuggested(info)}
                           className="focusable shrink-0 cursor-pointer rounded-full border-[1.5px] border-cyan px-16 py-8 text-caption font-bold text-cyan transition-[background,box-shadow] duration-150 hover:bg-[rgba(124,217,236,.08)] hover:shadow-glow-neon active:scale-[0.97]"
                         >
-                          Add
+                          {t('app.onboarding.add')}
                         </button>
                       )}
                     </GlassPanel>
@@ -760,19 +765,19 @@ export default function Onboarding() {
 
             {/* what you can do */}
             <GlassPanel level={1} className="flex flex-col gap-12 p-16">
-              <p className="text-micro uppercase text-muted">What you can do</p>
+              <p className="text-micro uppercase text-muted">{t('app.onboarding.whatYouCanDo')}</p>
               <div className="flex items-start gap-12">
                 <Eye size={18} strokeWidth={1.75} className="mt-2 shrink-0 text-cyan" />
                 <p className="text-caption text-ink">
-                  Browse every catalog free — no account, no card.
+                  {t('app.onboarding.freeBrowsing')}
                 </p>
               </div>
               <div className="flex items-start gap-12">
                 <Sparkles size={18} strokeWidth={1.75} className="mt-2 shrink-0 text-highlight" />
                 <p className="text-caption text-ink">
-                  Premium playback is $4.99/month —{' '}
+                  {t('app.onboarding.premiumNote')}{' '}
                   <a href="/subscribe" className="focusable text-cyan underline-offset-2 hover:underline">
-                    subscribe any time
+                    {t('app.onboarding.subscribeLink')}
                   </a>
                   .
                 </p>
@@ -780,7 +785,7 @@ export default function Onboarding() {
               <div className="flex items-start gap-12">
                 <Tv size={18} strokeWidth={1.75} className="mt-2 shrink-0 text-cyan" />
                 <p className="text-caption text-ink">
-                  On a TV, Elitebox switches to big-screen controls automatically.
+                  {t('app.onboarding.tvNote')}
                 </p>
               </div>
             </GlassPanel>
@@ -808,7 +813,7 @@ export default function Onboarding() {
                 className="rounded-full"
               >
                 <SilverButton onClick={finish} className="px-40 py-16 text-body-l">
-                  Enter Elitebox
+                  {t('app.onboarding.enter')}
                 </SilverButton>
               </motion.div>
             </motion.div>
@@ -817,12 +822,12 @@ export default function Onboarding() {
       </AnimatePresence>
 
       {/* progress dots */}
-      <div className="mt-48 flex items-center gap-12" aria-label={`Step ${step + 1} of 3`}>
+      <div className="mt-48 flex items-center gap-12" aria-label={t('app.onboarding.stepAria', { step: step + 1 })}>
         {[0, 1, 2].map((i) => (
           <button
             key={i}
             type="button"
-            aria-label={`Go to step ${i + 1}`}
+            aria-label={t('app.onboarding.goToStepAria', { step: i + 1 })}
             aria-current={i === step ? 'step' : undefined}
             onClick={() => setStep(i)}
             className="focusable cursor-pointer rounded-full p-4"

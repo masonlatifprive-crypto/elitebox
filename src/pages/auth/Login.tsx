@@ -14,6 +14,7 @@ import MovieWall from '@/components/MovieWall';
 import { spring, toast } from '@/components/ui-elite';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,6 +44,7 @@ function Spinner() {
 }
 
 export default function Login() {
+  const { t } = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const login = useAuth((s) => s.login);
@@ -68,21 +70,21 @@ export default function Login() {
   useEffect(() => {
     if (phase !== 'loading') return;
     const id = reqId.current;
-    const t = setTimeout(() => {
+    const watchdog = setTimeout(() => {
       if (reqId.current === id) {
         reqId.current += 1;
         setPhase('idle');
-        toast.error('This is taking too long. Try again.');
+        toast.error(t('marketing.auth.login.toastTimeout'));
       }
     }, 4000);
-    return () => clearTimeout(t);
+    return () => clearTimeout(watchdog);
   }, [phase]);
 
   const dismissExpired = () => setExpiredShown(false);
 
   const onEmailBlur = () => {
     if (email.length > 0 && !EMAIL_RE.test(email)) {
-      setEmailError("That doesn't look like an email address.");
+      setEmailError(t('marketing.auth.login.emailInvalid'));
     } else {
       setEmailError(null);
     }
@@ -101,7 +103,7 @@ export default function Login() {
     e.preventDefault();
     if (!canSubmit) return;
     if (!EMAIL_RE.test(email)) {
-      setEmailError("That doesn't look like an email address.");
+      setEmailError(t('marketing.auth.login.emailInvalid'));
       return;
     }
     const id = ++reqId.current;
@@ -112,17 +114,17 @@ export default function Login() {
 
     if (!res.ok) {
       if (res.error === 'unknown') {
-        fail('No account found for that email. Create one in seconds.');
+        fail(t('marketing.auth.login.errorUnknown'));
       } else if (res.error === 'network') {
-        fail("Can't reach the server. Check your connection and try again.");
+        fail(t('marketing.auth.login.errorNetwork'));
       } else {
-        fail('Incorrect email or password.');
+        fail(t('marketing.auth.login.errorCredentials'));
       }
       return;
     }
 
     setPhase('success');
-    toast('Signed in. Picking up where you left off.');
+    toast(t('marketing.auth.login.toastSuccess'));
     const target = next && next.startsWith('/') ? next : '/app';
     setTimeout(() => navigate(target, { replace: true }), reduce ? 150 : 600);
   };
@@ -156,7 +158,7 @@ export default function Login() {
           }}
         >
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-            <Link to="/" aria-label="Elitebox home" className="focusable inline-block rounded-lg">
+            <Link to="/" aria-label={t('marketing.auth.login.homeAria')} className="focusable inline-block rounded-lg">
               <LogoBreathe />
             </Link>
           </motion.div>
@@ -167,18 +169,17 @@ export default function Login() {
               className="glass-1 mx-auto inline-flex items-center gap-8 rounded-full px-12 py-6 text-caption text-warn"
             >
               <Clock size={14} strokeWidth={1.75} />
-              Your session expired — sign in again.
+              {t('marketing.auth.login.expired')}
             </motion.p>
           )}
 
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-            <p className="text-micro uppercase tracking-[0.3em] text-cyan">Member sign in</p>
+            <p className="text-micro uppercase tracking-[0.3em] text-cyan">{t('marketing.auth.login.eyebrow')}</p>
             <h1 className="mt-8 font-display text-[1.75rem] leading-[1.2] tracking-[-0.03em] text-ink md:text-display-l">
-              Welcome back.
+              {t('marketing.auth.login.title')}
             </h1>
             <p className="mt-8 text-caption text-muted">
-              Sign in to keep watching. Your progress, library and addons are right where you left
-              them.
+              {t('marketing.auth.login.sub')}
             </p>
           </motion.div>
 
@@ -191,14 +192,14 @@ export default function Login() {
               htmlFor="login-email"
               className="mb-8 block text-micro uppercase text-muted transition-colors duration-150 group-focus-within:text-cyan"
             >
-              Email
+              {t('marketing.auth.login.emailLabel')}
             </label>
             <input
               id="login-email"
               type="email"
               autoComplete="email"
               inputMode="email"
-              placeholder="you@example.com"
+              placeholder={t('marketing.auth.login.emailPlaceholder')}
               value={email}
               disabled={busy}
               onChange={(e) => {
@@ -232,7 +233,7 @@ export default function Login() {
               htmlFor="login-password"
               className="mb-8 block text-micro uppercase text-muted transition-colors duration-150 group-focus-within:text-cyan"
             >
-              Password
+              {t('marketing.auth.login.passwordLabel')}
             </label>
             <div className="relative">
               <input
@@ -240,7 +241,7 @@ export default function Login() {
                 ref={pwRef}
                 type={showPw ? 'text' : 'password'}
                 autoComplete="current-password"
-                placeholder="Your password"
+                placeholder={t('marketing.auth.login.passwordPlaceholder')}
                 value={password}
                 disabled={busy}
                 onChange={(e) => {
@@ -259,7 +260,7 @@ export default function Login() {
               />
               <button
                 type="button"
-                aria-label={showPw ? 'Hide password' : 'Show password'}
+                aria-label={showPw ? t('marketing.auth.login.hidePassword') : t('marketing.auth.login.showPassword')}
                 onClick={() => setShowPw((v) => !v)}
                 className="focusable absolute right-8 top-1/2 -translate-y-1/2 rounded-full p-8 text-muted hover:text-ink"
               >
@@ -283,14 +284,14 @@ export default function Login() {
             >
               {phase === 'loading' ? (
                 <>
-                  <Spinner /> Signing in…
+                  <Spinner /> {t('marketing.auth.login.signingIn')}
                 </>
               ) : phase === 'success' ? (
                 <>
-                  <Check size={18} strokeWidth={2.5} /> Signed in
+                  <Check size={18} strokeWidth={2.5} /> {t('marketing.auth.login.signedIn')}
                 </>
               ) : (
-                'Sign in'
+                t('marketing.auth.login.signIn')
               )}
             </button>
           </motion.div>
@@ -302,7 +303,7 @@ export default function Login() {
             aria-hidden
           >
             <span className="h-px flex-1 bg-white/[.08]" />
-            <span className="text-micro uppercase text-muted">New to Elitebox</span>
+            <span className="text-micro uppercase text-muted">{t('marketing.auth.login.divider')}</span>
             <span className="h-px flex-1 bg-white/[.08]" />
           </motion.div>
 
@@ -315,14 +316,14 @@ export default function Login() {
               to={next ? `/register?next=${encodeURIComponent(next)}` : '/register'}
               className="focusable rounded-sm text-cyan underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-150 hover:decoration-cyan"
             >
-              Create account
+              {t('marketing.auth.login.createAccount')}
             </Link>
             <Link
               to="/subscribe"
               className="focusable inline-flex items-center gap-6 rounded-sm text-muted transition-colors hover:text-ink"
             >
               <Sparkles size={16} strokeWidth={1.75} />
-              See Premium
+              {t('marketing.auth.login.seePremium')}
             </Link>
           </motion.div>
 
@@ -332,7 +333,7 @@ export default function Login() {
               className="flex items-center justify-center gap-8 text-micro uppercase text-muted"
             >
               <span className="h-8 w-8 rounded-full bg-warn" />
-              Demo mode — accounts are stored on this device only.
+              {t('marketing.auth.login.demo')}
             </motion.p>
           )}
         </motion.form>

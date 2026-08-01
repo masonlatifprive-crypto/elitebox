@@ -33,33 +33,33 @@ import {
 } from '@/components/ui-elite';
 import { addonEngine } from '@/lib/addons/engine';
 import { useAddons } from '@/lib/store';
+import { useT } from '@/i18n';
 
 const OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /* ── S1 — Hero + status card ───────────────────────────────────────────── */
 
-const H1_WORDS = ['Get', 'back', 'to', 'watching.'];
-
 function StatusCard() {
+  const { t } = useT();
   const installed = useAddons((s) => s.installed);
   const showcase = addonEngine.health('elitebox.showcase');
   const liveOk = installed.some((a) => a.builtin);
   const rows = [
-    { label: 'Web engine', status: 'ok' as const, note: 'Operational' },
+    { label: t('marketing.support.status.webEngine'), status: 'ok' as const, note: t('marketing.support.status.operational') },
     {
-      label: 'Showcase addon',
+      label: t('marketing.support.status.showcase'),
       status: showcase.status,
-      note: showcase.status === 'ok' ? 'Operational' : showcase.status,
+      note: showcase.status === 'ok' ? t('marketing.support.status.operational') : showcase.status,
     },
     {
-      label: 'Live channels',
+      label: t('marketing.support.status.live'),
       status: liveOk ? ('ok' as const) : ('down' as const),
-      note: liveOk ? 'Operational' : 'No source installed',
+      note: liveOk ? t('marketing.support.status.operational') : t('marketing.support.status.noSource'),
     },
   ];
   return (
     <GlassPanel level={2} className="flex w-full max-w-sm flex-col gap-16 rounded-xl p-24">
-      <p className="text-micro uppercase tracking-[.08em] text-muted">System status</p>
+      <p className="text-micro uppercase tracking-[.08em] text-muted">{t('marketing.support.status.title')}</p>
       {rows.map((r, i) => (
         <motion.div
           key={r.label}
@@ -80,6 +80,7 @@ function StatusCard() {
 }
 
 function Hero() {
+  const { t } = useT();
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
@@ -113,10 +114,10 @@ function Hero() {
             <motion.div
               variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.5 } } }}
             >
-              <Eyebrow className="mb-16">Support</Eyebrow>
+              <Eyebrow className="mb-16">{t('marketing.support.hero.eyebrow')}</Eyebrow>
             </motion.div>
             <h1 className="font-display text-[2.25rem] leading-[1.05] tracking-[-0.035em] font-extrabold md:text-display-xl">
-              {H1_WORDS.map((word, i) => (
+              {t('marketing.support.hero.title').split(' ').map((word, i) => (
                 <motion.span
                   key={`${word}-${i}`}
                   className="text-chrome mr-[0.28em] inline-block will-change-transform"
@@ -136,7 +137,7 @@ function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.45, ease: OUT_EXPO }}
           >
-            Most Elitebox issues fix themselves. For the rest, start here.
+            {t('marketing.support.hero.sub')}
           </motion.p>
         </div>
 
@@ -155,51 +156,15 @@ function Hero() {
 /* ── S2 — FAQ accordion ────────────────────────────────────────────────── */
 
 const FAQS = [
-  {
-    id: 'q1',
-    q: 'Which platforms does Elitebox run on?',
-    a: 'Elitebox runs in any modern browser, as a native Windows app, on Android phones and on Android TV. Every build shares one codebase — the TV build adds a true 10-foot interface with arrow-key spatial navigation and oversized focus targets.',
-  },
-  {
-    id: 'q2',
-    q: 'What does Elitebox Premium cost — and how do I cancel?',
-    a: 'Elitebox Premium is $4.99/month: every movie, every series, completely. Cancel any time from your account page — the change applies at the end of the current month, and your local library, profiles and watch progress stay exactly where they are.',
-  },
-  {
-    id: 'q3',
-    q: 'How do I install an addon?',
-    a: 'Two ways: from the Store page, or by pasting a manifest URL in the app\u2019s Addon Manager (Addons → Install by URL). Elitebox fetches the manifest, shows you exactly which permissions the addon requests — network, storage — and installs nothing until you confirm.',
-  },
-  {
-    id: 'q4',
-    q: 'How do subtitles work?',
-    a: 'Subtitle addons provide tracks per title; the player normalizes everything to WebVTT. Pick a track from Player → Subtitles, set a preferred language and size in Settings, and Elitebox remembers the choice per profile. A broken track can be re-downloaded from the same menu.',
-  },
-  {
-    id: 'q5',
-    q: 'Can I watch on my TV or cast from my phone?',
-    a: 'On Android TV, use the leanback build. From any other device, open the web app in your TV\u2019s browser or cast the tab — the player hands off cleanly, and the 10-foot web mode takes over navigation with remote-style arrow keys.',
-  },
-  {
-    id: 'q6',
-    q: 'Where is my watch progress stored? Does it sync?',
-    a: 'Locally, per profile, on your device — Elitebox resumes to the second. Premium syncs resume points and library across signed-in devices. Without Premium, Settings → Export produces one JSON you can import on any other device.',
-  },
-  {
-    id: 'q7',
-    q: 'What movies and shows ship with Elitebox?',
-    a: 'The built-in Showcase addon: open films from the Blender Foundation — Big Buck Bunny, Sintel, Tears of Steel and more — released under Creative Commons (CC-BY). They play out of the box, fully offline-capable, with full attribution in the licenses section below.',
-  },
-  {
-    id: 'q8',
-    q: 'Can I try Elitebox without an account?',
-    a: 'Yes — open the app and you\u2019re in demo mode: the full engine, the Showcase catalog and the open live channels, no sign-in required. An account is only needed for Premium and cross-device sync.',
-  },
-  {
-    id: 'q9',
-    q: 'Why does an addon show a red dot?',
-    a: 'It failed its health check — timeouts or errors three times in a row. The circuit breaker benches it automatically so it can\u2019t freeze your evening, and it probes again after 60 seconds. Check Addons → Health for latency, success rate and a manual Recover button.',
-  },
+  { id: 'q1' },
+  { id: 'q2' },
+  { id: 'q3' },
+  { id: 'q4' },
+  { id: 'q5' },
+  { id: 'q6' },
+  { id: 'q7' },
+  { id: 'q8' },
+  { id: 'q9' },
 ] as const;
 
 function FaqItem({
@@ -213,6 +178,7 @@ function FaqItem({
   onToggle: () => void;
   index: number;
 }) {
+  const { t } = useT();
   return (
     <motion.div
       id={faq.id}
@@ -229,7 +195,7 @@ function FaqItem({
         aria-controls={`${faq.id}-panel`}
         className="focusable flex w-full items-center justify-between gap-16 rounded-lg px-20 py-16 text-left cursor-pointer"
       >
-        <span className="text-caption font-semibold text-ink">{faq.q}</span>
+        <span className="text-caption font-semibold text-ink">{t(`marketing.support.faq.${faq.id}.q`)}</span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={spring.smooth}
@@ -248,7 +214,7 @@ function FaqItem({
             transition={{ ...spring.smooth, opacity: { duration: 0.2 } }}
             className="overflow-hidden"
           >
-            <p className="max-w-[68ch] px-20 pb-16 text-caption text-muted">{faq.a}</p>
+            <p className="max-w-[68ch] px-20 pb-16 text-caption text-muted">{t(`marketing.support.faq.${faq.id}.a`)}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -257,6 +223,7 @@ function FaqItem({
 }
 
 function Faq() {
+  const { t } = useT();
   const [openId, setOpenId] = useState<string | null>(null);
 
   // Deep links: /support#q3 opens that item.
@@ -272,11 +239,11 @@ function Faq() {
     <section className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-48 px-16 py-96 md:px-24 lg:flex-row lg:items-start">
       {/* sticky left column */}
       <div className="flex flex-col gap-16 lg:sticky lg:top-[120px] lg:w-[35%]">
-        <Eyebrow>FAQ</Eyebrow>
-        <h2 className="font-display text-display-l text-ink">Frequently asked</h2>
-        <p className="text-caption text-muted">Nine answers. Most questions end here.</p>
+        <Eyebrow>{t('marketing.support.faq.eyebrow')}</Eyebrow>
+        <h2 className="font-display text-display-l text-ink">{t('marketing.support.faq.title')}</h2>
+        <p className="text-caption text-muted">{t('marketing.support.faq.sub')}</p>
         <ButtonGhost onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })} className="w-fit">
-          Contact support ↓
+          {t('marketing.support.faq.contact')}
         </ButtonGhost>
       </div>
       {/* accordion */}
@@ -297,16 +264,10 @@ function Faq() {
 
 /* ── S3 — Diagnostics checklist ────────────────────────────────────────── */
 
-const STEPS = [
-  { name: 'Network', instruction: 'Settings → Diagnostics → Run network check. You want cyan on all three probes.' },
-  { name: 'Addon health', instruction: 'Addons → any amber/red addon → Test. Reorder healthy addons to the top.' },
-  { name: 'Cache', instruction: 'Settings → Cache → Clear image cache if posters look stale.' },
-  { name: 'Playback', instruction: 'Try the same title at a lower quality from the recovery panel.' },
-  { name: 'Subtitles', instruction: 'Player → Subtitles → re-download track; all tracks are normalized to WebVTT.' },
-  { name: 'Fresh start', instruction: 'Settings → Export config, then Reset. Import to restore.' },
-] as const;
+const STEPS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
 function Diagnostics() {
+  const { t } = useT();
   return (
     <section id="diagnostics" className="relative z-10 mx-auto flex w-full max-w-[1280px] scroll-mt-[120px] flex-col gap-48 px-16 pb-96 md:px-24 lg:flex-row">
       <div className="flex-1">
@@ -317,14 +278,14 @@ function Diagnostics() {
           transition={{ duration: 0.5, ease: OUT_EXPO }}
           className="mb-32 flex flex-col gap-8"
         >
-          <Eyebrow>Self-check</Eyebrow>
-          <h2 className="font-display text-display-l text-ink">Run the self-check.</h2>
+          <Eyebrow>{t('marketing.support.diagnostics.eyebrow')}</Eyebrow>
+          <h2 className="font-display text-display-l text-ink">{t('marketing.support.diagnostics.title')}</h2>
         </motion.div>
 
         <GlassPanel level={2} className="flex flex-col gap-16 rounded-xl p-24">
           {STEPS.map((s, i) => (
             <motion.div
-              key={s.name}
+              key={s}
               initial={{ opacity: 0, x: -24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
@@ -348,8 +309,8 @@ function Diagnostics() {
                 {i + 1}
               </motion.span>
               <div className="flex flex-col gap-4 pt-4">
-                <h3 className="font-display text-title text-ink">{s.name}</h3>
-                <p className="text-caption text-muted">{s.instruction}</p>
+                <h3 className="font-display text-title text-ink">{t(`marketing.support.diagnostics.${s}.name`)}</h3>
+                <p className="text-caption text-muted">{t(`marketing.support.diagnostics.${s}.instruction`)}</p>
               </div>
             </motion.div>
           ))}
@@ -366,7 +327,7 @@ function Diagnostics() {
         <GlassPanel level={2} className="overflow-hidden rounded-xl p-8">
           <img
             src="/devices-mockup.webp"
-            alt="Elitebox running on TV, laptop, tablet and phone"
+            alt={t('marketing.support.diagnostics.imageAlt')}
             loading="lazy"
             className="w-full rounded-lg"
           />
@@ -378,16 +339,13 @@ function Diagnostics() {
 
 /* ── S4 — Downloads ────────────────────────────────────────────────────── */
 
-const EXE_MSG = 'The Windows installer ships with the v1.0 desktop release — in final packaging now. The web app is fully live today.';
-const APK_MSG = 'The Android APK ships with the v1.0 mobile release — in final packaging now. The web app is fully live today.';
-const TV_MSG = 'The Android TV leanback build ships with the v1.0 TV release — the web app already speaks remote.';
-
 function Downloads() {
+  const { t } = useT();
   const cards = [
-    { icon: Monitor, name: 'Windows', detail: 'Native EXE installer · in packaging', action: () => toast(EXE_MSG), cta: 'Build status' },
-    { icon: Smartphone, name: 'Android', detail: 'Mobile APK · in packaging', action: () => toast(APK_MSG), cta: 'Build status' },
-    { icon: Globe, name: 'Web', detail: 'Runs in your browser', action: undefined, cta: 'Launch web app' },
-    { icon: Tv, name: 'Android TV', detail: 'Leanback build · in packaging', action: () => toast(TV_MSG), cta: 'Build status' },
+    { icon: Monitor, slug: 'windows', action: () => toast(t('marketing.support.downloads.toasts.exe')) },
+    { icon: Smartphone, slug: 'android', action: () => toast(t('marketing.support.downloads.toasts.apk')) },
+    { icon: Globe, slug: 'web', action: undefined },
+    { icon: Tv, slug: 'androidTv', action: () => toast(t('marketing.support.downloads.toasts.tv')) },
   ] as const;
 
   return (
@@ -399,13 +357,13 @@ function Downloads() {
         transition={{ duration: 0.5, ease: OUT_EXPO }}
         className="flex flex-col gap-8"
       >
-        <Eyebrow>Downloads</Eyebrow>
-        <h2 className="font-display text-display-l text-ink">One codebase. Every screen.</h2>
+        <Eyebrow>{t('marketing.support.downloads.eyebrow')}</Eyebrow>
+        <h2 className="font-display text-display-l text-ink">{t('marketing.support.downloads.title')}</h2>
       </motion.div>
       <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card, i) => (
           <motion.div
-            key={card.name}
+            key={card.slug}
             initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
@@ -416,16 +374,16 @@ function Downloads() {
                 <card.icon size={24} strokeWidth={1.75} className="text-cyan" />
               </span>
               <div>
-                <h3 className="font-display text-title text-ink">{card.name}</h3>
-                <p className="text-caption text-muted">{card.detail}</p>
+                <h3 className="font-display text-title text-ink">{t(`marketing.platformCards.${card.slug}.name`)}</h3>
+                <p className="text-caption text-muted">{t(`marketing.platformCards.${card.slug}.detail`)}</p>
               </div>
               {card.action ? (
                 <ButtonNeon onClick={card.action} className="mt-auto px-16 py-8 text-[12px]">
-                  <Download size={14} strokeWidth={1.75} /> {card.cta}
+                  <Download size={14} strokeWidth={1.75} /> {t(`marketing.platformCards.${card.slug}.cta`)}
                 </ButtonNeon>
               ) : (
                 <ButtonPrimary to="/app" className="mt-auto px-16 py-8 text-[12px]">
-                  {card.cta}
+                  {t(`marketing.platformCards.${card.slug}.cta`)}
                 </ButtonPrimary>
               )}
             </GlassPanel>
@@ -438,27 +396,9 @@ function Downloads() {
 
 /* ── S5 — Legal: release notes, privacy, terms ─────────────────────────── */
 
-const RELEASE_NOTES = [
-  'Cinematic web app: Home, Discover, Movies, Series, Live, Search, Library, Stats and more — 22 routes, every one live.',
-  'Elitebox Addon Protocol v1: install any compatible source, with live health dots, circuit breaker and one-click recovery.',
-  'Player: HLS with automatic multi-source failover, resume-from-position memory, WebVTT subtitle tracks, keyboard and TV-remote control.',
-  'TV mode: spatial navigation, 10-foot focus rings, Android TV leanback support.',
-  'Elitebox Premium: one plan, $4.99/month, via Stripe or PayPal. Clearly-labeled demo mode where no backend is connected.',
-];
-
-const PRIVACY_POINTS = [
-  'Local-first: your library, watch progress, profiles and settings are stored on your device, not on our servers.',
-  'Demo mode: accounts and subscriptions never leave your device — there is nothing to leak because nothing is sent.',
-  'Live mode: the server stores your email and subscription state only. Card details are handled entirely by Stripe or PayPal — Elitebox never sees your card number.',
-  'No ad networks, no tracking pixels, no selling of viewing data. Ever.',
-];
-
-const TERMS_POINTS = [
-  'Elitebox Premium is a recurring subscription at $5 USD per month. Cancel anytime from Account — access stays active until the end of the current paid period.',
-  'Where demo mode is labeled, checkout is simulated and no payment method is charged.',
-  'The Showcase catalog streams open films © Blender Foundation under CC-BY 3.0 (attribution below). Third-party addons are operated by their own authors, who are responsible for their content and rights.',
-  'One subscription covers every client — web, Windows, Android and TV — on the same account.',
-];
+const RELEASE_NOTES = ['p1', 'p2', 'p3', 'p4', 'p5'] as const;
+const PRIVACY_POINTS = ['p1', 'p2', 'p3', 'p4'] as const;
+const TERMS_POINTS = ['p1', 'p2', 'p3', 'p4'] as const;
 
 function LegalPanel({
   id,
@@ -501,6 +441,7 @@ function LegalPanel({
 }
 
 function Legal() {
+  const { t } = useT();
   return (
     <section className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-32 px-16 pb-96 md:px-24">
       <motion.div
@@ -510,13 +451,13 @@ function Legal() {
         transition={{ duration: 0.5, ease: OUT_EXPO }}
         className="flex flex-col gap-8"
       >
-        <Eyebrow>In writing</Eyebrow>
-        <h2 className="font-display text-display-l text-ink">What shipped. What we store. What you pay.</h2>
+        <Eyebrow>{t('marketing.support.legal.eyebrow')}</Eyebrow>
+        <h2 className="font-display text-display-l text-ink">{t('marketing.support.legal.title')}</h2>
       </motion.div>
       <div className="grid grid-cols-1 gap-24 lg:grid-cols-3">
-        <LegalPanel id="release-notes" icon={FileText} title="Release notes — v1.0.0" items={RELEASE_NOTES} delay={0} />
-        <LegalPanel id="privacy" icon={ShieldCheck} title="Privacy" items={PRIVACY_POINTS} delay={0.08} />
-        <LegalPanel id="terms" icon={ScrollText} title="Terms of service" items={TERMS_POINTS} delay={0.16} />
+        <LegalPanel id="release-notes" icon={FileText} title={t('marketing.support.legal.releaseNotes.title')} items={RELEASE_NOTES.map((p) => t(`marketing.support.legal.releaseNotes.${p}`))} delay={0} />
+        <LegalPanel id="privacy" icon={ShieldCheck} title={t('marketing.support.legal.privacy.title')} items={PRIVACY_POINTS.map((p) => t(`marketing.support.legal.privacy.${p}`))} delay={0.08} />
+        <LegalPanel id="terms" icon={ScrollText} title={t('marketing.support.legal.terms.title')} items={TERMS_POINTS.map((p) => t(`marketing.support.legal.terms.${p}`))} delay={0.16} />
       </div>
     </section>
   );
@@ -524,16 +465,10 @@ function Legal() {
 
 /* ── S6 — Contact + licenses ───────────────────────────────────────────── */
 
-const LICENSES = [
-  'Big Buck Bunny © Blender Foundation — blender.org',
-  'Sintel © Blender Foundation',
-  'Tears of Steel © Blender Foundation',
-  'Elephants Dream © Blender Foundation',
-  'Cosmos Laundromat © Blender Foundation',
-  'Caminandes, Agent 327, Sprite Fright, Charge, Wing It! © Blender Foundation',
-];
+const LICENSES = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6'] as const;
 
 function ContactAndLicenses() {
+  const { t } = useT();
   return (
     <section
       id="contact"
@@ -547,9 +482,9 @@ function ContactAndLicenses() {
         transition={{ duration: 0.55, ease: OUT_EXPO }}
       >
         <GlassPanel level={3} className="flex h-full flex-col gap-16 rounded-2xl p-32">
-          <h2 className="font-display text-title text-ink">Talk to a human.</h2>
+          <h2 className="font-display text-title text-ink">{t('marketing.support.contact.title')}</h2>
           <p className="text-caption text-muted">
-            Support is handled through the project's community channels.
+            {t('marketing.support.contact.sub')}
           </p>
           <div className="flex flex-col gap-12">
             <a
@@ -560,7 +495,7 @@ function ContactAndLicenses() {
             >
               <MessagesSquare size={20} strokeWidth={1.75} className="shrink-0 text-cyan" />
               <span className="flex flex-col">
-                <span className="font-semibold">GitHub Discussions</span>
+                <span className="font-semibold">{t('marketing.support.contact.github')}</span>
                 <span className="font-mono text-[12px] text-muted">github.com/elitebox/discuss</span>
               </span>
               <ArrowUpRight
@@ -577,9 +512,9 @@ function ContactAndLicenses() {
             >
               <Bug size={20} strokeWidth={1.75} className="shrink-0 text-cyan" />
               <span className="flex flex-col">
-                <span className="font-semibold">Issue tracker</span>
+                <span className="font-semibold">{t('marketing.support.contact.issues')}</span>
                 <span className="text-[12px] text-muted">
-                  Bug reports with a diagnostics export attached get fixed first.
+                  {t('marketing.support.contact.issuesNote')}
                 </span>
               </span>
               <ArrowUpRight
@@ -590,7 +525,7 @@ function ContactAndLicenses() {
             </a>
           </div>
           <p className="mt-auto text-micro uppercase tracking-[.08em] text-muted">
-            Never share your config export publicly — it contains your addon list.
+            {t('marketing.support.contact.warning')}
           </p>
         </GlassPanel>
       </motion.div>
@@ -605,16 +540,15 @@ function ContactAndLicenses() {
         transition={{ delay: 0.12, duration: 0.55, ease: OUT_EXPO }}
       >
         <GlassPanel level={2} className="flex h-full flex-col gap-16 rounded-2xl p-32">
-          <h2 className="font-display text-title text-ink">With gratitude.</h2>
+          <h2 className="font-display text-title text-ink">{t('marketing.support.licenses.title')}</h2>
           <p className="text-caption text-muted">
-            The Showcase catalog is built on open films released under Creative Commons Attribution
-            (CC-BY 3.0):
+            {t('marketing.support.licenses.intro')}
           </p>
           <ul className="flex flex-col gap-8">
             {LICENSES.map((l) => (
               <li key={l} className="flex items-start gap-10 text-caption text-muted">
                 <Captions size={14} strokeWidth={1.75} className="mt-2 shrink-0 text-cyan" />
-                {l}
+                {t(`marketing.support.licenses.${l}`)}
               </li>
             ))}
           </ul>
@@ -624,7 +558,7 @@ function ContactAndLicenses() {
             rel="noopener noreferrer"
             className="focusable group mt-auto inline-flex w-fit items-center gap-6 rounded-lg text-caption font-semibold text-cyan hover:underline"
           >
-            Full license texts
+            {t('marketing.support.licenses.fullTexts')}
             <ArrowUpRight
               size={16}
               strokeWidth={1.75}

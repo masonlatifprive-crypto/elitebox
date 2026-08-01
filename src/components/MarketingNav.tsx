@@ -9,18 +9,21 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, Search, User, X } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
+import LanguageSwitch from '@/components/LanguageSwitch';
 import { openCommandPalette } from '@/components/CommandPalette';
 import { ButtonPrimary, spring } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
-  { to: '/', label: 'Movies & Shows', end: true },
-  { to: '/sports', label: 'Live Sports' },
-  { to: '/store', label: 'Store' },
-  { to: '/support', label: 'Support' },
+  { to: '/', labelKey: 'common.nav.movies', end: true },
+  { to: '/sports', labelKey: 'common.nav.sports' },
+  { to: '/store', labelKey: 'common.nav.store' },
+  { to: '/support', labelKey: 'common.nav.support' },
 ] as const;
 
 export default function MarketingNav() {
+  const { t } = useT();
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,11 +69,11 @@ export default function MarketingNav() {
               ? 'glass-solid py-8 pl-16 pr-8 shadow-panel'
               : 'glass-3 py-12 pl-24 pr-12 border-white/10',
           )}
-          aria-label="Marketing"
+          aria-label={t('common.nav.navLabel')}
         >
           <Link
             to="/"
-            aria-label="Elitebox home"
+            aria-label={t('common.nav.home')}
             className="focusable rounded-full shrink-0"
           >
             <motion.span
@@ -98,7 +101,7 @@ export default function MarketingNav() {
               >
                 {({ isActive }) => (
                   <>
-                    {l.label}
+                    {t(l.labelKey)}
                     {isActive && (
                       <motion.span
                         layoutId="nav-beam"
@@ -116,8 +119,8 @@ export default function MarketingNav() {
           <div className="flex items-center gap-8">
             <button
               type="button"
-              aria-label="Open command palette"
-              title="Command palette"
+              aria-label={t('common.nav.openCommandPalette')}
+              title={t('common.nav.commandPalette')}
               onClick={openCommandPalette}
               className="focusable hidden sm:flex items-center gap-8 rounded-full px-12 py-8 text-muted hover:text-ink hover:bg-white/[.06] transition-colors cursor-pointer"
             >
@@ -128,17 +131,18 @@ export default function MarketingNav() {
             </button>
             <Link
               to="/app/profiles"
-              aria-label="Profiles"
+              aria-label={t('common.nav.profiles')}
               className="focusable hidden sm:flex rounded-full p-8 text-muted hover:text-ink hover:bg-white/[.06] transition-colors"
             >
               <User size={20} strokeWidth={1.75} />
             </Link>
+            <LanguageSwitch className="hidden sm:flex" />
             <ButtonPrimary to="/app" className="hidden sm:inline-flex px-20 py-8">
-              Open App
+              {t('common.nav.openApp')}
             </ButtonPrimary>
             <button
               type="button"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? t('common.nav.closeMenu') : t('common.nav.openMenu')}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
               className="focusable md:hidden rounded-full p-8 text-ink hover:bg-white/[.06] cursor-pointer"
@@ -185,7 +189,7 @@ export default function MarketingNav() {
                     )
                   }
                 >
-                  {l.label}
+                  {t(l.labelKey)}
                 </NavLink>
               </motion.div>
             ))}
@@ -196,7 +200,15 @@ export default function MarketingNav() {
               transition={{ delay: 0.06 * LINKS.length, duration: 0.25 }}
               className="mt-16"
             >
-              <ButtonPrimary to="/app">Open App</ButtonPrimary>
+              <ButtonPrimary to="/app">{t('common.nav.openApp')}</ButtonPrimary>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ delay: 0.06 * (LINKS.length + 1), duration: 0.25 }}
+            >
+              <LanguageSwitch />
             </motion.div>
           </motion.div>
         )}

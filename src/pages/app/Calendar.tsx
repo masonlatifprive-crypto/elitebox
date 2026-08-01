@@ -22,11 +22,12 @@ import {
   releaseMonthKey,
 } from '@/lib/releases';
 import { ButtonGhost, ButtonNeon, Eyebrow, GlassPanel, spring, toast } from '@/components/ui-elite';
-import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
 /* ── live countdown (ticking every second) ─────────────────────────────── */
 
 function Countdown({ iso }: { iso: string }) {
+  const { t } = useT();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -34,16 +35,16 @@ function Countdown({ iso }: { iso: string }) {
   }, []);
   const c = countdownTo(iso, now);
   if (c.arrived) {
-    return <span className="font-mono text-[12px] text-ok">Premiered</span>;
+    return <span className="font-mono text-[12px] text-ok">{t('app.calendar.premiered')}</span>;
   }
   const cells: Array<[number, string]> = [
-    [c.days, 'd'],
-    [c.hours, 'h'],
-    [c.minutes, 'm'],
-    [c.seconds, 's'],
+    [c.days, t('app.calendar.unitDay')],
+    [c.hours, t('app.calendar.unitHour')],
+    [c.minutes, t('app.calendar.unitMinute')],
+    [c.seconds, t('app.calendar.unitSecond')],
   ];
   return (
-    <span className="flex items-center gap-8" aria-label={`Premieres in ${c.days} days ${c.hours} hours`}>
+    <span className="flex items-center gap-8" aria-label={t('app.calendar.premieresIn', { days: c.days, hours: c.hours })}>
       {cells.map(([v, unit]) => (
         <span key={unit} className="glass-1 rounded-md px-8 py-4 font-mono text-[12px] text-cyan">
           {String(v).padStart(2, '0')}
@@ -57,6 +58,7 @@ function Countdown({ iso }: { iso: string }) {
 /* ── premiere card ─────────────────────────────────────────────────────── */
 
 function PremiereCard({ item }: { item: MetaItem }) {
+  const { t } = useT();
   const watchlist = useLibrary((s) => s.watchlist);
   const toggleWatchlist = useLibrary((s) => s.toggleWatchlist);
   const saved = watchlist.includes(item.id);
@@ -73,18 +75,18 @@ function PremiereCard({ item }: { item: MetaItem }) {
       <Link
         to={`/app/detail/${item.type}/${item.id}`}
         className="focusable relative block aspect-video overflow-hidden rounded-t-2xl"
-        aria-label={`${item.name} — details`}
+        aria-label={t('app.calendar.detailsAria', { name: item.name })}
       >
         <img
           src={item.backdrop ?? item.poster}
-          alt={`${item.name} key art`}
+          alt={t('app.calendar.keyArtAlt', { name: item.name })}
           loading="lazy"
           decoding="async"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
         />
         <span className="absolute left-12 top-12 inline-flex items-center gap-6 rounded-full bg-deep/70 px-10 py-5 text-micro uppercase text-cyan ring-1 ring-cyan/40 backdrop-blur-sm">
           <Sparkles size={11} strokeWidth={1.75} />
-          {item.releaseLabel ?? 'Coming soon'}
+          {item.releaseLabel ?? t('app.poster.comingSoon')}
         </span>
       </Link>
       <div className="flex flex-col gap-12 p-20">
@@ -105,10 +107,10 @@ function PremiereCard({ item }: { item: MetaItem }) {
           ) : (
             <span
               className="inline-flex shrink-0 items-center gap-6 rounded-full border border-white/[.10] px-10 py-5 font-mono text-[11px] text-muted"
-              title="The premiere date has not been officially announced"
+              title={t('app.calendar.tbaTitle')}
             >
               <CalendarClock size={12} strokeWidth={1.75} />
-              DATE TBA
+              {t('app.calendar.dateTba')}
             </span>
           )}
         </div>
@@ -117,24 +119,26 @@ function PremiereCard({ item }: { item: MetaItem }) {
           <ButtonNeon
             onClick={() => {
               toggleWatchlist(item.id);
-              toast(saved ? `${item.name} removed from Watchlist` : `${item.name} — we'll flag it the moment it lands`);
+              toast(saved
+                ? t('app.calendar.toastUntracked', { name: item.name })
+                : t('app.calendar.toastTracked', { name: item.name }));
             }}
             aria-pressed={saved}
             className="px-14 py-7 text-micro"
           >
             {saved ? <BookmarkCheck size={14} strokeWidth={1.75} /> : <Bookmark size={14} strokeWidth={1.75} />}
-            {saved ? 'Tracking' : 'Remind me'}
+            {saved ? t('app.calendar.tracking') : t('app.calendar.remindMe')}
           </ButtonNeon>
           <ButtonGhost
             onClick={() => {
-              if (downloadIcs(item)) toast('Calendar file downloaded');
+              if (downloadIcs(item)) toast(t('app.calendar.icsDownloaded'));
             }}
             disabled={!dated}
-            className={cn('px-14 py-7 text-micro', !dated && 'opacity-40 pointer-events-none')}
-            aria-label={dated ? `Export ${item.name} premiere to calendar` : 'Calendar export unlocks when the date is announced'}
+            className="px-14 py-7 text-micro"
+            aria-label={dated ? t('app.calendar.exportAria', { name: item.name }) : t('app.calendar.exportLockedAria')}
           >
             <CalendarPlus size={14} strokeWidth={1.75} />
-            {dated ? 'Add to calendar' : 'Add to calendar — needs a date'}
+            {dated ? t('app.calendar.addToCalendar') : t('app.calendar.addToCalendarNeedsDate')}
           </ButtonGhost>
         </div>
       </div>
@@ -145,13 +149,14 @@ function PremiereCard({ item }: { item: MetaItem }) {
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function Calendar() {
+  const { t } = useT();
   const watchlist = useLibrary((s) => s.watchlist);
 
   /* arrival reminders: watchlisted premieres whose confirmed date passed */
   useEffect(() => {
     const arrived = drainArrivedReleases(watchlist, findShowcaseMeta);
     for (const item of arrived) {
-      toast(`${item.name} has premiered — it's on your Board now`, 'ok');
+      toast(t('app.calendar.arrivedToast', { name: item.name }), 'ok');
     }
     // watchlist identity changes don't re-fire arrivals (seen-set guards)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,21 +180,19 @@ export default function Calendar() {
   return (
     <div className="flex flex-col gap-40 pb-64 pt-32">
       <header className="flex flex-col gap-12">
-        <Eyebrow>Release calendar</Eyebrow>
-        <h1 className="font-display text-display-xl text-ink">New & upcoming, one timeline.</h1>
+        <Eyebrow>{t('app.calendar.eyebrow')}</Eyebrow>
+        <h1 className="font-display text-display-xl text-ink">{t('app.calendar.headline')}</h1>
         <p className="max-w-[62ch] text-body text-muted">
-          The freshest titles across your installed catalogs — tracked against officially
-          announced dates, never invented ones. Watchlist anything and Elitebox flags it
-          the moment a confirmed date lands.
+          {t('app.calendar.intro')}
         </p>
         <div className="flex flex-wrap items-center gap-12 text-caption text-muted">
           <span className="inline-flex items-center gap-6">
             <Bell size={13} strokeWidth={1.75} className="text-cyan" />
-            {upcoming.length} fresh title{upcoming.length === 1 ? '' : 's'} across your catalogs
+            {t('app.calendar.freshCount', { count: upcoming.length })}
           </span>
           <span className="inline-flex items-center gap-6">
             <BellRing size={13} strokeWidth={1.75} className="text-cyan" />
-            {datedCount} with confirmed dates
+            {t('app.calendar.datedCount', { count: datedCount })}
           </span>
         </div>
       </header>
@@ -197,7 +200,7 @@ export default function Calendar() {
       {groups.map(([key, items]) => (
         <section key={key} className="flex flex-col gap-16">
           <h2 className="font-display text-title text-ink">
-            {key === 'tba' ? 'Across your catalogs' : monthLabel(key)}
+            {key === 'tba' ? t('app.calendar.acrossCatalogs') : monthLabel(key)}
           </h2>
           <div className="grid gap-20 md:grid-cols-2">
             {items.map((item) => (
@@ -208,11 +211,9 @@ export default function Calendar() {
       ))}
 
       <GlassPanel className="flex flex-col gap-8 p-24">
-        <span className="text-micro uppercase text-muted">How tracking works</span>
+        <span className="text-micro uppercase text-muted">{t('app.calendar.trackingTitle')}</span>
         <p className="text-caption text-muted">
-          Reminders live on this device: when a tracked premiere&apos;s confirmed date passes,
-          the title surfaces on your Board with an arrival note. Install catalog addons to see
-          their dated releases flow into this calendar automatically as they announce them.
+          {t('app.calendar.trackingBody')}
         </p>
       </GlassPanel>
     </div>

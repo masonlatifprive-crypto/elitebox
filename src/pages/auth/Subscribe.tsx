@@ -26,20 +26,15 @@ import { LogoMark } from '@/components/Logo';
 import { hasAccessFor, useAuth } from '@/lib/auth';
 import type { PayMethod } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
-const FEATURES = [
-  'Every movie and series in the catalog',
-  'HD and 4K playback where the source provides it',
-  'Web, Windows, Android and Android TV — one subscription',
-  'Watch progress and library sync across your devices',
-  'Cancel anytime. Access runs to the end of your paid month.',
-];
+const FEATURES = ['f1', 'f2', 'f3', 'f4', 'f5'] as const;
 
-function formatDate(iso?: string): string {
+function formatDate(iso: string | undefined, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 function Spinner() {
@@ -53,6 +48,7 @@ function Spinner() {
 
 /** $0 → $5 count-up, 500ms out-expo, starts +200ms (disabled for reduced motion). */
 function PriceCountUp() {
+  const { t } = useT();
   const reduce = useReducedMotion();
   const [value, setValue] = useState(reduce ? 5 : 0);
   useEffect(() => {
@@ -73,7 +69,7 @@ function PriceCountUp() {
       <span className="font-display text-[2.75rem] leading-none tracking-[-0.04em] md:text-display-2xl">
         <span className="text-chrome">${value}</span>
       </span>
-      <span className="font-display text-title text-muted">/month</span>
+      <span className="font-display text-title text-muted">{t('marketing.auth.subscribe.perMonth')}</span>
     </p>
   );
 }
@@ -111,6 +107,7 @@ function SuccessEmblem({ demo }: { demo: boolean }) {
 }
 
 export default function Subscribe() {
+  const { t, locale } = useT();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const user = useAuth((s) => s.user);
@@ -136,7 +133,7 @@ export default function Subscribe() {
   useEffect(() => {
     if (status === 'success' && subscribed && !toastFired.current) {
       toastFired.current = true;
-      toast('Premium active. The whole catalog is open.');
+      toast(t('marketing.auth.subscribe.toastActive'));
     }
   }, [status, subscribed]);
 
@@ -153,7 +150,7 @@ export default function Subscribe() {
         if (res.ok) {
           setParams(next ? { status: 'success', next } : { status: 'success' }, { replace: true });
         } else {
-          toast.error("Couldn't open checkout. Try again in a moment.");
+          toast.error(t('marketing.auth.subscribe.toastCheckoutFail'));
         }
       } else {
         const res = await subscribe(method);
@@ -162,7 +159,7 @@ export default function Subscribe() {
         if (res.ok && hasAccessFor(useAuth.getState().subscription)) {
           setParams(next ? { status: 'success', next } : { status: 'success' }, { replace: true });
         } else if (!res.ok) {
-          toast('Payment service is unreachable. Nothing was charged — try again.');
+          toast(t('marketing.auth.subscribe.toastUnreachable'));
         }
       }
     } finally {
@@ -178,19 +175,19 @@ export default function Subscribe() {
 
   const ctaLabel = processing
     ? demoMode
-      ? 'Processing demo payment…'
+      ? t('marketing.auth.subscribe.cta.processingDemo')
       : method === 'paypal'
-        ? 'Redirecting to PayPal…'
-        : 'Opening secure checkout…'
+        ? t('marketing.auth.subscribe.cta.redirectPaypal')
+        : t('marketing.auth.subscribe.cta.openingCheckout')
     : demoMode
-      ? 'Subscribe — Demo'
+      ? t('marketing.auth.subscribe.cta.subscribeDemo')
       : method === 'paypal'
-        ? 'Continue with PayPal'
-        : 'Subscribe — $4.99/month';
+        ? t('marketing.auth.subscribe.cta.continuePaypal')
+        : t('marketing.auth.subscribe.cta.subscribe');
 
   const tiles: { id: PayMethod; label: string; caption: string; Icon: typeof CreditCard }[] = [
-    { id: 'card', label: 'Card', caption: 'Secure checkout by Stripe', Icon: CreditCard },
-    { id: 'paypal', label: 'PayPal', caption: 'Pay with your PayPal account', Icon: Wallet },
+    { id: 'card', label: t('marketing.auth.subscribe.pay.card'), caption: t('marketing.auth.subscribe.pay.cardCaption'), Icon: CreditCard },
+    { id: 'paypal', label: t('marketing.auth.subscribe.pay.paypal'), caption: t('marketing.auth.subscribe.pay.paypalCaption'), Icon: Wallet },
   ];
 
   return (
@@ -211,16 +208,15 @@ export default function Subscribe() {
             transition={spring.smooth}
           >
             <XCircle size={48} strokeWidth={1.75} className="text-muted" />
-            <h1 className="font-display text-display-l text-ink">Checkout canceled.</h1>
+            <h1 className="font-display text-display-l text-ink">{t('marketing.auth.subscribe.canceled.title')}</h1>
             <p className="max-w-[46ch] text-caption text-muted">
-              No charge was made. The free catalog is always open, and Premium is here whenever
-              you're ready.
+              {t('marketing.auth.subscribe.canceled.copy')}
             </p>
             <div className="flex w-full flex-col gap-12 sm:flex-row sm:justify-center">
               <ButtonPrimary onClick={resetToPlan} className="py-12">
-                Try again
+                {t('marketing.auth.subscribe.canceled.tryAgain')}
               </ButtonPrimary>
-              <ButtonGhost to="/app">Back to browsing</ButtonGhost>
+              <ButtonGhost to="/app">{t('marketing.auth.subscribe.canceled.back')}</ButtonGhost>
             </div>
           </motion.div>
         ) : status === 'success' && subscribed ? (
@@ -233,32 +229,31 @@ export default function Subscribe() {
           >
             <SuccessEmblem demo={Boolean(subscription?.demo)} />
             <h1 className="font-display text-display-l">
-              <span className="text-chrome">You're in.</span>
+              <span className="text-chrome">{t('marketing.auth.subscribe.success.title')}</span>
             </h1>
             <p className="max-w-[46ch] text-caption text-muted">
-              Elitebox Premium is active on this account. Every movie and series in the catalog is
-              open — press play on anything.
+              {t('marketing.auth.subscribe.success.copy')}
             </p>
             {subscription?.demo && (
               <p className="text-micro uppercase text-warn">
-                Demo mode — no real charge. Premium is active locally on this device.
+                {t('marketing.auth.subscribe.success.demo')}
               </p>
             )}
             <div className="flex flex-wrap items-center justify-center gap-12 text-caption">
               <span className="glass-1 rounded-full px-12 py-6 font-mono text-micro uppercase text-ink">
-                Premium — $4.99/month
+                {t('marketing.auth.subscribe.success.plan')}
               </span>
               {subscription?.renewsAt && (
                 <span className="text-muted">
-                  Renews <span className="font-mono">{formatDate(subscription.renewsAt)}</span>
+                  {t('marketing.auth.subscribe.success.renews')} <span className="font-mono">{formatDate(subscription.renewsAt, locale)}</span>
                 </span>
               )}
             </div>
             <div className="flex w-full flex-col gap-12 sm:flex-row sm:justify-center">
               <ButtonPrimary to={startWatchingTarget} className="py-12">
-                Start watching
+                {t('marketing.auth.subscribe.success.start')}
               </ButtonPrimary>
-              <ButtonNeon to="/app/account">View account</ButtonNeon>
+              <ButtonNeon to="/app/account">{t('marketing.auth.subscribe.success.account')}</ButtonNeon>
             </div>
           </motion.div>
         ) : subscribed ? (
@@ -271,13 +266,13 @@ export default function Subscribe() {
           >
             <CheckCircle2 size={48} strokeWidth={1.75} className="text-cyan" />
             <h1 className="font-display text-display-l text-ink">
-              Premium is already active on this account.
+              {t('marketing.auth.subscribe.active.title')}
             </h1>
             <div className="flex w-full flex-col gap-12 sm:flex-row sm:justify-center">
               <ButtonPrimary to="/app" className="py-12">
-                Open the app
+                {t('marketing.auth.subscribe.active.open')}
               </ButtonPrimary>
-              <ButtonGhost to="/app/account">Manage subscription</ButtonGhost>
+              <ButtonGhost to="/app/account">{t('marketing.auth.subscribe.active.manage')}</ButtonGhost>
             </div>
           </motion.div>
         ) : (
@@ -289,13 +284,13 @@ export default function Subscribe() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
-              Elitebox Premium
+              {t('marketing.auth.subscribe.hero.eyebrow')}
             </motion.p>
 
             {!user && (
               <p className="glass-1 mx-auto inline-flex items-center gap-8 rounded-full px-12 py-6 text-caption text-ink">
                 <User size={14} strokeWidth={1.75} className="text-cyan" />
-                You'll create a free account first.
+                {t('marketing.auth.subscribe.hero.accountFirst')}
               </p>
             )}
 
@@ -309,7 +304,7 @@ export default function Subscribe() {
               <div className="glass-3 flex flex-col gap-24 rounded-2xl p-28 md:p-40">
                 <PriceCountUp />
                 <p className="text-center text-body-l text-ink">
-                  Every movie and series in the catalog. Cancel anytime.
+                  {t('marketing.auth.subscribe.hero.tagline')}
                 </p>
 
                 <ul className="flex flex-col gap-12 self-start">
@@ -322,7 +317,7 @@ export default function Subscribe() {
                       transition={reduce ? { duration: 0.15 } : { delay: 0.3 + i * 0.05, duration: 0.3 }}
                     >
                       <Check size={16} strokeWidth={2} className="mt-2 shrink-0 text-cyan" />
-                      <span>{f}</span>
+                      <span>{t(`marketing.auth.subscribe.${f}`)}</span>
                     </motion.li>
                   ))}
                 </ul>
@@ -334,13 +329,13 @@ export default function Subscribe() {
                     to={`/register?next=${encodeURIComponent(next ? `/subscribe?next=${encodeURIComponent(next)}` : '/subscribe')}`}
                     className="w-full py-12"
                   >
-                    Create account &amp; continue
+                    {t('marketing.auth.subscribe.hero.createContinue')}
                   </ButtonPrimary>
                 ) : (
                   <div className="flex flex-col gap-16">
                     {/* payment method selector */}
-                    <div role="radiogroup" aria-label="Pay with">
-                      <p className="mb-12 text-micro uppercase text-muted">Pay with</p>
+                    <div role="radiogroup" aria-label={t('marketing.auth.subscribe.pay.ariaLabel')}>
+                      <p className="mb-12 text-micro uppercase text-muted">{t('marketing.auth.subscribe.pay.label')}</p>
                       <div className="grid grid-cols-1 gap-12 min-[400px]:grid-cols-2">
                         {tiles.map(({ id, label, caption, Icon }) => {
                           const selected = method === id;
@@ -383,7 +378,7 @@ export default function Subscribe() {
                     {demoMode && (
                       <p className="glass-1 mx-auto inline-flex items-center gap-8 rounded-full px-12 py-6 text-micro uppercase text-warn">
                         <FlaskConical size={14} strokeWidth={1.75} />
-                        Demo mode — no real charge
+                        {t('marketing.auth.subscribe.demoBadge')}
                       </p>
                     )}
 
@@ -410,14 +405,14 @@ export default function Subscribe() {
             >
               {!demoMode && (
                 <span className="inline-flex items-center gap-8">
-                  <Lock size={16} strokeWidth={1.75} /> Payments processed by Stripe or PayPal
+                  <Lock size={16} strokeWidth={1.75} /> {t('marketing.auth.subscribe.trust.payments')}
                 </span>
               )}
               <span className="inline-flex items-center gap-8">
-                <Shield size={16} strokeWidth={1.75} /> Elitebox never sees your card number
+                <Shield size={16} strokeWidth={1.75} /> {t('marketing.auth.subscribe.trust.card')}
               </span>
               <span className="inline-flex items-center gap-8">
-                <RefreshCcw size={16} strokeWidth={1.75} /> Cancel anytime from Account
+                <RefreshCcw size={16} strokeWidth={1.75} /> {t('marketing.auth.subscribe.trust.cancel')}
               </span>
             </motion.div>
 
@@ -429,12 +424,11 @@ export default function Subscribe() {
               transition={{ delay: 0.35, duration: 0.35 }}
             >
               <p className="max-w-[46ch] text-micro uppercase text-muted/70">
-                Recurring monthly billing through your chosen payment provider. Cancel anytime —
-                Premium stays active until the end of the current paid period. Prices in USD.
+                {t('marketing.auth.subscribe.fineprint')}
               </p>
               {demoMode && (
                 <p className="max-w-[46ch] text-micro uppercase text-muted/70">
-                  Demo mode: checkout is simulated and no payment method is charged.
+                  {t('marketing.auth.subscribe.fineprintDemo')}
                 </p>
               )}
               <button
@@ -442,7 +436,7 @@ export default function Subscribe() {
                 onClick={() => navigate('/app')}
                 className="focusable rounded-sm text-caption text-muted transition-colors hover:text-ink"
               >
-                Not ready? Keep browsing the free catalog <ArrowRight size={14} strokeWidth={1.75} className="inline" />
+                {t('marketing.auth.subscribe.keepBrowsing')} <ArrowRight size={14} strokeWidth={1.75} className="inline" />
               </button>
             </motion.div>
           </>

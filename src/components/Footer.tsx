@@ -5,30 +5,32 @@
 import { Link } from 'react-router';
 import { Globe, Monitor, Smartphone, Tv } from 'lucide-react';
 import Logo, { LogoMark } from '@/components/Logo';
+import LanguageSwitch from '@/components/LanguageSwitch';
+import { useT } from '@/i18n';
 
 const EXPLORE = [
-  { to: '/', label: 'Movies & Shows' },
-  { to: '/sports', label: 'Live Sports' },
-  { to: '/store', label: 'Store' },
-  { to: '/support', label: 'Support' },
-];
+  { to: '/', labelKey: 'common.nav.movies' },
+  { to: '/sports', labelKey: 'common.nav.sports' },
+  { to: '/store', labelKey: 'common.nav.store' },
+  { to: '/support', labelKey: 'common.nav.support' },
+] as const;
 
 const PRODUCT = [
-  { to: '/features', label: 'Features' },
-  { to: '/downloads', label: 'Downloads' },
-  { to: '/technology', label: 'Technology' },
-  { to: '/developers', label: 'Addon SDK' },
-  { to: '/updates', label: 'Updates & Status' },
-  { to: '/support', label: 'Help center' },
-];
+  { to: '/features', labelKey: 'common.footer.features' },
+  { to: '/downloads', labelKey: 'common.footer.downloads' },
+  { to: '/technology', labelKey: 'common.footer.technology' },
+  { to: '/developers', labelKey: 'common.footer.addonSdk' },
+  { to: '/updates', labelKey: 'common.footer.updatesStatus' },
+  { to: '/support', labelKey: 'common.footer.helpCenter' },
+] as const;
 
 const LEGAL = [
-  { to: '/privacy', label: 'Privacy' },
-  { to: '/terms', label: 'Terms' },
-  { to: '/cookies', label: 'Cookies' },
-  { to: '/security', label: 'Security' },
-  { to: '/support#licenses', label: 'Open Content Licenses' },
-];
+  { to: '/privacy', labelKey: 'common.footer.privacy' },
+  { to: '/terms', labelKey: 'common.footer.terms' },
+  { to: '/cookies', labelKey: 'common.footer.cookies' },
+  { to: '/security', labelKey: 'common.footer.security' },
+  { to: '/support#licenses', labelKey: 'common.footer.openContentLicenses' },
+] as const;
 
 const PLATFORMS = [
   { icon: Monitor, label: 'Windows' },
@@ -38,6 +40,7 @@ const PLATFORMS = [
 ];
 
 export default function Footer() {
+  const { t } = useT();
   return (
     <footer className="relative z-10 mt-96 bg-deep/80">
       {/* top hairline gradient */}
@@ -48,7 +51,7 @@ export default function Footer() {
       <div className="mx-auto max-w-[1280px] px-16 md:px-24 py-64 grid grid-cols-2 md:grid-cols-4 gap-32">
         <div className="col-span-2 md:col-span-1 flex flex-col gap-16">
           <LogoMark height={36} className="self-start" />
-          <p className="text-caption text-muted max-w-[28ch]">Everything you watch. One place.</p>
+          <p className="text-caption text-muted max-w-[28ch]">{t('common.footer.tagline')}</p>
           <div className="flex flex-wrap gap-8">
             {PLATFORMS.map((p) => (
               <span
@@ -62,35 +65,33 @@ export default function Footer() {
           </div>
         </div>
 
-        <nav aria-label="Explore" className="flex flex-col gap-12">
-          <h3 className="text-micro uppercase text-muted">Explore</h3>
+        <nav aria-label={t('common.footer.explore')} className="flex flex-col gap-12">
+          <h3 className="text-micro uppercase text-muted">{t('common.footer.explore')}</h3>
           {EXPLORE.map((l) => (
-            <Link key={l.label} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
-              {l.label}
+            <Link key={l.labelKey} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
+              {t(l.labelKey)}
             </Link>
           ))}
         </nav>
 
-        <nav aria-label="Product" className="flex flex-col gap-12">
-          <h3 className="text-micro uppercase text-muted">Product</h3>
+        <nav aria-label={t('common.footer.product')} className="flex flex-col gap-12">
+          <h3 className="text-micro uppercase text-muted">{t('common.footer.product')}</h3>
           {PRODUCT.map((l) => (
-            <Link key={l.label} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
-              {l.label}
+            <Link key={l.labelKey} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
+              {t(l.labelKey)}
             </Link>
           ))}
         </nav>
 
-        <nav aria-label="Legal" className="flex flex-col gap-12">
-          <h3 className="text-micro uppercase text-muted">Legal</h3>
+        <nav aria-label={t('common.footer.legal')} className="flex flex-col gap-12">
+          <h3 className="text-micro uppercase text-muted">{t('common.footer.legal')}</h3>
           {LEGAL.map((l) => (
-            <Link key={l.label} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
-              {l.label}
+            <Link key={l.labelKey} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
+              {t(l.labelKey)}
             </Link>
           ))}
           <p className="text-[11px] leading-relaxed text-muted/70 max-w-[30ch]">
-            Showcase films © Blender Foundation, CC-BY 3.0 — Big Buck Bunny, Sintel, Tears of
-            Steel, Elephants Dream, Cosmos Laundromat, Caminandes 1–3, Agent 327, Sprite Fright,
-            Charge, Wing It!
+            {t('common.footer.credits')}
           </p>
         </nav>
       </div>
@@ -98,11 +99,14 @@ export default function Footer() {
       <div className="border-t border-white/[.06]">
         <div className="mx-auto max-w-[1280px] px-16 md:px-24 py-24 flex flex-wrap items-center justify-between gap-16">
           <p className="text-caption text-muted">
-            © 2026 <Logo size={13} className="mx-2" /> Movies, shows, and live channels. One place.
+            © 2026 <Logo size={13} className="mx-2" /> {t('common.footer.bottomLine')}
           </p>
-          <span className="glass-1 rounded-full px-12 py-4 font-mono text-[11px] text-cyan">
-            v1.0.0
-          </span>
+          <div className="flex items-center gap-8">
+            <LanguageSwitch />
+            <span className="glass-1 rounded-full px-12 py-4 font-mono text-[11px] text-cyan">
+              v1.0.0
+            </span>
+          </div>
         </div>
       </div>
     </footer>

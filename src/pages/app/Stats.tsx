@@ -22,6 +22,7 @@ import {
 import { ButtonNeon, EmptyState, GlassPanel, spring } from '@/components/ui-elite';
 import { useLibrary } from '@/lib/store';
 import { findShowcaseMeta } from '@/data/showcase';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
@@ -115,6 +116,8 @@ const SIGNATURE_BAR = 'linear-gradient(90deg,#7CD9EC,#8B7CE8,#A99BF0)';
 const GENRE_STOPS = Array.from({ length: 6 }, () => SIGNATURE_BAR);
 
 function GenreBar({ genre, minutes, pct, top, index }: { genre: string; minutes: number; pct: number; top: boolean; index: number }) {
+  const { t } = useT();
+  const topLabel = t('app.stats.topOrbit');
   const reduce = useReducedMotion();
   return (
     <motion.div
@@ -144,7 +147,7 @@ function GenreBar({ genre, minutes, pct, top, index }: { genre: string; minutes:
       </span>
       {top && (
         <span className="hidden shrink-0 rounded-full bg-signature px-8 py-1 text-micro uppercase text-deep lg:block">
-          Top orbit
+          {topLabel}
         </span>
       )}
     </motion.div>
@@ -155,14 +158,15 @@ function GenreBar({ genre, minutes, pct, top, index }: { genre: string; minutes:
 
 interface Milestone {
   id: string;
-  name: string;
-  condition: string;
+  nameKey: string;
+  conditionKey: string;
   icon: React.ComponentType<{ size?: number | string; className?: string; strokeWidth?: number | string }>;
   earned: boolean;
   progress: string; // honest progress readout
 }
 
 function MilestoneChip({ m, index }: { m: Milestone; index: number }) {
+  const { t } = useT();
   const Icon = m.earned ? m.icon : Lock;
   return (
     <motion.div
@@ -178,8 +182,8 @@ function MilestoneChip({ m, index }: { m: Milestone; index: number }) {
       <span className={cn('glass-2 flex h-40 w-40 items-center justify-center rounded-full', m.earned ? 'text-cyan' : 'text-muted')}>
         <Icon size={18} strokeWidth={1.75} />
       </span>
-      <span className="text-caption font-semibold text-ink">{m.name}</span>
-      <span className="text-micro uppercase text-muted">{m.condition}</span>
+      <span className="text-caption font-semibold text-ink">{t(m.nameKey)}</span>
+      <span className="text-micro uppercase text-muted">{t(m.conditionKey)}</span>
       <span className={cn('font-mono text-[11px]', m.earned ? 'text-ok' : 'text-muted')}>
         {m.progress}
       </span>
@@ -190,6 +194,7 @@ function MilestoneChip({ m, index }: { m: Milestone; index: number }) {
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function StatsPage() {
+  const { t } = useT();
   const { continueWatching, watchlist, favorites } = useLibrary();
 
   const data = useMemo(() => {
@@ -267,54 +272,58 @@ export default function StatsPage() {
   const milestones: Milestone[] = [
     {
       id: 'first-stream',
-      name: 'First Stream',
-      condition: 'Start watching anything',
+      nameKey: 'app.stats.msFirstStreamName',
+      conditionKey: 'app.stats.msFirstStreamCond',
       icon: Play,
       earned: data.inProgress > 0,
-      progress: data.inProgress > 0 ? `${data.inProgress} title${data.inProgress > 1 ? 's' : ''} started` : '0 titles started',
+      progress: data.inProgress > 0
+        ? t('app.stats.progressTitlesStarted', { count: data.inProgress })
+        : t('app.stats.progressNoTitles'),
     },
     {
       id: 'marathon',
-      name: 'Marathon',
-      condition: '3h watched in one day',
+      nameKey: 'app.stats.msMarathonName',
+      conditionKey: 'app.stats.msMarathonCond',
       icon: Rocket,
       earned: data.maxDayMin >= 180,
       progress:
         data.maxDayMin >= 180
-          ? `${Math.round(data.maxDayMin / 60)}h best day`
-          : `best day ${Math.round(data.maxDayMin)}m of 180m`,
+          ? t('app.stats.progressBestDayHours', { h: Math.round(data.maxDayMin / 60) })
+          : t('app.stats.progressBestDayMins', { m: Math.round(data.maxDayMin) }),
     },
     {
       id: 'explorer',
-      name: 'Explorer',
-      condition: 'Watch 5 different genres',
+      nameKey: 'app.stats.msExplorerName',
+      conditionKey: 'app.stats.msExplorerCond',
       icon: Orbit,
       earned: data.distinctGenres >= 5,
-      progress: `${data.distinctGenres} of 5 genres`,
+      progress: t('app.stats.progressGenres', { n: data.distinctGenres }),
     },
     {
       id: 'collector',
-      name: 'Collector',
-      condition: 'Save 10 titles to your library',
+      nameKey: 'app.stats.msCollectorName',
+      conditionKey: 'app.stats.msCollectorCond',
       icon: Bookmark,
       earned: data.savedCount >= 10,
-      progress: `${data.savedCount} of 10 saved`,
+      progress: t('app.stats.progressSaved', { n: data.savedCount }),
     },
     {
       id: 'loyal-orbit',
-      name: 'Loyal Orbit',
-      condition: '7-day watch streak',
+      nameKey: 'app.stats.msLoyalName',
+      conditionKey: 'app.stats.msLoyalCond',
       icon: Flame,
       earned: data.longest >= 7,
-      progress: data.longest >= 7 ? `${data.longest}-day best` : `best ${data.longest} of 7 days`,
+      progress: data.longest >= 7
+        ? t('app.stats.progressDayBest', { n: data.longest })
+        : t('app.stats.progressDayOf', { n: data.longest }),
     },
     {
       id: 'night-owl',
-      name: 'Night Owl',
-      condition: 'Watch between 2–5 AM',
+      nameKey: 'app.stats.msOwlName',
+      conditionKey: 'app.stats.msOwlCond',
       icon: Moon,
       earned: data.nightOwl,
-      progress: data.nightOwl ? 'Logged after 2 AM' : 'No 2–5 AM sessions yet',
+      progress: data.nightOwl ? t('app.stats.progressOwlEarned') : t('app.stats.progressOwlNone'),
     },
   ];
 
@@ -330,16 +339,16 @@ export default function StatsPage() {
         className="flex flex-col gap-8"
       >
         <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">
-          Your universe in numbers.
+          {t('app.stats.headline')}
         </h1>
-        <p className="text-caption text-muted">Computed on this device from your watch history.</p>
+        <p className="text-caption text-muted">{t('app.stats.sub')}</p>
       </motion.header>
 
       <div className="grid grid-cols-1 gap-16 md:grid-cols-3">
         {(
           [
             {
-              label: 'Time watched',
+              label: t('app.stats.timeWatched'),
               icon: Clock,
               node: (
                 <CountUp
@@ -348,10 +357,10 @@ export default function StatsPage() {
                   className="font-display text-display-2xl text-gradient-signature max-md:text-[2.75rem]"
                 />
               ),
-              sub: 'across everything you started',
+              sub: t('app.stats.timeWatchedSub'),
             },
             {
-              label: 'Titles in progress',
+              label: t('app.stats.titlesInProgress'),
               icon: Clapperboard,
               node: (
                 <CountUp
@@ -359,10 +368,12 @@ export default function StatsPage() {
                   className="font-display text-display-2xl text-gradient-signature max-md:text-[2.75rem]"
                 />
               ),
-              sub: data.inProgress > 0 ? `avg ${data.avgCompletion}% through each` : 'press play to begin',
+              sub: data.inProgress > 0
+                ? t('app.stats.titlesInProgressSub', { pct: data.avgCompletion })
+                : t('app.stats.titlesInProgressEmpty'),
             },
             {
-              label: 'Current streak',
+              label: t('app.stats.currentStreak'),
               icon: Flame,
               node: (
                 <span className="flex items-end gap-12">
@@ -379,7 +390,7 @@ export default function StatsPage() {
                   </motion.span>
                 </span>
               ),
-              sub: `days · longest: ${data.longest}`,
+              sub: t('app.stats.streakSub', { longest: data.longest }),
             },
           ] as const
         ).map((tile, i) => (
@@ -404,16 +415,16 @@ export default function StatsPage() {
       {isEmpty ? (
         <EmptyState
           icon={Trophy}
-          title="Your story hasn't started."
-          caption="Watch something and this page turns into your personal data story — time, genres, streaks, milestones."
-          action={<ButtonNeon to="/app">Watch something</ButtonNeon>}
+          title={t('app.stats.emptyTitle')}
+          caption={t('app.stats.emptyCaption')}
+          action={<ButtonNeon to="/app">{t('app.library.watchSomething')}</ButtonNeon>}
         />
       ) : (
         <>
           {/* ── S2 genre breakdown ── */}
           {data.genres.length > 0 && (
             <section className="flex flex-col gap-16">
-              <h2 className="font-display text-title text-ink">Where your time goes.</h2>
+              <h2 className="font-display text-title text-ink">{t('app.stats.genreTitle')}</h2>
               <GlassPanel level={2} className="flex max-w-4xl flex-col gap-16 p-24">
                 {data.genres.map((g, i) => (
                   <GenreBar
@@ -431,13 +442,13 @@ export default function StatsPage() {
 
           {/* ── S3 activity heat strip ── */}
           <section className="flex flex-col gap-16">
-            <h2 className="font-display text-title text-ink">Activity, last 12 weeks.</h2>
+            <h2 className="font-display text-title text-ink">{t('app.stats.activityTitle')}</h2>
             <GlassPanel level={2} className="flex max-w-4xl flex-col gap-16 overflow-x-auto p-24">
               <div
                 className="grid gap-6"
                 style={{ gridTemplateRows: 'repeat(7, 10px)', gridAutoFlow: 'column', gridAutoColumns: '10px' }}
                 role="img"
-                aria-label="Watch activity heat map for the last 12 weeks"
+                aria-label={t('app.stats.heatAria')}
               >
                 {heat.cells.map((c, i) => {
                   const intensity = c.minutes === 0 ? 0 : Math.max(1, Math.ceil((c.minutes / heat.max) * 4));
@@ -466,13 +477,13 @@ export default function StatsPage() {
                 })}
               </div>
               <div className="flex items-center gap-8 text-micro uppercase text-muted">
-                <span>Less</span>
+                <span>{t('app.stats.less')}</span>
                 {['rgba(255,255,255,.06)', 'rgba(124,217,236,.25)', 'rgba(124,217,236,.55)', 'rgba(169,155,240,.7)', 'rgba(139,124,232,.95)'].map(
                   (c) => (
                     <span key={c} className="h-10 w-10 rounded-[3px]" style={{ background: c }} />
                   ),
                 )}
-                <span>More</span>
+                <span>{t('app.stats.more')}</span>
               </div>
             </GlassPanel>
           </section>
@@ -481,7 +492,7 @@ export default function StatsPage() {
 
       {/* ── S4 milestones (always visible — greyed teaser when empty) ── */}
       <section className="flex flex-col gap-16">
-        <h2 className="font-display text-title text-ink">Milestones.</h2>
+        <h2 className="font-display text-title text-ink">{t('app.stats.milestonesTitle')}</h2>
         <div className="flex gap-16 overflow-x-auto no-scrollbar pb-8">
           {milestones.map((m, i) => (
             <MilestoneChip key={m.id} m={m} index={i} />
@@ -491,8 +502,7 @@ export default function StatsPage() {
 
       {/* ── S5 honesty strip ── */}
       <p className="text-center text-caption text-muted">
-        Stats are computed on this device from your watch history. Export them any time from
-        Settings → Configuration.
+        {t('app.stats.honestyNote')}
       </p>
     </div>
   );

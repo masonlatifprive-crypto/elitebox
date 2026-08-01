@@ -16,6 +16,7 @@ import { addonEngine } from '@/lib/addons/engine';
 import { findShowcaseMeta } from '@/data/showcase';
 import { useAddons } from '@/lib/store';
 import type { AddonHealth, MetaItem } from '@/lib/types';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 /* ── Shared browsing helpers (also used by AppHome / Catalog / Search) ──── */
@@ -57,34 +58,36 @@ export function sourceForItem(item: MetaItem, installedIds: string[]): string {
 
 export interface CollectionDef {
   id: string;
-  name: string;
-  caption: string;
+  /** i18n key for the collection name — render via t() */
+  nameKey: string;
+  /** i18n key for the caption — render via t() */
+  captionKey: string;
   match: (m: MetaItem) => boolean;
 }
 
 export const COLLECTIONS: CollectionDef[] = [
   {
     id: 'sci-fi-night',
-    name: 'Sci-Fi Night',
-    caption: 'Sci-Fi picks · rated 6.5+',
+    nameKey: 'app.collections.scifiName',
+    captionKey: 'app.collections.scifiCaption',
     match: (m) => m.genres.includes('Sci-Fi') && (m.rating ?? 0) >= 6.5,
   },
   {
     id: 'family-afternoon',
-    name: 'Family Afternoon',
-    caption: 'Family & animation · all ages',
+    nameKey: 'app.collections.familyName',
+    captionKey: 'app.collections.familyCaption',
     match: (m) => m.genres.includes('Family'),
   },
   {
     id: 'critics-picks',
-    name: "Critics' Picks",
-    caption: 'Rated 7.0 and up',
+    nameKey: 'app.collections.criticsName',
+    captionKey: 'app.collections.criticsCaption',
     match: (m) => (m.rating ?? 0) >= 7,
   },
   {
     id: 'short-brilliant',
-    name: 'Short & Brilliant',
-    caption: 'Under 15 minutes',
+    nameKey: 'app.collections.shortName',
+    captionKey: 'app.collections.shortCaption',
     match: (m) => (m.runtime ?? 999) < 15 && m.type === 'movie',
   },
 ];
@@ -97,16 +100,17 @@ export function getCollection(id: string | null): CollectionDef | undefined {
 
 export interface SortOption {
   id: string;
-  label: string;
+  /** i18n key for the label — render via t() */
+  labelKey: string;
   cmp: (a: MetaItem, b: MetaItem) => number;
 }
 
 export const SORT_OPTIONS: SortOption[] = [
-  { id: 'trending', label: 'Trending', cmp: (a, b) => (b.rating ?? 0) - (a.rating ?? 0) },
-  { id: 'rating', label: 'Rating', cmp: (a, b) => (b.rating ?? 0) - (a.rating ?? 0) },
-  { id: 'az', label: 'A–Z', cmp: (a, b) => a.name.localeCompare(b.name) },
-  { id: 'year-desc', label: 'Year ↓', cmp: (a, b) => (b.year ?? 0) - (a.year ?? 0) },
-  { id: 'year-asc', label: 'Year ↑', cmp: (a, b) => (a.year ?? 0) - (b.year ?? 0) },
+  { id: 'trending', labelKey: 'app.sort.trending', cmp: (a, b) => (b.rating ?? 0) - (a.rating ?? 0) },
+  { id: 'rating', labelKey: 'app.sort.rating', cmp: (a, b) => (b.rating ?? 0) - (a.rating ?? 0) },
+  { id: 'az', labelKey: 'app.sort.az', cmp: (a, b) => a.name.localeCompare(b.name) },
+  { id: 'year-desc', labelKey: 'app.sort.yearDesc', cmp: (a, b) => (b.year ?? 0) - (a.year ?? 0) },
+  { id: 'year-asc', labelKey: 'app.sort.yearAsc', cmp: (a, b) => (a.year ?? 0) - (b.year ?? 0) },
 ];
 
 export function SortControl({
@@ -120,6 +124,7 @@ export function SortControl({
   options?: SortOption[];
   className?: string;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.id === value) ?? options[0];
@@ -149,7 +154,7 @@ export function SortControl({
         aria-expanded={open}
         className="focusable glass-1 inline-flex cursor-pointer items-center gap-8 rounded-full px-16 py-8 text-caption font-semibold text-muted hover:text-ink"
       >
-        Sort: <span className="text-cyan">{current.label}</span>
+        {t('app.discover.sortPrefix')} <span className="text-cyan">{t(current.labelKey)}</span>
         <ChevronDownIcon open={open} />
       </button>
       <AnimatePresence>
@@ -177,7 +182,7 @@ export function SortControl({
                   o.id === value ? 'bg-[rgba(124,217,236,.10)] text-cyan' : 'text-muted hover:bg-white/[.06] hover:text-ink',
                 )}
               >
-                {o.label}
+                {t(o.labelKey)}
               </button>
             ))}
           </motion.div>
@@ -253,13 +258,14 @@ export function SkeletonGrid({ count = 21, className }: { count?: number; classN
 
 const PAGE = 24;
 const TYPE_TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'movie', label: 'Movies' },
-  { id: 'series', label: 'Series' },
-  { id: 'channel', label: 'Live' },
+  { id: 'all', labelKey: 'app.discover.tabAll' },
+  { id: 'movie', labelKey: 'app.rail.movies' },
+  { id: 'series', labelKey: 'app.rail.series' },
+  { id: 'channel', labelKey: 'app.discover.tabLive' },
 ] as const;
 
 export default function Discover() {
+  const { t } = useT();
   const [params, setParams] = useSearchParams();
   const { items, loading, reload } = useCatalogItems();
   const installed = useAddons((s) => s.installed);
@@ -365,9 +371,9 @@ export default function Discover() {
         transition={spring.smooth}
         className="flex flex-wrap items-end justify-between gap-12 pt-16"
       >
-        <h1 className="font-display text-display-xl text-ink">Discover</h1>
+        <h1 className="font-display text-display-xl text-ink">{t('app.discover.title')}</h1>
         <p className="text-caption text-muted" aria-live="polite">
-          {loading ? 'Loading catalogs…' : `${filtered.length} title${filtered.length === 1 ? '' : 's'}`}
+          {loading ? t('app.discover.loadingCatalogs') : t('app.discover.titleCount', { count: filtered.length })}
         </p>
       </motion.header>
 
@@ -382,12 +388,12 @@ export default function Discover() {
             className="glass-2 flex flex-wrap items-center justify-between gap-12 rounded-xl border-l-[3px] border-l-cyan p-16"
           >
             <div className="flex flex-col gap-4">
-              <h2 className="font-display text-title text-ink">{collection.name}</h2>
+              <h2 className="font-display text-title text-ink">{t(collection.nameKey)}</h2>
               <p className="font-mono text-micro uppercase tracking-wider text-muted">
-                {collection.caption} · computed from your addons
+                {t(collection.captionKey)} · {t('app.discover.computedFromAddons')}
               </p>
             </div>
-            <ButtonGhost onClick={() => patchParams({ collection: null })}>Clear</ButtonGhost>
+            <ButtonGhost onClick={() => patchParams({ collection: null })}>{t('app.discover.clear')}</ButtonGhost>
           </motion.div>
         )}
       </AnimatePresence>
@@ -401,25 +407,25 @@ export default function Discover() {
       >
         <div className="flex flex-wrap items-center gap-12">
           {/* type segmented control */}
-          <div className="glass-1 flex rounded-full p-4" role="tablist" aria-label="Type">
-            {TYPE_TABS.map((t) => (
+          <div className="glass-1 flex rounded-full p-4" role="tablist" aria-label={t('app.discover.typeAria')}>
+            {TYPE_TABS.map((tab) => (
               <button
-                key={t.id}
+                key={tab.id}
                 type="button"
                 role="tab"
-                aria-selected={type === t.id}
-                onClick={() => patchParams({ type: t.id })}
+                aria-selected={type === tab.id}
+                onClick={() => patchParams({ type: tab.id })}
                 className="focusable relative cursor-pointer rounded-full px-16 py-8 text-caption font-semibold"
               >
-                {type === t.id && (
+                {type === tab.id && (
                   <motion.span
                     layoutId="discover-type-pill"
                     transition={spring.snappy}
                     className="bg-signature absolute inset-0 rounded-full"
                   />
                 )}
-                <span className={cn('relative z-10', type === t.id ? 'text-deep' : 'text-muted hover:text-ink')}>
-                  {t.label}
+                <span className={cn('relative z-10', type === tab.id ? 'text-deep' : 'text-muted hover:text-ink')}>
+                  {t(tab.labelKey)}
                 </span>
               </button>
             ))}
@@ -430,9 +436,9 @@ export default function Discover() {
         </div>
 
         {/* genre chips */}
-        <div className="no-scrollbar flex gap-8 overflow-x-auto" role="group" aria-label="Genre">
+        <div className="no-scrollbar flex gap-8 overflow-x-auto" role="group" aria-label={t('app.discover.genreAria')}>
           <FilterChip active={genre === 'all'} onClick={() => patchParams({ genre: null })}>
-            All genres
+            {t('app.discover.allGenres')}
           </FilterChip>
           {genres.map((g) => (
             <FilterChip key={g} active={genre === g} onClick={() => patchParams({ genre: g })}>
@@ -443,7 +449,7 @@ export default function Discover() {
 
         {/* source switcher */}
         <div className="flex flex-wrap items-center gap-8">
-          <span className="text-caption text-muted">Sources:</span>
+          <span className="text-caption text-muted">{t('app.discover.sources')}</span>
           {catalogAddons.map((a) => {
             const h = health[a.id];
             const broken = h?.circuit === 'open';
@@ -455,7 +461,7 @@ export default function Discover() {
                 onClick={() => toggleSource(a.id)}
                 disabled={broken}
                 aria-pressed={active}
-                title={broken ? 'Benched — recovering automatically' : a.name}
+                title={broken ? t('app.discover.benched') : a.name}
                 className={cn(
                   'focusable glass-1 inline-flex cursor-pointer items-center gap-8 rounded-full px-12 py-6 text-caption font-semibold transition-opacity',
                   active ? 'text-ink' : 'text-muted opacity-60',
@@ -476,18 +482,18 @@ export default function Discover() {
       ) : allDown ? (
         <EmptyState
           icon={RotateCcw}
-          title="No catalog addons are responding."
-          caption="Every installed catalog source is unreachable right now. Check their health or try again."
+          title={t('app.discover.emptyDownTitle')}
+          caption={t('app.discover.emptyDownCaption')}
           action={
             <div className="flex flex-wrap items-center justify-center gap-12">
-              <ButtonGhost to="/app/addons">Check addon health</ButtonGhost>
+              <ButtonGhost to="/app/addons">{t('app.discover.checkHealth')}</ButtonGhost>
               <ButtonGhost
                 onClick={() => {
                   reload();
                   setHealth(addonEngine.healthAll());
                 }}
               >
-                Retry
+                {t('app.discover.retry')}
               </ButtonGhost>
             </div>
           }
@@ -495,20 +501,20 @@ export default function Discover() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={SearchX}
-          title="Nothing matches those filters."
-          caption="Try a different genre or type — or reset everything and start broad."
+          title={t('app.discover.emptyFilterTitle')}
+          caption={t('app.discover.emptyFilterCaption')}
           action={
             <div className="flex flex-wrap items-center justify-center gap-12">
               {genre !== 'all' && (
                 <FilterChip active={false} onClick={() => patchParams({ genre: null })}>
-                  Clear genre
+                  {t('app.discover.clearGenre')}
                 </FilterChip>
               )}
               <FilterChip
                 active={false}
                 onClick={() => patchParams({ type: null, genre: null, sort: null, collection: null, src: null })}
               >
-                Reset all
+                {t('app.discover.resetAll')}
               </FilterChip>
             </div>
           }
@@ -539,15 +545,15 @@ export default function Discover() {
               <div className="glass-1 relative mx-auto h-3 w-1/3 overflow-hidden rounded-full" aria-hidden>
                 <div className="absolute inset-0 animate-beam-slide bg-gradient-to-r from-transparent via-[rgba(124,217,236,.35)] to-transparent [animation-duration:1.4s]" />
               </div>
-              <p className="mt-12 text-center text-micro uppercase text-muted">Loading more…</p>
+              <p className="mt-12 text-center text-micro uppercase text-muted">{t('app.discover.loadingMore')}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-12 py-32 text-center">
               <p className="text-caption text-muted">
-                That's everything your addons offer — install more from the Store.
+                {t('app.discover.allShown')}
               </p>
               <ButtonGhost to="/store">
-                <Store size={16} strokeWidth={1.75} /> Open Store
+                <Store size={16} strokeWidth={1.75} /> {t('app.discover.openStore')}
               </ButtonGhost>
             </div>
           )}

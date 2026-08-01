@@ -10,6 +10,7 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import PosterCard from '@/components/PosterCard';
 import type { MetaItem } from '@/lib/types';
 import { spring } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 interface ShelfProps {
@@ -25,6 +26,7 @@ interface ShelfProps {
 }
 
 export default function Shelf({ title, items, seeAllTo, progressFor, autoScroll, className }: ShelfProps) {
+  const { t } = useT();
   const railRef = useRef<HTMLDivElement>(null);
 
   // Idle auto-scroll (home.md S2): 0.5px/frame after 4s idle, pause on
@@ -92,7 +94,7 @@ export default function Shelf({ title, items, seeAllTo, progressFor, autoScroll,
             to={seeAllTo}
             className="focusable rounded-full px-8 py-4 text-caption font-semibold text-muted hover:text-cyan transition-colors"
           >
-            See all <ArrowRight size={14} strokeWidth={1.75} className="inline" />
+            {t('app.shelf.seeAll')} <ArrowRight size={14} strokeWidth={1.75} className="inline" />
           </Link>
         )}
       </div>
@@ -120,7 +122,7 @@ export default function Shelf({ title, items, seeAllTo, progressFor, autoScroll,
         {/* chevron scroll buttons (desktop hover) */}
         <button
           type="button"
-          aria-label={`Scroll ${title ?? "shelf"} left`}
+          aria-label={t('app.shelf.scrollLeft', { name: title ?? t('app.shelf.shelfFallback') })}
           onClick={() => scrollByCards(-1)}
           className="focusable glass-2 absolute left-8 top-1/2 hidden -translate-y-1/2 rounded-full p-8 text-ink opacity-0 transition-opacity duration-150 hover:shadow-glow-neon group-hover/shelf:opacity-100 md:block cursor-pointer"
         >
@@ -128,7 +130,7 @@ export default function Shelf({ title, items, seeAllTo, progressFor, autoScroll,
         </button>
         <button
           type="button"
-          aria-label={`Scroll ${title ?? "shelf"} right`}
+          aria-label={t('app.shelf.scrollRight', { name: title ?? t('app.shelf.shelfFallback') })}
           onClick={() => scrollByCards(1)}
           className="focusable glass-2 absolute right-8 top-1/2 hidden -translate-y-1/2 rounded-full p-8 text-ink opacity-0 transition-opacity duration-150 hover:shadow-glow-neon group-hover/shelf:opacity-100 md:block cursor-pointer"
         >

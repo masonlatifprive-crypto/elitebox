@@ -8,47 +8,24 @@ import { Activity, GitCommitHorizontal, HeartPulse } from 'lucide-react';
 import { addonEngine } from '@/lib/addons/engine';
 import type { AddonHealth } from '@/lib/types';
 import { Eyebrow, GlassPanel, HealthDot } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 
 interface ReleaseNote {
+  slug: string;
   version: string;
   date: string;
-  highlights: string[];
+  highlightKeys: string[];
 }
 
+/* version/date are factual data, left as literals; highlights are UI copy → keyed. */
 const RELEASES: ReleaseNote[] = [
-  {
-    version: '1.0.0-rc',
-    date: 'July 2026',
-    highlights: [
-      'Living Tree hero — the animated Elitebox mark above the headline, calm under reduced motion',
-      'Upcoming & Originals: honest coming-soon premieres with watchlist tracking and the new Release Calendar',
-      'Addon engine hardened: Manifest 2.0 declarations, HTTPS enforcement, piracy blocklist, reliability scoring',
-      'Player: progressive seek with on-screen target preview, per-title subtitle sync, source failover',
-      'Legal pages, developer guide, downloads matrix and these notes go live',
-    ],
-  },
-  {
-    version: '0.9.0',
-    date: 'July 2026',
-    highlights: [
-      'Unified lunar design system across marketing and app',
-      'Discover smart collections, Command Palette (Ctrl+K), spatial TV navigation',
-      'Library: favorites, watchlist, watched marks and continue-watching across profiles',
-      'Addon manager with circuit-breaker health monitor and install-by-URL previews',
-    ],
-  },
-  {
-    version: '0.8.0',
-    date: 'July 2026',
-    highlights: [
-      'First public web build: showcase catalog of CC-BY open movies, series and open live channels',
-      'hls.js player with adaptive playback, subtitle offset sync and keyboard shortcuts',
-      'Profiles with PIN lock, stats dashboard, data export/import',
-    ],
-  },
+  { slug: 'r1', version: '1.0.0-rc', date: 'July 2026', highlightKeys: ['h1', 'h2', 'h3', 'h4', 'h5'] },
+  { slug: 'r2', version: '0.9.0', date: 'July 2026', highlightKeys: ['h1', 'h2', 'h3', 'h4'] },
+  { slug: 'r3', version: '0.8.0', date: 'July 2026', highlightKeys: ['h1', 'h2', 'h3'] },
 ];
 
 function LiveStatus() {
+  const { t } = useT();
   const [health, setHealth] = useState<Record<string, AddonHealth>>({});
   useEffect(() => {
     const read = () => setHealth(addonEngine.healthAll());
@@ -61,11 +38,10 @@ function LiveStatus() {
     <GlassPanel className="flex flex-col gap-12 rounded-xl p-24">
       <div className="flex items-center gap-10">
         <HeartPulse size={18} strokeWidth={1.75} className="text-cyan" />
-        <h2 className="font-display text-title-s text-ink">Live status — this device</h2>
+        <h2 className="font-display text-title-s text-ink">{t('marketing.updates.status.title')}</h2>
       </div>
       <p className="text-caption text-muted">
-        Real-time health of your installed addons, measured by actual probes from your browser.
-        Refreshing every 5 seconds.
+        {t('marketing.updates.status.copy')}
       </p>
       <div className="flex flex-col gap-8">
         {rows.map(({ addon, h }) => (
@@ -74,7 +50,7 @@ function LiveStatus() {
             <span className="flex items-center gap-10">
               {h && (
                 <span className="font-mono text-[11px] text-muted">
-                  {Math.round(h.successRate * 100)}% · circuit {h.circuit}
+                  {t('marketing.updates.status.row', { rate: Math.round(h.successRate * 100), circuit: h.circuit })}
                 </span>
               )}
               {h ? (
@@ -91,6 +67,7 @@ function LiveStatus() {
 }
 
 export default function Updates() {
+  const { t } = useT();
   return (
     <div className="relative z-10 mx-auto flex w-full max-w-[880px] flex-col gap-48 px-16 pb-128 pt-160 md:px-24">
       <motion.header
@@ -99,10 +76,10 @@ export default function Updates() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col gap-12"
       >
-        <Eyebrow>Updates</Eyebrow>
-        <h1 className="font-display text-display-xl text-ink">Release notes & status.</h1>
+        <Eyebrow>{t('marketing.updates.eyebrow')}</Eyebrow>
+        <h1 className="font-display text-display-xl text-ink">{t('marketing.updates.title')}</h1>
         <p className="max-w-[64ch] text-body text-muted">
-          What shipped, when — plus a live read of your addon health, measured on this device.
+          {t('marketing.updates.sub')}
         </p>
       </motion.header>
 
@@ -126,9 +103,9 @@ export default function Updates() {
               <span className="text-caption text-muted">{r.date}</span>
             </div>
             <ul className="flex flex-col gap-6">
-              {r.highlights.map((h) => (
+              {r.highlightKeys.map((h) => (
                 <li key={h} className="text-caption text-muted">
-                  · {h}
+                  · {t(`marketing.updates.${r.slug}.${h}`)}
                 </li>
               ))}
             </ul>

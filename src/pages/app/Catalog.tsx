@@ -13,24 +13,25 @@ import type { SortOption } from '@/pages/app/Discover';
 import { FilterChip, SORT_OPTIONS, SkeletonGrid, SortControl, useCatalogItems } from '@/pages/app/Discover';
 import { scopedKey, useLibrary } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
+import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const CONFIG = {
   movie: {
-    eyebrow: 'Movies',
-    headline: 'Every movie in the catalog.',
+    eyebrowKey: 'app.rail.movies',
+    headlineKey: 'app.catalog.headlineMovies',
     featured: ['sintel', 'tears-of-steel', 'charge'],
-    other: { kind: 'series' as const, label: 'Switch to series', to: '/app/series', cta: 'All series' },
-    emptyTitle: 'No movies available right now.',
-    emptyLink: { to: '/app/series', label: 'Browse series instead' },
+    other: { kind: 'series' as const, labelKey: 'app.catalog.switchToSeries', to: '/app/series', ctaKey: 'app.catalog.allSeries' },
+    emptyTitleKey: 'app.catalog.emptyMovies',
+    emptyLink: { to: '/app/series', labelKey: 'app.catalog.browseSeries' },
   },
   series: {
-    eyebrow: 'Series',
-    headline: 'Every series in the catalog.',
+    eyebrowKey: 'app.rail.series',
+    headlineKey: 'app.catalog.headlineSeries',
     featured: ['caminandes-series', 'caminandes-2', 'caminandes-3'],
-    other: { kind: 'movie' as const, label: 'Switch to movies', to: '/app/movies', cta: 'All movies' },
-    emptyTitle: 'No series available right now.',
-    emptyLink: { to: '/app/movies', label: 'Browse movies instead' },
+    other: { kind: 'movie' as const, labelKey: 'app.catalog.switchToMovies', to: '/app/movies', ctaKey: 'app.catalog.allMovies' },
+    emptyTitleKey: 'app.catalog.emptySeries',
+    emptyLink: { to: '/app/movies', labelKey: 'app.catalog.browseMovies' },
   },
 } as const;
 
@@ -40,7 +41,7 @@ const CATALOG_SORTS: SortOption[] = [
   SORT_OPTIONS[3], // year ↓
   {
     id: 'duration',
-    label: 'Duration',
+    labelKey: 'app.sort.duration',
     cmp: (a, b) => (a.runtime ?? 999) - (b.runtime ?? 999),
   },
 ];
@@ -50,6 +51,7 @@ const PAGE = 24;
 /* ── S1 — type hero strip (36vh, 10s crossfade + Ken Burns) ────────────── */
 
 function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: MetaItem[] }) {
+  const { t } = useT();
   const [index, setIndex] = useState(0);
   const reduceMotion = useReducedMotion();
   const cfg = CONFIG[kind];
@@ -65,7 +67,7 @@ function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: Met
 
   return (
     <section
-      aria-label={`Featured ${cfg.eyebrow.toLowerCase()}`}
+      aria-label={t('app.catalog.featuredAria', { kind: t(cfg.eyebrowKey).toLowerCase() })}
       className="relative h-[36vh] min-h-[280px] overflow-hidden rounded-2xl"
     >
       <AnimatePresence mode="popLayout">
@@ -100,17 +102,17 @@ function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: Met
             transition={spring.smooth}
             className="flex flex-col gap-8"
           >
-            <p className="text-micro uppercase tracking-[0.3em] text-cyan">{cfg.eyebrow}</p>
-            <h1 className="font-display text-display-xl text-ink">{cfg.headline}</h1>
+            <p className="text-micro uppercase tracking-[0.3em] text-cyan">{t(cfg.eyebrowKey)}</p>
+            <h1 className="font-display text-display-xl text-ink">{t(cfg.headlineKey)}</h1>
             <p className="text-caption text-muted">
-              Featuring <span className="text-ink">{item.name}</span>
+              {t('app.catalog.featuring')} <span className="text-ink">{item.name}</span>
               {item.year ? ` · ${item.year}` : ''}
             </p>
             <div className="flex flex-wrap items-center gap-12">
               <ButtonPrimary to={`/app/player/${item.type}/${item.id}`} className="px-16 py-8">
-                <Play size={14} strokeWidth={1.75} fill="currentColor" /> Play featured
+                <Play size={14} strokeWidth={1.75} fill="currentColor" /> {t('app.catalog.playFeatured')}
               </ButtonPrimary>
-              <ButtonGhost to={`/app/detail/${item.type}/${item.id}`}>Details</ButtonGhost>
+              <ButtonGhost to={`/app/detail/${item.type}/${item.id}`}>{t('app.catalog.details')}</ButtonGhost>
             </div>
           </motion.div>
         </AnimatePresence>
@@ -123,7 +125,7 @@ function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: Met
             <button
               key={m.id}
               type="button"
-              aria-label={`Feature ${m.name}`}
+              aria-label={t('app.catalog.featureAria', { name: m.name })}
               onClick={() => setIndex(i)}
               className="focusable flex h-16 cursor-pointer items-center"
             >
@@ -143,6 +145,7 @@ function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: Met
 /* ── series card wrapper: episode chip + hover episode peek ────────────── */
 
 function SeriesCard({ item }: { item: MetaItem }) {
+  const { t } = useT();
   const episodes = item.videos ?? [];
   return (
     <div className="group/sc relative">
@@ -150,11 +153,13 @@ function SeriesCard({ item }: { item: MetaItem }) {
       {episodes.length > 0 && (
         <>
           <span className="glass-1 pointer-events-none absolute right-8 top-8 z-10 rounded-md px-8 py-2 text-micro uppercase text-ink">
-            {episodes.length} episode{episodes.length === 1 ? '' : 's'}
+            {t('app.catalog.episodeCount', { count: episodes.length })}
           </span>
           <div className="glass-2 pointer-events-none absolute inset-x-8 bottom-56 z-10 rounded-lg px-10 py-6 opacity-0 transition-opacity duration-[180ms] group-hover/sc:opacity-100">
-            <p className="text-micro uppercase text-cyan">S01 · {episodes.length} episodes</p>
-            <p className="truncate text-caption text-ink">Starts with “{episodes[0].title}”</p>
+            <p className="text-micro uppercase text-cyan">
+              S01 · {t('app.catalog.episodesLower', { count: episodes.length })}
+            </p>
+            <p className="truncate text-caption text-ink">{t('app.catalog.startsWith', { title: episodes[0].title })}</p>
           </div>
         </>
       )}
@@ -165,6 +170,7 @@ function SeriesCard({ item }: { item: MetaItem }) {
 /* ── list-mode row ─────────────────────────────────────────────────────── */
 
 function ListRow({ item, index }: { item: MetaItem; index: number }) {
+  const { t } = useT();
   const watchlist = useLibrary((s) => s.watchlist);
   const toggleWatchlist = useLibrary((s) => s.toggleWatchlist);
   const saved = watchlist.includes(item.id);
@@ -184,7 +190,7 @@ function ListRow({ item, index }: { item: MetaItem; index: number }) {
         <img src={item.backdrop ?? item.poster} alt="" loading="lazy" className="aspect-video h-full w-full object-cover" />
         {item.type === 'series' && item.videos && (
           <span className="glass-1 absolute left-6 top-6 rounded-md px-6 py-2 text-micro uppercase text-ink">
-            {item.videos.length} episodes
+            {t('app.catalog.episodesLower', { count: item.videos.length })}
           </span>
         )}
       </Link>
@@ -205,7 +211,7 @@ function ListRow({ item, index }: { item: MetaItem; index: number }) {
       <div className="flex shrink-0 items-center gap-8 sm:opacity-0 sm:transition-opacity sm:duration-[180ms] sm:group-hover/row:opacity-100">
         <Link
           to={`/app/player/${item.type}/${item.id}`}
-          aria-label={`Play ${item.name}`}
+          aria-label={t('app.catalog.playAria', { name: item.name })}
           className="focusable glass-2 rounded-full p-10 text-cyan hover:shadow-glow-neon"
         >
           <Play size={16} strokeWidth={1.75} fill="currentColor" />
@@ -213,17 +219,21 @@ function ListRow({ item, index }: { item: MetaItem; index: number }) {
         <button
           type="button"
           aria-pressed={saved}
-          aria-label={saved ? `Remove ${item.name} from Watchlist` : `Add ${item.name} to Watchlist`}
+          aria-label={saved
+            ? t('app.catalog.removeWatchlistAria', { name: item.name })
+            : t('app.catalog.addWatchlistAria', { name: item.name })}
           onClick={() => {
             toggleWatchlist(item.id);
-            toast(saved ? `Removed “${item.name}” from Watchlist` : `Added “${item.name}” to Watchlist`);
+            toast(saved
+              ? t('app.home.toastRemovedWatchlist', { name: item.name })
+              : t('app.home.toastAddedWatchlist', { name: item.name }));
           }}
           className={cn('focusable glass-2 cursor-pointer rounded-full p-10', saved ? 'text-cyan' : 'text-muted hover:text-ink')}
         >
           {saved ? <BookmarkCheck size={16} strokeWidth={1.75} /> : <BookmarkPlus size={16} strokeWidth={1.75} />}
         </button>
         <ButtonGhost to={`/app/detail/${item.type}/${item.id}`} className="hidden md:inline-flex">
-          Details
+          {t('app.catalog.details')}
         </ButtonGhost>
       </div>
     </motion.div>
@@ -233,6 +243,7 @@ function ListRow({ item, index }: { item: MetaItem; index: number }) {
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
+  const { t } = useT();
   const cfg = CONFIG[kind];
   const { items, loading } = useCatalogItems();
   const [genre, setGenre] = useState('all');
@@ -311,11 +322,13 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
         className="flex flex-wrap items-center gap-12"
       >
         <span className="text-caption text-muted" aria-live="polite">
-          {loading ? 'Loading…' : `${filtered.length} ${kind === 'movie' ? 'films' : 'series'}`}
+          {loading
+            ? t('app.catalog.loading')
+            : t(kind === 'movie' ? 'app.catalog.countFilms' : 'app.catalog.countSeries', { count: filtered.length })}
         </span>
-        <div className="no-scrollbar order-4 flex min-w-0 flex-1 basis-full gap-8 overflow-x-auto md:order-none md:basis-auto" role="group" aria-label="Genre">
+        <div className="no-scrollbar order-4 flex min-w-0 flex-1 basis-full gap-8 overflow-x-auto md:order-none md:basis-auto" role="group" aria-label={t('app.discover.genreAria')}>
           <FilterChip active={genre === 'all'} onClick={() => setGenre('all')}>
-            All
+            {t('app.catalog.all')}
           </FilterChip>
           {genres.map((g) => (
             <FilterChip key={g} active={genre === g} onClick={() => setGenre(g)}>
@@ -325,11 +338,11 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
         </div>
         <SortControl value={sortId} onChange={setSortId} options={CATALOG_SORTS} />
         {/* view toggle */}
-        <div className="glass-1 flex rounded-full p-4" role="group" aria-label="View">
+        <div className="glass-1 flex rounded-full p-4" role="group" aria-label={t('app.catalog.viewAria')}>
           <button
             type="button"
             aria-pressed={view === 'grid'}
-            aria-label="Grid view"
+            aria-label={t('app.catalog.gridView')}
             onClick={() => switchView('grid')}
             className={cn('focusable cursor-pointer rounded-full p-8', view === 'grid' ? 'bg-signature text-deep' : 'text-muted hover:text-ink')}
           >
@@ -338,7 +351,7 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
           <button
             type="button"
             aria-pressed={view === 'list'}
-            aria-label="List view"
+            aria-label={t('app.catalog.listView')}
             onClick={() => switchView('list')}
             className={cn('focusable cursor-pointer rounded-full p-8', view === 'list' ? 'bg-signature text-deep' : 'text-muted hover:text-ink')}
           >
@@ -353,12 +366,12 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={List}
-          title={cfg.emptyTitle}
-          caption="The installed addons aren't serving this type right now — check addon health if one was just added."
+          title={t(cfg.emptyTitleKey)}
+          caption={t('app.catalog.emptyCaption')}
           action={
             <div className="flex flex-wrap items-center justify-center gap-12">
-              <ButtonGhost to={cfg.emptyLink.to}>{cfg.emptyLink.label}</ButtonGhost>
-              <ButtonGhost to="/app/addons">Check addon health</ButtonGhost>
+              <ButtonGhost to={cfg.emptyLink.to}>{t(cfg.emptyLink.labelKey)}</ButtonGhost>
+              <ButtonGhost to="/app/addons">{t('app.discover.checkHealth')}</ButtonGhost>
             </div>
           }
         />
@@ -408,8 +421,8 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
           className="mt-16 flex flex-col gap-16 border-t border-[rgba(124,217,236,.15)] pt-32"
         >
           <div className="flex items-baseline justify-between gap-16">
-            <h2 className="font-display text-title text-ink">{cfg.other.label}</h2>
-            <ButtonGhost to={cfg.other.to}><span className="inline-flex items-center gap-6">{cfg.other.cta}<ArrowRight size={14} strokeWidth={1.75} /></span></ButtonGhost>
+            <h2 className="font-display text-title text-ink">{t(cfg.other.labelKey)}</h2>
+            <ButtonGhost to={cfg.other.to}><span className="inline-flex items-center gap-6">{t(cfg.other.ctaKey)}<ArrowRight size={14} strokeWidth={1.75} /></span></ButtonGhost>
           </div>
           <div className="no-scrollbar -mx-16 flex gap-20 overflow-x-auto overscroll-x-contain scroll-smooth px-16 pb-4 md:mx-0 md:px-0">
             {others.map((item, i) => (

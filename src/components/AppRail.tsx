@@ -25,29 +25,30 @@ import {
 import { LogoE } from '@/components/Logo';
 import { openCommandPalette } from '@/components/CommandPalette';
 import { spring } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 import { useProfiles } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 const RAIL_ITEMS = [
-  { to: '/app', label: 'Home', icon: Home, end: true },
-  { to: '/app/discover', label: 'Discover', icon: Compass },
-  { to: '/app/movies', label: 'Movies', icon: Film },
-  { to: '/app/series', label: 'Series', icon: MonitorPlay },
-  { to: '/app/live', label: 'Live TV', icon: Radio },
-  { to: '/app/calendar', label: 'Calendar', icon: CalendarDays },
-  { to: '/app/search', label: 'Search', icon: Search },
-  { to: '/app/library', label: 'Library', icon: LibraryBig },
-  { to: '/app/addons', label: 'Addons', icon: Puzzle },
-  { to: '/app/stats', label: 'Stats', icon: BarChart3 },
-  { to: '/app/settings', label: 'Settings', icon: Settings },
+  { to: '/app', labelKey: 'app.rail.home', icon: Home, end: true },
+  { to: '/app/discover', labelKey: 'app.rail.discover', icon: Compass },
+  { to: '/app/movies', labelKey: 'app.rail.movies', icon: Film },
+  { to: '/app/series', labelKey: 'app.rail.series', icon: MonitorPlay },
+  { to: '/app/live', labelKey: 'app.rail.live', icon: Radio },
+  { to: '/app/calendar', labelKey: 'app.rail.calendar', icon: CalendarDays },
+  { to: '/app/search', labelKey: 'app.rail.search', icon: Search },
+  { to: '/app/library', labelKey: 'app.rail.library', icon: LibraryBig },
+  { to: '/app/addons', labelKey: 'app.rail.addons', icon: Puzzle },
+  { to: '/app/stats', labelKey: 'app.rail.stats', icon: BarChart3 },
+  { to: '/app/settings', labelKey: 'app.rail.settings', icon: Settings },
 ] as const;
 
 const MOBILE_ITEMS = [
-  { to: '/app', label: 'Home', icon: Home, end: true },
-  { to: '/app/discover', label: 'Discover', icon: Compass },
-  { to: '/app/search', label: 'Search', icon: Search },
-  { to: '/app/library', label: 'Library', icon: LibraryBig },
-  { to: '/app/settings', label: 'Settings', icon: Settings },
+  { to: '/app', labelKey: 'app.rail.home', icon: Home, end: true },
+  { to: '/app/discover', labelKey: 'app.rail.discover', icon: Compass },
+  { to: '/app/search', labelKey: 'app.rail.search', icon: Search },
+  { to: '/app/library', labelKey: 'app.rail.library', icon: LibraryBig },
+  { to: '/app/settings', labelKey: 'app.rail.settings', icon: Settings },
 ] as const;
 
 function ProfileAvatar({ size = 36 }: { size?: number }) {
@@ -74,6 +75,7 @@ function ProfileAvatar({ size = 36 }: { size?: number }) {
 }
 
 export default function AppRail() {
+  const { t } = useT();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -90,11 +92,11 @@ export default function AppRail() {
         onBlurCapture={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node)) setExpanded(false);
         }}
-        aria-label="App navigation"
+        aria-label={t('app.rail.appNav')}
       >
         <Link
           to="/app"
-          aria-label="Elitebox home"
+          aria-label={t('app.rail.homeAria')}
           className="focusable mx-auto mt-16 flex h-48 w-48 items-center justify-center rounded-lg"
         >
           <LogoE height={30} />
@@ -104,8 +106,8 @@ export default function AppRail() {
           <button
             type="button"
             onClick={openCommandPalette}
-            aria-label="Open command palette"
-            title="Command palette"
+            aria-label={t('app.rail.openCommandPalette')}
+            title={t('app.rail.commandPalette')}
             className="focusable group relative flex items-center gap-16 rounded-lg px-12 py-12 text-muted transition-colors duration-[180ms] hover:text-ink hover:bg-white/[.05] cursor-pointer"
           >
             <Search size={22} strokeWidth={1.75} className="shrink-0" />
@@ -115,7 +117,7 @@ export default function AppRail() {
               animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -8 }}
               transition={{ duration: 0.18 }}
             >
-              Command
+              {t('app.rail.command')}
             </motion.span>
             <motion.kbd
               className="glass-1 ml-auto rounded-md px-6 py-2 font-mono text-[10px] uppercase text-muted whitespace-nowrap"
@@ -157,7 +159,7 @@ export default function AppRail() {
                     animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -8 }}
                     transition={{ duration: 0.18 }}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </motion.span>
                 </>
               )}
@@ -167,7 +169,7 @@ export default function AppRail() {
 
         <Link
           to="/app/profiles"
-          aria-label="Profiles"
+          aria-label={t('app.rail.profiles')}
           className="focusable mx-auto mb-24 flex items-center gap-12 rounded-full p-4"
         >
           <ProfileAvatar />
@@ -177,7 +179,7 @@ export default function AppRail() {
             animate={{ opacity: expanded ? 1 : 0 }}
             transition={{ duration: 0.18 }}
           >
-            Profiles
+            {t('app.rail.profiles')}
           </motion.span>
         </Link>
       </motion.aside>
@@ -186,7 +188,7 @@ export default function AppRail() {
       <nav
         className="glass-solid fixed inset-x-0 bottom-0 z-40 flex md:hidden items-stretch justify-around border-x-0 border-b-0"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        aria-label="App navigation"
+        aria-label={t('app.rail.appNav')}
       >
         {MOBILE_ITEMS.map((item) => (
           <NavLink
@@ -211,7 +213,7 @@ export default function AppRail() {
                 )}
                 <item.icon size={22} strokeWidth={1.75} />
                 <span className="text-[10px] font-semibold uppercase tracking-[.08em]">
-                  {item.label}
+                  {t(item.labelKey)}
                 </span>
               </>
             )}

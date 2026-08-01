@@ -23,6 +23,8 @@ import PosterCard from '@/components/PosterCard';
 import { ButtonNeon, EmptyState, spring, toast } from '@/components/ui-elite';
 import { DEFAULT_PROFILE_ID, useLibrary, useProfiles } from '@/lib/store';
 import { findShowcaseMeta } from '@/data/showcase';
+import { useT } from '@/i18n';
+import type { TFunction } from '@/i18n';
 import { cn } from '@/lib/utils';
 import type { MetaItem } from '@/lib/types';
 
@@ -56,20 +58,22 @@ function formatHours(totalSec: number): number {
   return h >= 10 ? Math.round(h) : Math.round(h * 10) / 10;
 }
 
-function formatRemaining(sec: number): string {
+function formatRemaining(sec: number, t: TFunction): string {
   const m = Math.max(1, Math.round(sec / 60));
-  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m left` : `${m}m left`;
+  return m >= 60
+    ? t('app.library.remainingHours', { h: Math.floor(m / 60), m: m % 60 })
+    : t('app.library.remainingMinutes', { m });
 }
 
-function formatAgo(ts: number): string {
+function formatAgo(ts: number, t: TFunction): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t('app.library.justNow');
+  if (mins < 60) return t('app.library.minutesAgo', { n: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('app.library.hoursAgo', { n: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t('app.library.daysAgo', { n: days });
   return new Date(ts).toLocaleDateString();
 }
 
@@ -106,11 +110,11 @@ function CountUp({ value, decimals = 0, className }: { value: number; decimals?:
 
 type TabId = 'continue' | 'watchlist' | 'favorites' | 'history';
 
-const TABS: Array<{ id: TabId; label: string }> = [
-  { id: 'continue', label: 'Continue Watching' },
-  { id: 'watchlist', label: 'Watchlist' },
-  { id: 'favorites', label: 'Favorites' },
-  { id: 'history', label: 'History' },
+const TABS: Array<{ id: TabId; labelKey: string }> = [
+  { id: 'continue', labelKey: 'app.library.tabContinue' },
+  { id: 'watchlist', labelKey: 'app.library.tabWatchlist' },
+  { id: 'favorites', labelKey: 'app.library.tabFavorites' },
+  { id: 'history', labelKey: 'app.library.tabHistory' },
 ];
 
 /* ── small round glass action button ───────────────────────────────────── */
@@ -159,6 +163,7 @@ function ContinueCard({
   durationSec: number;
   onRemove: () => void;
 }) {
+  const { t } = useT();
   const ratio = durationSec > 0 ? progressSec / durationSec : 0;
   return (
     <motion.div
@@ -172,7 +177,7 @@ function ContinueCard({
       <Link
         to={`/app/player/${meta.type}/${meta.id}`}
         className="focusable relative block aspect-video overflow-hidden rounded-lg ring-1 ring-white/[.08] bg-navy hover:shadow-focus-glow focus-visible:shadow-focus-glow transition-shadow"
-        aria-label={`Resume ${meta.name} — ${formatRemaining(durationSec - progressSec)}`}
+        aria-label={t('app.library.resumeAria', { name: meta.name, remaining: formatRemaining(durationSec - progressSec, t) })}
       >
         <img
           src={meta.backdrop ?? meta.poster}
@@ -189,7 +194,7 @@ function ContinueCard({
           <span className="text-caption text-ink leading-tight line-clamp-1">{meta.name}</span>
           <span className="text-micro uppercase text-muted flex items-center gap-6">
             <Clock size={12} strokeWidth={1.75} />
-            {formatRemaining(durationSec - progressSec)}
+            {formatRemaining(durationSec - progressSec, t)}
           </span>
         </div>
         <div className="absolute inset-x-0 bottom-0 h-3 bg-white/[.08]">
@@ -197,7 +202,7 @@ function ContinueCard({
         </div>
       </Link>
       <div className="absolute left-8 top-8 z-10">
-        <CardAction label={`Remove ${meta.name} from Continue Watching`} onClick={onRemove} danger>
+        <CardAction label={t('app.library.removeFromCw', { name: meta.name })} onClick={onRemove} danger>
           <X size={14} strokeWidth={1.75} />
         </CardAction>
       </div>
@@ -208,6 +213,7 @@ function ContinueCard({
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function LibraryPage() {
+  const { t } = useT();
   const { watchlist, favorites, watched, continueWatching, removeFromWatchlist, removeFavorite, addFavorite, clearProgress, toggleWatched } =
     useLibrary();
   const profiles = useProfiles((s) => s.profiles);
@@ -261,7 +267,7 @@ export default function LibraryPage() {
         className="flex flex-col gap-16"
       >
         <div className="flex flex-wrap items-center gap-16">
-          <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">My Library</h1>
+          <h1 className="font-display text-display-xl text-ink max-md:text-[2.25rem]">{t('app.library.title')}</h1>
           {profile && (
             <span className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-6">
               <img src={profile.avatar} alt="" className="h-20 w-20 rounded-full object-cover" />
@@ -273,13 +279,13 @@ export default function LibraryPage() {
         <div className="grid grid-cols-2 gap-12 lg:grid-cols-3">
           {(
             [
-              { label: 'Titles saved', value: stats.titles, decimals: 0, icon: LibraryBig, purple: false },
-              { label: 'Hours tracked', value: stats.hours, decimals: stats.hours >= 10 ? 0 : 1, icon: Clock, purple: false },
-              { label: 'Day streak', value: stats.streak, decimals: 0, icon: Flame, purple: true },
+              { labelKey: 'app.library.titlesSaved', value: stats.titles, decimals: 0, icon: LibraryBig, purple: false },
+              { labelKey: 'app.library.hoursTracked', value: stats.hours, decimals: stats.hours >= 10 ? 0 : 1, icon: Clock, purple: false },
+              { labelKey: 'app.library.dayStreak', value: stats.streak, decimals: 0, icon: Flame, purple: true },
             ] as const
           ).map((tile, i) => (
             <motion.div
-              key={tile.label}
+              key={tile.labelKey}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ ...spring.smooth, delay: 0.08 + i * 0.07 }}
@@ -297,7 +303,7 @@ export default function LibraryPage() {
                     decimals={tile.decimals}
                     className="font-display text-display-l text-gradient-signature max-md:text-[1.75rem]"
                   />
-                  <span className="text-micro uppercase text-muted">{tile.label}</span>
+                  <span className="text-micro uppercase text-muted">{t(tile.labelKey)}</span>
                 </span>
               </Link>
             </motion.div>
@@ -307,31 +313,31 @@ export default function LibraryPage() {
 
       {/* ── S2 tab bar ── */}
       <div className="glass-1 flex w-fit max-w-full gap-4 overflow-x-auto no-scrollbar rounded-full p-4">
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <button
-            key={t.id}
+            key={tabDef.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tabDef.id)}
             className={cn(
               'focusable relative flex shrink-0 items-center gap-8 rounded-full px-16 py-8 text-caption font-semibold cursor-pointer transition-colors',
-              tab === t.id ? 'text-deep' : 'text-muted hover:text-ink',
+              tab === tabDef.id ? 'text-deep' : 'text-muted hover:text-ink',
             )}
           >
-            {tab === t.id && (
+            {tab === tabDef.id && (
               <motion.span
                 layoutId="library-tab-pill"
                 className="absolute inset-0 rounded-full bg-chrome"
                 transition={spring.snappy}
               />
             )}
-            <span className="relative z-10">{t.label}</span>
+            <span className="relative z-10">{t(tabDef.labelKey)}</span>
             <span
               className={cn(
                 'relative z-10 rounded-full px-8 py-1 text-micro',
-                tab === t.id ? 'bg-deep/15 text-deep' : 'bg-white/[.06] text-muted',
+                tab === tabDef.id ? 'bg-deep/15 text-deep' : 'bg-white/[.06] text-muted',
               )}
             >
-              {counts[t.id]}
+              {counts[tabDef.id]}
             </span>
           </button>
         ))}
@@ -350,9 +356,9 @@ export default function LibraryPage() {
             (continueItems.length === 0 ? (
               <EmptyState
                 icon={PlayCircle}
-                title="Nothing in progress."
-                caption="Press play on anything — it'll show up here exactly where you stop."
-                action={<ButtonNeon to="/app/discover">Browse Discover</ButtonNeon>}
+                title={t('app.library.emptyContinueTitle')}
+                caption={t('app.library.emptyContinueCaption')}
+                action={<ButtonNeon to="/app/discover">{t('app.library.browseDiscover')}</ButtonNeon>}
               />
             ) : (
               <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-3">
@@ -365,7 +371,7 @@ export default function LibraryPage() {
                       durationSec={entry.durationSec}
                       onRemove={() => {
                         clearProgress(entry.id);
-                        toast(`Removed “${meta.name}” from Continue Watching`);
+                        toast(t('app.library.toastRemovedCw', { name: meta.name }));
                       }}
                     />
                   ))}
@@ -377,9 +383,9 @@ export default function LibraryPage() {
             (watchlistItems.length === 0 ? (
               <EmptyState
                 icon={Bookmark}
-                title="Your watchlist is empty."
-                caption="Save titles for later with + Watchlist on any detail page."
-                action={<ButtonNeon to="/app/discover">Discover something</ButtonNeon>}
+                title={t('app.library.emptyWatchlistTitle')}
+                caption={t('app.library.emptyWatchlistCaption')}
+                action={<ButtonNeon to="/app/discover">{t('app.library.discoverSomething')}</ButtonNeon>}
               />
             ) : (
               <div className="grid grid-cols-2 gap-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -394,21 +400,21 @@ export default function LibraryPage() {
                     <PosterCard item={meta} className="w-full" />
                     <div className="absolute right-8 top-8 z-10 flex flex-col gap-6">
                       <CardAction
-                        label={`Move ${meta.name} to Favorites`}
+                        label={t('app.library.moveToFavorites', { name: meta.name })}
                         onClick={() => {
                           addFavorite(meta.id);
                           removeFromWatchlist(meta.id);
-                          toast(`“${meta.name}” moved to Favorites`);
+                          toast(t('app.library.toastMovedFavorites', { name: meta.name }));
                         }}
                       >
                         <Heart size={14} strokeWidth={1.75} />
                       </CardAction>
                       <CardAction
-                        label={`Remove ${meta.name} from Watchlist`}
+                        label={t('app.library.removeFromWatchlist', { name: meta.name })}
                         danger
                         onClick={() => {
                           removeFromWatchlist(meta.id);
-                          toast(`Removed “${meta.name}” from Watchlist`);
+                          toast(t('app.library.toastRemovedWatchlist', { name: meta.name }));
                         }}
                       >
                         <X size={14} strokeWidth={1.75} />
@@ -423,13 +429,13 @@ export default function LibraryPage() {
             (favoriteItems.length === 0 ? (
               <EmptyState
                 icon={Heart}
-                title="No favorites yet."
-                caption="Mark the ones you'd rewatch — tap the heart on any title."
+                title={t('app.library.emptyFavoritesTitle')}
+                caption={t('app.library.emptyFavoritesCaption')}
                 action={
                   watchlistItems.length > 0 ? (
-                    <ButtonNeon onClick={() => setTab('watchlist')}>Browse your Watchlist</ButtonNeon>
+                    <ButtonNeon onClick={() => setTab('watchlist')}>{t('app.library.browseWatchlist')}</ButtonNeon>
                   ) : (
-                    <ButtonNeon to="/app/discover">Discover something</ButtonNeon>
+                    <ButtonNeon to="/app/discover">{t('app.library.discoverSomething')}</ButtonNeon>
                   )
                 }
               />
@@ -449,11 +455,11 @@ export default function LibraryPage() {
                     </span>
                     <div className="absolute right-8 top-8 z-10">
                       <CardAction
-                        label={`Remove ${meta.name} from Favorites`}
+                        label={t('app.library.removeFromFavorites', { name: meta.name })}
                         danger
                         onClick={() => {
                           removeFavorite(meta.id);
-                          toast(`Removed “${meta.name}” from Favorites`);
+                          toast(t('app.library.toastRemovedFavorites', { name: meta.name }));
                         }}
                       >
                         <X size={14} strokeWidth={1.75} />
@@ -468,9 +474,9 @@ export default function LibraryPage() {
             (continueItems.length === 0 && watchedItems.length === 0 ? (
               <EmptyState
                 icon={HistoryIcon}
-                title="No watch activity yet."
-                caption="Everything you start is tracked on this device, newest first."
-                action={<ButtonNeon to="/app">Watch something</ButtonNeon>}
+                title={t('app.library.emptyHistoryTitle')}
+                caption={t('app.library.emptyHistoryCaption')}
+                action={<ButtonNeon to="/app">{t('app.library.watchSomething')}</ButtonNeon>}
               />
             ) : (
               <div className="flex max-w-4xl flex-col gap-12">
@@ -488,14 +494,14 @@ export default function LibraryPage() {
                       <Link
                         to={`/app/detail/${meta.type}/${meta.id}`}
                         className="focusable block w-64 shrink-0 overflow-hidden rounded-md ring-1 ring-white/[.08]"
-                        aria-label={`${meta.name} details`}
+                        aria-label={t('app.calendar.detailsAria', { name: meta.name })}
                       >
                         <img src={meta.poster} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" />
                       </Link>
                       <div className="flex min-w-0 flex-1 flex-col gap-4">
                         <span className="text-caption text-ink line-clamp-1">{meta.name}</span>
                         <span className="text-micro uppercase text-muted">
-                          Watched {formatAgo(entry.updatedAt)} · {pct}% seen
+                          {t('app.library.watchedAgo', { ago: formatAgo(entry.updatedAt, t), pct })}
                         </span>
                         <div className="h-3 w-full max-w-240 overflow-hidden rounded-full bg-white/[.08]">
                           <div className="h-full bg-signature" style={{ width: `${pct}%` }} />
@@ -505,16 +511,16 @@ export default function LibraryPage() {
                         <Link
                           to={`/app/player/${meta.type}/${meta.id}`}
                           className="focusable glass-2 flex h-36 w-36 items-center justify-center rounded-full text-cyan hover:shadow-glow-neon"
-                          aria-label={`Resume ${meta.name}`}
+                          aria-label={t('app.library.resumeShortAria', { name: meta.name })}
                         >
                           <Play size={16} strokeWidth={1.75} className="fill-cyan" />
                         </Link>
                         <CardAction
-                          label={`Remove ${meta.name} from history`}
+                          label={t('app.library.removeFromHistory', { name: meta.name })}
                           danger
                           onClick={() => {
                             clearProgress(entry.id);
-                            toast(`Removed “${meta.name}” from history`);
+                            toast(t('app.library.toastRemovedHistory', { name: meta.name }));
                           }}
                         >
                           <X size={14} strokeWidth={1.75} />
@@ -526,7 +532,7 @@ export default function LibraryPage() {
               {watchedItems.length > 0 && (
                 <>
                   <h3 className="mt-24 text-micro uppercase tracking-wider text-muted">
-                    Marked as watched · {watchedItems.length}
+                    {t('app.library.markedWatchedCount', { count: watchedItems.length })}
                   </h3>
                   <div className="grid grid-cols-3 gap-12 sm:grid-cols-4 md:grid-cols-6">
                     {watchedItems.map((meta) => (
@@ -534,10 +540,10 @@ export default function LibraryPage() {
                         <PosterCard item={meta} className="w-full" />
                         <div className="absolute right-8 top-8 z-10">
                           <CardAction
-                            label={`Unmark ${meta.name} as watched`}
+                            label={t('app.library.unmarkWatched', { name: meta.name })}
                             onClick={() => {
                               toggleWatched(meta.id);
-                              toast(`Unmarked “${meta.name}”`);
+                              toast(t('app.library.toastUnmarked', { name: meta.name }));
                             }}
                           >
                             <X size={14} strokeWidth={1.75} />
@@ -561,10 +567,9 @@ export default function LibraryPage() {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="glass-2 rounded-xl px-16 py-12 text-caption text-muted"
       >
-        Your library lives on this device. Full export and import — library, addons and settings —
-        lives in{' '}
+        {t('app.library.portabilityNote')}{' '}
         <Link to="/app/settings" className="focusable text-cyan hover:underline">
-          Settings → Configuration
+          {t('app.library.portabilityLink')}
         </Link>
         .
       </motion.p>

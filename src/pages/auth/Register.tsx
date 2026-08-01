@@ -14,6 +14,7 @@ import MovieWall from '@/components/MovieWall';
 import { spring, toast } from '@/components/ui-elite';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,7 +44,7 @@ function scorePassword(pw: string): number {
   return score;
 }
 
-const STRENGTH_LABELS = ['', 'Weak', 'Fair', 'Strong', 'Excellent'];
+const STRENGTH_KEYS = ['', 'weak', 'fair', 'strong', 'excellent'] as const;
 const STRENGTH_COLORS = ['', 'bg-error', 'bg-warn', 'bg-cyan', 'bg-cyan'];
 
 /** Requirement chip with a check that draws itself in when satisfied. */
@@ -74,6 +75,7 @@ function RequirementChip({ met, label, reduce }: { met: boolean; label: string; 
 }
 
 export default function Register() {
+  const { t } = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const register = useAuth((s) => s.register);
@@ -129,14 +131,14 @@ export default function Register() {
   useEffect(() => {
     if (phase !== 'loading') return;
     const id = reqId.current;
-    const t = setTimeout(() => {
+    const watchdog = setTimeout(() => {
       if (reqId.current === id) {
         reqId.current += 1;
         setPhase('idle');
-        toast.error("Can't reach the server. Your details are safe — try again.");
+        toast.error(t('marketing.auth.register.toastNetwork'));
       }
     }, 6000);
-    return () => clearTimeout(t);
+    return () => clearTimeout(watchdog);
   }, [phase]);
 
   const onSubmit = async (e: FormEvent) => {
@@ -144,18 +146,18 @@ export default function Register() {
     if (busy) return;
     /* field-level errors, first invalid field auto-focused */
     if (name.trim().length < 2) {
-      setNameError('Tell us what to call you.');
+      setNameError(t('marketing.auth.register.nameError'));
       nameRef.current?.focus();
       return;
     }
     if (!EMAIL_RE.test(email)) {
-      setEmailError("That doesn't look like an email address.");
+      setEmailError(t('marketing.auth.register.emailInvalid'));
       emailRef.current?.focus();
       return;
     }
     if (!bothMet) return;
     if (confirm !== password) {
-      setConfirmError("Passwords don't match.");
+      setConfirmError(t('marketing.auth.register.confirmError'));
       confirmRef.current?.focus();
       return;
     }
@@ -168,20 +170,20 @@ export default function Register() {
     if (!res.ok) {
       setPhase('idle');
       if (res.error === 'duplicate') {
-        setEmailError('That email already has an account.');
-        toast.error('That email already has an account.');
+        setEmailError(t('marketing.auth.register.emailDuplicate'));
+        toast.error(t('marketing.auth.register.emailDuplicate'));
         emailRef.current?.focus();
       } else if (res.error === 'network') {
-        toast.error("Can't reach the server. Your details are safe — try again.");
+        toast.error(t('marketing.auth.register.toastNetwork'));
       } else {
-        toast.error('Something went wrong. Try again.');
+        toast.error(t('marketing.auth.register.toastGeneric'));
       }
       return;
     }
 
     /* created + silently signed in (register() opens the session itself) */
     setPhase('success');
-    toast('Account created. Welcome to Elitebox.');
+    toast(t('marketing.auth.register.toastCreated'));
     const dest =
       next && next.startsWith('/subscribe')
         ? next
@@ -214,32 +216,32 @@ export default function Register() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
         >
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-            <Link to="/" aria-label="Elitebox home" className="focusable inline-block rounded-lg">
+            <Link to="/" aria-label={t('marketing.auth.register.homeAria')} className="focusable inline-block rounded-lg">
               <LogoMark height={48} glow />
             </Link>
           </motion.div>
 
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-            <p className="text-micro uppercase tracking-[0.3em] text-cyan">Create your account</p>
+            <p className="text-micro uppercase tracking-[0.3em] text-cyan">{t('marketing.auth.register.eyebrow')}</p>
             <h1 className="mt-8 font-display text-[1.75rem] leading-[1.2] tracking-[-0.03em] text-ink md:text-display-l">
-              One account. Every screen.
+              {t('marketing.auth.register.title')}
             </h1>
             <p className="mt-8 text-caption text-muted">
-              Free to create. Your watch progress, library and addons sync to this account.
+              {t('marketing.auth.register.sub')}
             </p>
           </motion.div>
 
           {/* name */}
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className={fieldShell}>
             <label htmlFor="reg-name" className={labelCls}>
-              Name
+              {t('marketing.auth.register.nameLabel')}
             </label>
             <input
               id="reg-name"
               ref={nameRef}
               type="text"
               autoComplete="name"
-              placeholder="Ada Nakamura"
+              placeholder={t('marketing.auth.register.namePlaceholder')}
               value={name}
               disabled={busy}
               onChange={(e) => {
@@ -247,7 +249,7 @@ export default function Register() {
                 setNameError(null);
               }}
               onBlur={() => {
-                if (name.length > 0 && name.trim().length < 2) setNameError('Tell us what to call you.');
+                if (name.length > 0 && name.trim().length < 2) setNameError(t('marketing.auth.register.nameError'));
               }}
               className={cn(inputCls, nameError ? 'border-error' : focusGlow, busy && 'opacity-60')}
             />
@@ -262,7 +264,7 @@ export default function Register() {
           {/* email */}
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className={fieldShell}>
             <label htmlFor="reg-email" className={labelCls}>
-              Email
+              {t('marketing.auth.register.emailLabel')}
             </label>
             <input
               id="reg-email"
@@ -270,7 +272,7 @@ export default function Register() {
               type="email"
               autoComplete="email"
               inputMode="email"
-              placeholder="you@example.com"
+              placeholder={t('marketing.auth.register.emailPlaceholder')}
               value={email}
               disabled={busy}
               onChange={(e) => {
@@ -279,7 +281,7 @@ export default function Register() {
               }}
               onBlur={() => {
                 if (email.length > 0 && !EMAIL_RE.test(email)) {
-                  setEmailError("That doesn't look like an email address.");
+                  setEmailError(t('marketing.auth.register.emailInvalid'));
                 }
               }}
               className={cn(inputCls, emailError ? 'border-error' : focusGlow, busy && 'opacity-60')}
@@ -290,9 +292,9 @@ export default function Register() {
                   <AlertCircle size={16} strokeWidth={1.75} />
                   {emailError}
                 </span>
-                {emailError.includes('already') && (
+                {emailError === t('marketing.auth.register.emailDuplicate') && (
                   <Link to="/login" className="focusable rounded-sm text-cyan hover:underline">
-                    Sign in instead <ArrowRight size={14} strokeWidth={1.75} className="inline" />
+                    {t('marketing.auth.register.signInInstead')} <ArrowRight size={14} strokeWidth={1.75} className="inline" />
                   </Link>
                 )}
               </p>
@@ -302,14 +304,14 @@ export default function Register() {
           {/* password + chips + meter */}
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className={fieldShell}>
             <label htmlFor="reg-password" className={labelCls}>
-              Password
+              {t('marketing.auth.register.passwordLabel')}
             </label>
             <div className="relative">
               <input
                 id="reg-password"
                 type={showPw ? 'text' : 'password'}
                 autoComplete="new-password"
-                placeholder="8+ characters, 1 number or symbol"
+                placeholder={t('marketing.auth.register.passwordPlaceholder')}
                 value={password}
                 disabled={busy}
                 onChange={(e) => setPassword(e.target.value)}
@@ -317,7 +319,7 @@ export default function Register() {
               />
               <button
                 type="button"
-                aria-label={showPw ? 'Hide password' : 'Show password'}
+                aria-label={showPw ? t('marketing.auth.register.hidePassword') : t('marketing.auth.register.showPassword')}
                 onClick={() => setShowPw((v) => !v)}
                 className="focusable absolute right-8 top-1/2 -translate-y-1/2 rounded-full p-8 text-muted hover:text-ink"
               >
@@ -331,8 +333,8 @@ export default function Register() {
               animate={pulse > 0 && !reduce ? { scale: [1, 1.08, 1] } : { scale: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <RequirementChip met={reqLen} label="8+ characters" reduce={reduce ?? false} />
-              <RequirementChip met={reqNumSym} label="1 number or symbol" reduce={reduce ?? false} />
+              <RequirementChip met={reqLen} label={t('marketing.auth.register.reqChars')} reduce={reduce ?? false} />
+              <RequirementChip met={reqNumSym} label={t('marketing.auth.register.reqNumSym')} reduce={reduce ?? false} />
             </motion.div>
 
             {/* strength meter */}
@@ -356,7 +358,7 @@ export default function Register() {
                     score === 1 ? 'text-error' : score === 2 ? 'text-warn' : 'text-cyan',
                   )}
                 >
-                  {STRENGTH_LABELS[score]}
+                  {score > 0 && t(`marketing.auth.register.strength.${STRENGTH_KEYS[score]}`)}
                 </span>
               )}
             </div>
@@ -365,14 +367,14 @@ export default function Register() {
           {/* confirm */}
           <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className={fieldShell}>
             <label htmlFor="reg-confirm" className={labelCls}>
-              Confirm password
+              {t('marketing.auth.register.confirmLabel')}
             </label>
             <input
               id="reg-confirm"
               ref={confirmRef}
               type={showPw ? 'text' : 'password'}
               autoComplete="new-password"
-              placeholder="Repeat your password"
+              placeholder={t('marketing.auth.register.confirmPlaceholder')}
               value={confirm}
               disabled={busy}
               onChange={(e) => {
@@ -380,7 +382,7 @@ export default function Register() {
                 setConfirmError(null);
               }}
               onBlur={() => {
-                if (confirm.length > 0 && confirm !== password) setConfirmError("Passwords don't match.");
+                if (confirm.length > 0 && confirm !== password) setConfirmError(t('marketing.auth.register.confirmError'));
               }}
               className={cn(
                 inputCls,
@@ -413,14 +415,14 @@ export default function Register() {
             >
               {phase === 'loading' ? (
                 <>
-                  <Spinner /> Creating your account…
+                  <Spinner /> {t('marketing.auth.register.creating')}
                 </>
               ) : phase === 'success' ? (
                 <>
-                  <Check size={18} strokeWidth={2.5} /> Account created
+                  <Check size={18} strokeWidth={2.5} /> {t('marketing.auth.register.created')}
                 </>
               ) : (
-                'Create account'
+                t('marketing.auth.register.createAccount')
               )}
             </button>
           </motion.div>
@@ -430,13 +432,13 @@ export default function Register() {
             variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
             className="text-caption text-muted"
           >
-            By creating an account you agree to the{' '}
+            {t('marketing.auth.register.legalPre')}
             <Link to="/support#terms" className="focusable rounded-sm text-ink hover:text-cyan">
-              Terms
-            </Link>{' '}
-            and{' '}
+              {t('marketing.auth.register.legalTerms')}
+            </Link>
+            {t('marketing.auth.register.legalMid')}
             <Link to="/support#privacy" className="focusable rounded-sm text-ink hover:text-cyan">
-              Privacy Policy
+              {t('marketing.auth.register.legalPrivacy')}
             </Link>
             .
           </motion.p>
@@ -444,7 +446,7 @@ export default function Register() {
           {/* divider + links */}
           <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex items-center gap-12" aria-hidden>
             <span className="h-px flex-1 bg-white/[.08]" />
-            <span className="text-micro uppercase text-muted">Already a member</span>
+            <span className="text-micro uppercase text-muted">{t('marketing.auth.register.divider')}</span>
             <span className="h-px flex-1 bg-white/[.08]" />
           </motion.div>
           <motion.div
@@ -455,14 +457,14 @@ export default function Register() {
               to={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
               className="focusable rounded-sm text-cyan underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-150 hover:decoration-cyan"
             >
-              Sign in
+              {t('marketing.auth.register.signIn')}
             </Link>
             <Link
               to="/subscribe"
               className="focusable inline-flex items-center gap-6 rounded-sm text-muted transition-colors hover:text-ink"
             >
               <Sparkles size={16} strokeWidth={1.75} />
-              See Premium
+              {t('marketing.auth.register.seePremium')}
             </Link>
           </motion.div>
 
@@ -472,7 +474,7 @@ export default function Register() {
               className="flex items-center justify-center gap-8 text-micro uppercase text-muted"
             >
               <span className="h-8 w-8 rounded-full bg-warn" />
-              Demo mode — accounts are stored on this device only.
+              {t('marketing.auth.register.demo')}
             </motion.p>
           )}
         </motion.form>

@@ -98,11 +98,20 @@ export interface ContinueWatchingEntry {
   updatedAt: number;
 }
 
+/** A magnet link the user saved from the magnet result sheet (drop/paste). */
+export interface SavedMagnet {
+  infoHash: string; // 40-char lowercase hex
+  name: string;
+  magnetUri: string;
+  addedAt: number;
+}
+
 interface LibraryState {
   watchlist: string[];
   favorites: string[];
   watched: string[];
   continueWatching: ContinueWatchingEntry[];
+  savedMagnets: SavedMagnet[];
   /** Incognito: when true, setProgress records nothing (private session). */
   historyPaused: boolean;
   setHistoryPaused: (v: boolean) => void;
@@ -115,6 +124,8 @@ interface LibraryState {
   toggleWatched: (id: string) => void;
   setProgress: (entry: Omit<ContinueWatchingEntry, 'updatedAt'>) => void;
   clearProgress: (id: string) => void;
+  addSavedMagnet: (m: SavedMagnet) => void;
+  removeSavedMagnet: (infoHash: string) => void;
   isWatchlisted: (id: string) => boolean;
   isFavorite: (id: string) => boolean;
   isWatched: (id: string) => boolean;
@@ -125,6 +136,7 @@ const libraryInitial = {
   favorites: [] as string[],
   watched: [] as string[],
   continueWatching: [] as ContinueWatchingEntry[],
+  savedMagnets: [] as SavedMagnet[],
   historyPaused: false,
 };
 
@@ -172,6 +184,19 @@ export const useLibrary = create<LibraryState>()(
         set((s) =>
           s.continueWatching.some((e) => e.id === id)
             ? { continueWatching: s.continueWatching.filter((e) => e.id !== id) }
+            : s,
+        ),
+      // Saved magnets are deduped by info-hash and capped like continueWatching.
+      addSavedMagnet: (m) =>
+        set((s) =>
+          s.savedMagnets.some((x) => x.infoHash === m.infoHash)
+            ? s
+            : { savedMagnets: [m, ...s.savedMagnets].slice(0, 60) },
+        ),
+      removeSavedMagnet: (infoHash) =>
+        set((s) =>
+          s.savedMagnets.some((x) => x.infoHash === infoHash)
+            ? { savedMagnets: s.savedMagnets.filter((x) => x.infoHash !== infoHash) }
             : s,
         ),
       isWatchlisted: (id) => get().watchlist.includes(id),
@@ -335,6 +360,9 @@ export const useAddons = create<AddonsState>()(
 /* ── Settings ──────────────────────────────────────────────────────────── */
 
 export interface EliteSettings {
+  general: {
+    language: 'en' | 'nl'; // interface language (i18n provider reads this)
+  };
   appearance: {
     ambience: boolean; // particle ambience layer
     grain: boolean;
@@ -358,9 +386,19 @@ export interface EliteSettings {
   cache: {
     maxGb: number;
   };
+  streaming: {
+    /**
+     * off: magnet/torrent UI hidden. metadata: the browser app reads torrent
+     * metadata only (no peer-to-peer — impossible in a browser). desktop:
+     * the Elitebox desktop shell does local peer-to-peer for legal sources.
+     */
+    torrentProfile: 'off' | 'metadata' | 'desktop';
+    maxCacheGb: number;
+  };
 }
 
 export const DEFAULT_SETTINGS: EliteSettings = {
+  general: { language: 'en' },
   appearance: { ambience: true, grain: true },
   playback: { autoplayNext: true, defaultSpeed: 1, preferredQuality: 'auto', hardwareAccel: true, ambient: true },
   subtitles: {
@@ -373,6 +411,7 @@ export const DEFAULT_SETTINGS: EliteSettings = {
     outline: true,
   },
   cache: { maxGb: 4 },
+  streaming: { torrentProfile: 'metadata', maxCacheGb: 4 },
 };
 
 interface SettingsState {
@@ -396,10 +435,12 @@ export const useSettings = create<SettingsState>()(
           settings: {
             ...s.settings,
             ...patch,
+            general: { ...s.settings.general, ...(patch.general ?? {}) },
             appearance: { ...s.settings.appearance, ...(patch.appearance ?? {}) },
             playback: { ...s.settings.playback, ...(patch.playback ?? {}) },
             subtitles: { ...s.settings.subtitles, ...(patch.subtitles ?? {}) },
             cache: { ...s.settings.cache, ...(patch.cache ?? {}) },
+            streaming: { ...s.settings.streaming, ...(patch.streaming ?? {}) },
           },
         })),
       exportConfig: () => {
@@ -451,10 +492,12 @@ export const useSettings = create<SettingsState>()(
           ...current,
           ...p,
           settings: {
+            general: { ...DEFAULT_SETTINGS.general, ...(ps.general ?? {}) },
             appearance: { ...DEFAULT_SETTINGS.appearance, ...(ps.appearance ?? {}) },
             playback: { ...DEFAULT_SETTINGS.playback, ...(ps.playback ?? {}) },
             subtitles: { ...DEFAULT_SETTINGS.subtitles, ...(ps.subtitles ?? {}) },
             cache: { ...DEFAULT_SETTINGS.cache, ...(ps.cache ?? {}) },
+            streaming: { ...DEFAULT_SETTINGS.streaming, ...(ps.streaming ?? {}) },
           },
         };
       },
@@ -483,6 +526,38 @@ function rebindFromStorage<T extends object>(
   store.setState(initial);
 }
 
+/**
+ * Settings rebind deep-merges every section over DEFAULT_SETTINGS (same
+ * style as the persist merge above) so a slice persisted before a new
+ * section shipped can never rehydrate with missing keys.
+ */
+function rebindSettings(): void {
+  const raw = localStorage.getItem(scopedKey('settings'));
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as {
+        state?: { settings?: Partial<EliteSettings>; onboarded?: boolean };
+      };
+      const ps = parsed.state?.settings ?? {};
+      useSettings.setState({
+        onboarded: parsed.state?.onboarded ?? false,
+        settings: {
+          general: { ...DEFAULT_SETTINGS.general, ...(ps.general ?? {}) },
+          appearance: { ...DEFAULT_SETTINGS.appearance, ...(ps.appearance ?? {}) },
+          playback: { ...DEFAULT_SETTINGS.playback, ...(ps.playback ?? {}) },
+          subtitles: { ...DEFAULT_SETTINGS.subtitles, ...(ps.subtitles ?? {}) },
+          cache: { ...DEFAULT_SETTINGS.cache, ...(ps.cache ?? {}) },
+          streaming: { ...DEFAULT_SETTINGS.streaming, ...(ps.streaming ?? {}) },
+        },
+      });
+      return;
+    } catch {
+      /* fall through to initial */
+    }
+  }
+  useSettings.setState({ settings: DEFAULT_SETTINGS, onboarded: false });
+}
+
 function rebindScopedStores(): void {
   rebindFromStorage<LibraryState>(useLibrary as never, 'library', { ...libraryInitial });
   rebindFromStorage<PlaybackMemoryState>(usePlaybackMemory as never, 'playback', { byTitle: {} });
@@ -490,10 +565,7 @@ function rebindScopedStores(): void {
     installed: [...addonsInitial.installed],
     enabled: { ...addonsInitial.enabled },
   });
-  rebindFromStorage<SettingsState>(useSettings as never, 'settings', {
-    settings: DEFAULT_SETTINGS,
-    onboarded: false,
-  });
+  rebindSettings();
 }
 
 /** Convenience selector: continue-watching progress ratio for a title. */

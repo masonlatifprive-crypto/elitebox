@@ -9,7 +9,7 @@
 import { Fragment, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { motion, useInView, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -31,7 +31,6 @@ import {
   Tv,
 } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
-import MovieWall from '@/components/MovieWall';
 import LivingTree from '@/components/LivingTree';
 import ScrambleText from '@/components/ScrambleText';
 import SpotlightCard from '@/components/SpotlightCard';
@@ -48,6 +47,7 @@ import {
 } from '@/components/ui-elite';
 import { SHOWCASE_CHANNELS, SHOWCASE_MOVIES } from '@/data/showcase';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,16 +61,10 @@ const riseIn = {
 
 /* ── S1 — Hero ─────────────────────────────────────────────────────────── */
 
-const H1_LINES = ['EVERYTHING YOU WATCH', 'ONE PLACE'];
-
 function Hero() {
-  const heroRef = useRef<HTMLElement>(null);
-  const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const bgY = useTransform(scrollYProgress, [0, 1], [0, 80]);
-
+  const { t } = useT();
   return (
-    <section ref={heroRef} className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden">
+    <section className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden">
       {/* z0 — pure-black stage: the LivingTree is the hero, dadgpt-calm.
           Deep vignette melts the edges into the lunar night. */}
       <div className="absolute inset-0 z-0 bg-black" aria-hidden />
@@ -92,7 +86,7 @@ function Hero() {
         >
           {/* LivingTree — the signature mark: an AI waveform × neural tree,
               floating and breathing above the headline. Its own lunar halo
-              lifts it clear of the MovieWall art. Static under reduced
+              lifts it clear of the starfield. Static under reduced
               motion (handled in index.css). */}
           <motion.div
             aria-hidden
@@ -109,7 +103,7 @@ function Hero() {
           </motion.div>
 
           <Eyebrow className="mb-16">
-            {'ONE APP FOR EVERYTHING YOU WATCH'.split(' ').map((word, wi) => (
+            {t('marketing.home.hero.eyebrow').split(' ').map((word, wi) => (
               <Fragment key={wi}>
                 {wi > 0 && ' '}
                 <span className="inline-block whitespace-nowrap">
@@ -128,7 +122,7 @@ function Hero() {
           </Eyebrow>
 
           <h1 className="font-display text-[clamp(2rem,10.5vw,2.75rem)] leading-[1.05] tracking-[-0.04em] font-extrabold md:text-display-2xl">
-            {H1_LINES.map((line, li) => (
+            {[t('marketing.home.hero.title1'), t('marketing.home.hero.title2')].map((line, li) => (
               <span key={line} className={cn('block', li > 0 && 'mt-2')}>
                 {line.split(' ').map((word, wi) => (
                   <Fragment key={wi}>
@@ -160,8 +154,7 @@ function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.15, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
-          Movies, shows, and live channels from every addon you install. Health-checked in real
-          time, on every screen you own.
+          {t('marketing.home.hero.sub')}
         </motion.p>
 
         <motion.div
@@ -171,10 +164,10 @@ function Hero() {
           transition={{ delay: 1.3, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
           <ButtonPrimary to="/app" className="max-sm:w-full px-32 py-16 text-base">
-            Open the app
+            {t('marketing.home.hero.openApp')}
           </ButtonPrimary>
           <ButtonNeon to="/app/onboarding" className="max-sm:w-full px-32 py-16 text-base">
-            Set up Elitebox
+            {t('marketing.home.hero.setup')}
           </ButtonNeon>
         </motion.div>
 
@@ -184,7 +177,7 @@ function Hero() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.6, duration: 0.45 }}
         >
-          Open addon protocol · Free CC-BY open catalog · Web · Windows · Android · TV
+          {t('marketing.home.hero.meta')}
         </motion.p>
       </div>
 
@@ -200,16 +193,17 @@ function Hero() {
 /* ── S2 — Top Content Rail ─────────────────────────────────────────────── */
 
 function TopContentRail() {
+  const { t } = useT();
   // 12 showcase posters (HD) + the two LIVE channels riding the same rail.
   const items = [...SHOWCASE_MOVIES, ...SHOWCASE_CHANNELS.filter((c) => c.id !== 'launchpad')];
   return (
     <section id="top-content" className="relative z-10 flex flex-col gap-8 py-96">
       <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mx-auto w-full max-w-[1280px] px-16 md:px-24">
-        <Eyebrow>Now streaming</Eyebrow>
+        <Eyebrow>{t('marketing.home.rail.eyebrow')}</Eyebrow>
         <div className="mt-8 flex flex-wrap items-baseline justify-between gap-16">
-          <h2 className="font-display text-display-l text-ink">Now in the catalog</h2>
+          <h2 className="font-display text-display-l text-ink">{t('marketing.home.rail.title')}</h2>
           <ButtonGhost to="/app/discover">
-            Open the full catalog <ChevronRight size={16} strokeWidth={1.75} />
+            {t('marketing.home.rail.openCatalog')} <ChevronRight size={16} strokeWidth={1.75} />
           </ButtonGhost>
         </div>
       </motion.div>
@@ -221,40 +215,20 @@ function TopContentRail() {
 /* ── S3 — Feature Story: "Engineered, not patched" (GSAP pinned scene) ─── */
 
 const FEATURE_CARDS = [
-  {
-    key: 'health',
-    accent: 'cyan' as const,
-    title: 'Every addon, health-checked live',
-    copy: 'Your sources are timed and scored around the clock. A slow one is benched before it ever stalls your film.',
-    linkTo: '/app/addons',
-    linkLabel: 'See it in the app →',
-  },
-  {
-    key: 'memory',
-    accent: 'purple' as const,
-    title: 'Pick up where you left off',
-    copy: 'Resume position, playback speed and subtitle choice are remembered per title, per profile, on every screen.',
-    linkTo: '/app',
-    linkLabel: 'See it in the app →',
-  },
-  {
-    key: 'recovery',
-    accent: 'cyan' as const,
-    title: 'A dead stream never dead-ends',
-    copy: 'One tap hops to the next source. Elitebox remembers which mirrors actually play for you.',
-    linkTo: '/app/settings',
-    linkLabel: 'See it in the app →',
-  },
+  { key: 'health', accent: 'cyan' as const, linkTo: '/app/addons' },
+  { key: 'memory', accent: 'purple' as const, linkTo: '/app' },
+  { key: 'recovery', accent: 'cyan' as const, linkTo: '/app/settings' },
 ];
 
 function FeatureCardVisual({ cardKey }: { cardKey: string }) {
+  const { t } = useT();
   if (cardKey === 'health') {
     return (
       <div className="flex flex-col gap-10">
         {[
           { name: 'Elitebox Showcase', ms: 128, status: 'ok' as const },
           { name: 'Cinemeta', ms: 214, status: 'ok' as const },
-          { name: 'Your next addon', ms: 912, status: 'degraded' as const },
+          { name: t('marketing.home.story.visual.nextAddon'), ms: 912, status: 'degraded' as const },
         ].map((row) => (
           <div key={row.name} className="flex items-center justify-between gap-16">
             <span className="text-caption text-ink">{row.name}</span>
@@ -270,7 +244,7 @@ function FeatureCardVisual({ cardKey }: { cardKey: string }) {
           </div>
         ))}
         <span className="glass-1 mt-4 w-fit rounded-full px-12 py-4 text-micro uppercase text-warn">
-          Auto-recovering
+          {t('marketing.home.story.visual.autoRecovering')}
         </span>
       </div>
     );
@@ -282,7 +256,7 @@ function FeatureCardVisual({ cardKey }: { cardKey: string }) {
           <div className="h-full w-[42%] rounded-full bg-signature" />
         </div>
         <div className="flex flex-wrap gap-8">
-          {['1.25×', 'Subtitles: EN', 'Resume 42:17'].map((chip) => (
+          {['1.25×', t('marketing.home.story.visual.subtitlesEn'), t('marketing.home.story.visual.resume')].map((chip) => (
             <span key={chip} className="glass-1 rounded-full px-12 py-6 font-mono text-[11px] text-cyan">
               {chip}
             </span>
@@ -295,17 +269,17 @@ function FeatureCardVisual({ cardKey }: { cardKey: string }) {
     <div className="flex flex-col gap-12">
       <div className="flex items-center gap-10 text-muted">
         <AlertTriangle size={18} strokeWidth={1.75} className="text-warn shrink-0" />
-        <span className="text-caption">Source 1 timed out after 5s</span>
+        <span className="text-caption">{t('marketing.home.story.visual.timeout')}</span>
       </div>
       <div className="flex flex-wrap gap-8">
-        <ButtonNeon className="px-16 py-8 text-[12px]" onClick={() => toast('Switched to the next source')}>
-          Next source
+        <ButtonNeon className="px-16 py-8 text-[12px]" onClick={() => toast(t('marketing.home.story.visual.toastSwitched'))}>
+          {t('marketing.home.story.visual.nextSource')}
         </ButtonNeon>
-        <ButtonGhost onClick={() => toast('Quality stepped down to 720p')}>
-          Lower quality
+        <ButtonGhost onClick={() => toast(t('marketing.home.story.visual.toastSteppedDown'))}>
+          {t('marketing.home.story.visual.lowerQuality')}
         </ButtonGhost>
-        <ButtonGhost onClick={() => toast('Retrying the original source')}>
-          <RefreshCw size={14} strokeWidth={1.75} /> Retry
+        <ButtonGhost onClick={() => toast(t('marketing.home.story.visual.toastRetrying'))}>
+          <RefreshCw size={14} strokeWidth={1.75} /> {t('marketing.home.story.visual.retry')}
         </ButtonGhost>
       </div>
     </div>
@@ -313,6 +287,7 @@ function FeatureCardVisual({ cardKey }: { cardKey: string }) {
 }
 
 function FeatureStory() {
+  const { t } = useT();
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
@@ -385,12 +360,12 @@ function FeatureStory() {
     <section ref={sectionRef} className="relative z-10 flex min-h-[100dvh] items-center py-96">
       <div className="mx-auto grid w-full max-w-[1280px] gap-48 px-16 md:grid-cols-[40%_1fr] md:px-24">
         <div className="flex flex-col gap-16 md:sticky md:top-96 md:self-start">
-          <Eyebrow>Why Elitebox</Eyebrow>
+          <Eyebrow>{t('marketing.home.story.eyebrow')}</Eyebrow>
           <h2 className="font-display text-display-l text-ink">
-            Made for movie night.
+            {t('marketing.home.story.title')}
           </h2>
           <p className="max-w-[44ch] text-body-l text-muted">
-            Movies, series and live TV in one calm place. Your addons fill the shelves — Elitebox keeps every one of them honest, fast and recoverable.
+            {t('marketing.home.story.copy')}
           </p>
         </div>
 
@@ -423,15 +398,15 @@ function FeatureStory() {
                   card.accent === 'cyan' ? 'text-cyan' : 'text-purple',
                 )}
               >
-                {card.title}
+                {t(`marketing.home.story.cards.${card.key}.title`)}
               </h3>
               <FeatureCardVisual cardKey={card.key} />
-              <p className="text-caption text-muted">{card.copy}</p>
+              <p className="text-caption text-muted">{t(`marketing.home.story.cards.${card.key}.copy`)}</p>
               <Link
                 to={card.linkTo}
                 className="focusable w-fit rounded-full text-caption font-semibold text-muted transition-colors hover:text-cyan"
               >
-                {card.linkLabel}
+                {t(`marketing.home.story.cards.${card.key}.link`)}
               </Link>
             </GlassPanel>
           ))}
@@ -534,31 +509,31 @@ function ScrubberBeam() {
 /* ── S6 — Platforms + downloads ────────────────────────────────────────── */
 
 const PLATFORM_CHIPS = [
-  { icon: Globe, label: 'Web', caption: undefined },
-  { icon: Monitor, label: 'Windows', caption: 'Native installer' },
-  { icon: Smartphone, label: 'Android', caption: 'Mobile APK' },
-  { icon: Tv, label: 'Android TV', caption: 'Leanback build' },
+  { icon: Globe, slug: 'web' },
+  { icon: Monitor, slug: 'windows' },
+  { icon: Smartphone, slug: 'android' },
+  { icon: Tv, slug: 'androidTv' },
 ] as const;
 
 function PlatformsAndDownloads() {
+  const { t } = useT();
   return (
     <section id="downloads" className="relative z-10 flex flex-col gap-48 py-96">
       <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-16 px-16 text-center md:px-24">
-        <Eyebrow>Platforms</Eyebrow>
+        <Eyebrow>{t('marketing.home.platforms.eyebrow')}</Eyebrow>
         <motion.h2
           {...riseIn}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="font-display text-display-l text-ink max-w-[20ch]"
         >
-          One app. Every screen.
+          {t('marketing.home.platforms.title')}
         </motion.h2>
         <motion.p
           {...riseIn}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-[64ch] text-body-l text-muted"
         >
-          The same Elitebox runs in your browser, as a native Windows app, on Android phones and on
-          Android TV — with a true 10-foot interface and spatial remote navigation.
+          {t('marketing.home.platforms.sub')}
         </motion.p>
       </div>
 
@@ -569,7 +544,7 @@ function PlatformsAndDownloads() {
         transition={{ ...spring.cinematic, duration: 0.7 }}
         className="mx-auto w-full max-w-5xl px-16"
       >
-        <img src="/devices-mockup.webp" alt="Elitebox running on TV, laptop, tablet and phone" loading="lazy" className="w-full rounded-2xl" />
+        <img src="/devices-mockup.webp" alt={t('marketing.home.platforms.imageAlt')} loading="lazy" className="w-full rounded-2xl" />
         {/* reflection */}
         <div
           aria-hidden
@@ -583,7 +558,7 @@ function PlatformsAndDownloads() {
       <div className="mx-auto flex max-w-[1280px] flex-wrap items-stretch justify-center gap-12 px-16">
         {PLATFORM_CHIPS.map((chip, i) => (
           <motion.span
-            key={chip.label}
+            key={chip.slug}
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -592,8 +567,8 @@ function PlatformsAndDownloads() {
           >
             <chip.icon size={20} strokeWidth={1.75} className="text-cyan" />
             <span className="flex flex-col">
-              <span className="text-caption font-semibold text-ink">{chip.label}</span>
-              {chip.caption && <span className="text-[11px] text-muted">{chip.caption}</span>}
+              <span className="text-caption font-semibold text-ink">{t(`marketing.home.platforms.chips.${chip.slug}.label`)}</span>
+              {chip.slug !== 'web' && <span className="text-[11px] text-muted">{t(`marketing.home.platforms.chips.${chip.slug}.caption`)}</span>}
             </span>
           </motion.span>
         ))}
@@ -602,13 +577,13 @@ function PlatformsAndDownloads() {
       {/* download cards */}
       <div className="mx-auto grid w-full max-w-[1280px] gap-16 px-16 sm:grid-cols-2 lg:grid-cols-4 md:px-24">
         {[
-          { icon: Monitor, name: 'Windows', detail: 'Native EXE installer · in packaging', cta: 'Build status' },
-          { icon: Smartphone, name: 'Android', detail: 'Mobile APK · in packaging', cta: 'Build status' },
-          { icon: Globe, name: 'Web', detail: 'Runs in your browser', web: true, cta: 'Launch web app' },
-          { icon: Tv, name: 'Android TV', detail: 'Leanback build · in packaging', cta: 'Build status' },
+          { icon: Monitor, slug: 'windows' },
+          { icon: Smartphone, slug: 'android' },
+          { icon: Globe, slug: 'web', web: true },
+          { icon: Tv, slug: 'androidTv' },
         ].map((card, i) => (
           <motion.div
-            key={card.name}
+            key={card.slug}
             initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
@@ -620,16 +595,16 @@ function PlatformsAndDownloads() {
                   <card.icon size={24} strokeWidth={1.75} className="text-cyan" />
                 </span>
                 <div>
-                  <h3 className="font-display text-title text-ink">{card.name}</h3>
-                  <p className="text-caption text-muted">{card.detail}</p>
+                  <h3 className="font-display text-title text-ink">{t(`marketing.platformCards.${card.slug}.name`)}</h3>
+                  <p className="text-caption text-muted">{t(`marketing.platformCards.${card.slug}.detail`)}</p>
                 </div>
                 {card.web ? (
                   <ButtonPrimary to="/app" className="mt-auto px-16 py-8 text-[12px]">
-                    {card.cta}
+                    {t(`marketing.platformCards.${card.slug}.cta`)}
                   </ButtonPrimary>
                 ) : (
                   <ButtonNeon to="/downloads" className="mt-auto px-16 py-8 text-[12px]">
-                    <Download size={14} strokeWidth={1.75} /> {card.cta}
+                    <Download size={14} strokeWidth={1.75} /> {t(`marketing.platformCards.${card.slug}.cta`)}
                   </ButtonNeon>
                 )}
               </GlassPanel>
@@ -646,53 +621,21 @@ function PlatformsAndDownloads() {
 
 /* ── S6b — FAQ: the questions everyone asks, answered straight ────────── */
 
-const FAQ = [
-  {
-    q: 'What is Elitebox?',
-    a: 'Elitebox is a modern media center — one calm place for movies, series and live channels. Addons fill your catalog with real titles; the player, library and calendar are all built in.',
-  },
-  {
-    q: 'Is Elitebox free?',
-    a: 'Yes. The open catalog and every core feature are free. Elitebox Premium ($4.99 a month) unlocks the full catalog depth and native build downloads — cancel anytime.',
-  },
-  {
-    q: 'Are addons safe to install?',
-    a: 'Addons are data-only: they answer JSON and never run code on your device. Elitebox shows every permission before install, blocks known piracy sources outright, and benches any addon that slows down.',
-  },
-  {
-    q: 'Does Elitebox host movies itself?',
-    a: 'No — and we say that plainly. Elitebox ships an open Creative-Commons showcase, and everything else comes from the addons you choose to install. Your sources, your rules.',
-  },
-  {
-    q: 'What devices does it run on?',
-    a: 'The web app runs everywhere today and installs as a PWA. Native Windows, macOS, Linux, Android and Android TV builds ship from the same codebase — see Downloads for live status.',
-  },
-  {
-    q: 'Does it remember where I stopped?',
-    a: 'Per title and per profile: resume position, playback speed, subtitle choice and sync offset. Pick up on your TV exactly where you left off on your phone.',
-  },
-  {
-    q: 'What does Elitebox know about me?',
-    a: 'Almost nothing. Your library lives on your device — no viewing logs, no trackers, no analytics. Incognito mode pauses history with one switch. Read the privacy policy; it is short on purpose.',
-  },
-  {
-    q: 'Can I build my own addon?',
-    a: 'Yes — one JSON manifest and four optional endpoints. The developer guide documents the protocol exactly as the engine speaks it, with a 60-second local test loop.',
-  },
-];
+const FAQ_IDS = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8'] as const;
 
 function FaqSection() {
+  const { t } = useT();
   return (
     <section className="relative z-10 py-96">
       <div className="mx-auto flex max-w-[880px] flex-col gap-32 px-16 md:px-24">
         <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col gap-12 text-center">
-          <Eyebrow>Questions</Eyebrow>
-          <h2 className="font-display text-display-l text-ink">Everything you were going to ask.</h2>
+          <Eyebrow>{t('marketing.home.faq.eyebrow')}</Eyebrow>
+          <h2 className="font-display text-display-l text-ink">{t('marketing.home.faq.title')}</h2>
         </motion.div>
         <div className="flex flex-col gap-12">
-          {FAQ.map((item, i) => (
+          {FAQ_IDS.map((id, i) => (
             <motion.details
-              key={item.q}
+              key={id}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
@@ -700,10 +643,10 @@ function FaqSection() {
               className="glass-2 group rounded-xl px-20 py-16 open:border-cyan/30"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-16 text-caption font-semibold text-ink marker:hidden [&::-webkit-details-marker]:hidden">
-                {item.q}
+                {t(`marketing.home.faq.${id}.q`)}
                 <ChevronRight size={16} strokeWidth={1.75} className="shrink-0 rotate-90 text-cyan transition-transform group-open:-rotate-90" />
               </summary>
-              <p className="mt-10 text-caption leading-relaxed text-muted">{item.a}</p>
+              <p className="mt-10 text-caption leading-relaxed text-muted">{t(`marketing.home.faq.${id}.a`)}</p>
             </motion.details>
           ))}
         </div>
@@ -713,6 +656,7 @@ function FaqSection() {
 }
 
 function FinalCta() {
+  const { t } = useT();
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { once: true, amount: 0.4 });
   return (
@@ -754,21 +698,21 @@ function FinalCta() {
           <div ref={ctaRef}>
             <h2 className="font-display text-display-l text-gradient-signature">
               {ctaInView ? (
-                <ScrambleText text="Stop fighting your media center." caret />
+                <ScrambleText text={t('marketing.home.finalCta.title')} caret />
               ) : (
-                <span className="opacity-0">Stop fighting your media center.</span>
+                <span className="opacity-0">{t('marketing.home.finalCta.title')}</span>
               )}
             </h2>
           </div>
           <p className="max-w-[48ch] text-body-l text-muted">
-            Open Elitebox and press play. Your library, addons and progress are waiting.
+            {t('marketing.home.finalCta.copy')}
           </p>
           <div className="flex flex-col items-center gap-16 sm:flex-row">
             <ButtonPrimary to="/app" className="px-32 py-16 text-base">
-              Launch Elitebox
+              {t('marketing.home.finalCta.launch')}
             </ButtonPrimary>
             <ButtonNeon to="/app/onboarding" className="px-32 py-16 text-base">
-              Take the tour
+              {t('marketing.home.finalCta.tour')}
             </ButtonNeon>
           </div>
         </GlassPanel>
@@ -780,37 +724,38 @@ function FinalCta() {
 /* ── page assembly ─────────────────────────────────────────────────────── */
 
 export default function Home() {
+  const { t } = useT();
   return (
     <>
       <Hero />
       <TopContentRail />
       <FeatureStory />
       <SplitVisual
-        eyebrow="One library"
-        title="Every source. One shelf."
+        eyebrow={t('marketing.home.splitLibrary.eyebrow')}
+        title={t('marketing.home.splitLibrary.title')}
         bullets={[
-          { icon: Shield, text: 'Real movies, series and channels — from open catalogs you choose' },
-          { icon: Activity, text: 'Every addon shows its permissions before you install it' },
-          { icon: SlidersHorizontal, text: 'Reorder, disable or export your addons anytime' },
-          { icon: Code2, text: 'The protocol is open and documented — build your own addon' },
+          { icon: Shield, text: t('marketing.home.splitLibrary.b1') },
+          { icon: Activity, text: t('marketing.home.splitLibrary.b2') },
+          { icon: SlidersHorizontal, text: t('marketing.home.splitLibrary.b3') },
+          { icon: Code2, text: t('marketing.home.splitLibrary.b4') },
         ]}
-        cta={<ButtonNeon to="/app/discover">Open the catalog</ButtonNeon>}
+        cta={<ButtonNeon to="/app/discover">{t('marketing.home.splitLibrary.cta')}</ButtonNeon>}
         image="/addon-engine-visual.webp"
-        imageAlt="Abstract visualization of the Elitebox addon engine core"
+        imageAlt={t('marketing.home.splitLibrary.imageAlt')}
       />
       <SplitVisual
         mirrored
-        eyebrow="Playback"
-        title="Streams recover themselves."
+        eyebrow={t('marketing.home.splitPlayer.eyebrow')}
+        title={t('marketing.home.splitPlayer.title')}
         bullets={[
-          { icon: RefreshCw, text: 'Automatic source fallback and quality stepping' },
-          { icon: Captions, text: 'Every subtitle track, normalized to WebVTT' },
-          { icon: Keyboard, text: 'Keyboard, remote, and touch — one control language' },
-          { icon: FastForward, text: 'Skip-intro and next-episode prefetch' },
+          { icon: RefreshCw, text: t('marketing.home.splitPlayer.b1') },
+          { icon: Captions, text: t('marketing.home.splitPlayer.b2') },
+          { icon: Keyboard, text: t('marketing.home.splitPlayer.b3') },
+          { icon: FastForward, text: t('marketing.home.splitPlayer.b4') },
         ]}
-        cta={<ButtonPrimary to="/app">Meet the player</ButtonPrimary>}
+        cta={<ButtonPrimary to="/app">{t('marketing.home.splitPlayer.cta')}</ButtonPrimary>}
         image="/player-visual.webp"
-        imageAlt="Futuristic Elitebox player timeline made of light"
+        imageAlt={t('marketing.home.splitPlayer.imageAlt')}
         overlay={<ScrubberBeam />}
       />
       <FaqSection />

@@ -15,6 +15,7 @@ import { useLibrary } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
 import PosterCard from '@/components/PosterCard';
 import { spring } from '@/components/ui-elite';
+import { useT } from '@/i18n';
 
 const GENRE_WEIGHT = 0.6;
 const UNFINISHED_WEIGHT = 0.25;
@@ -77,6 +78,7 @@ export default function ForYouShelf({
   items: MetaItem[];
   lookup: (id: string) => MetaItem | undefined;
 }) {
+  const { t } = useT();
   const watched = useLibrary((s) => s.watched);
   const favorites = useLibrary((s) => s.favorites);
   const continueWatching = useLibrary((s) => s.continueWatching);
@@ -89,11 +91,11 @@ export default function ForYouShelf({
   if (picks.length < 3) return null;
 
   return (
-    <section className="flex flex-col gap-16" aria-label="From your taste">
+    <section className="flex flex-col gap-16" aria-label={t('app.forYou.title')}>
       <div className="flex flex-col gap-4">
-        <h2 className="font-display text-title text-ink">From your taste</h2>
+        <h2 className="font-display text-title text-ink">{t('app.forYou.title')}</h2>
         <span className="text-caption text-muted">
-          Tuned on this device from what you watch — nothing leaves your browser.
+          {t('app.forYou.subtitle')}
         </span>
       </div>
       <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto overscroll-x-contain px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
