@@ -17,6 +17,8 @@ import {
   LibraryBig,
   Play,
   PlayCircle,
+  Search,
+  SearchX,
   X,
 } from 'lucide-react';
 import PosterCard from '@/components/PosterCard';
@@ -51,6 +53,11 @@ function computeStreak(timestamps: number[]): number {
     cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
+}
+
+/** Case/diacritic-insensitive fold for local library search (stremio local_search parity). */
+function fold(s: string): string {
+  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 }
 
 function formatHours(totalSec: number): number {
@@ -210,6 +217,20 @@ function ContinueCard({
   );
 }
 
+/* ── local search no-match state ───────────────────────────────────────── */
+
+function SearchNoMatch({ query, onClear }: { query: string; onClear: () => void }) {
+  const { t } = useT();
+  return (
+    <EmptyState
+      icon={SearchX}
+      title={t('app.library.searchNoMatchTitle', { query })}
+      caption={t('app.library.searchNoMatchCaption')}
+      action={<ButtonNeon onClick={onClear}>{t('app.library.searchClear')}</ButtonNeon>}
+    />
+  );
+}
+
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function LibraryPage() {
@@ -221,6 +242,11 @@ export default function LibraryPage() {
   const profile = profiles.find((p) => p.id === (activeProfileId ?? DEFAULT_PROFILE_ID));
 
   const [tab, setTab] = useState<TabId>('continue');
+  /* Local search filters the rendered lists only — saved data and tab
+     counts always reflect the real library. */
+  const [query, setQuery] = useState('');
+  const q = fold(query.trim());
+  const matches = (name: string) => !q || fold(name).includes(q);
 
   const stats = useMemo(() => {
     const saved = new Set([...watchlist, ...favorites]);
@@ -249,6 +275,13 @@ export default function LibraryPage() {
     () => watched.map((id) => findShowcaseMeta(id)).filter((m): m is MetaItem => Boolean(m)),
     [watched],
   );
+
+  /* Query-filtered views (client-side, stremio local_search parity). */
+  const fContinue = continueItems.filter((x) => matches(x.meta.name));
+  const fWatchlist = watchlistItems.filter((m) => matches(m.name));
+  const fFavorites = favoriteItems.filter((m) => matches(m.name));
+  const fWatched = watchedItems.filter((m) => matches(m.name));
+  const searching = q.length > 0;
 
   const counts: Record<TabId, number> = {
     continue: continueItems.length,
@@ -311,36 +344,62 @@ export default function LibraryPage() {
         </div>
       </motion.header>
 
-      {/* ── S2 tab bar ── */}
-      <div className="glass-1 flex w-fit max-w-full gap-4 overflow-x-auto no-scrollbar rounded-full p-4">
-        {TABS.map((tabDef) => (
-          <button
-            key={tabDef.id}
-            type="button"
-            onClick={() => setTab(tabDef.id)}
-            className={cn(
-              'focusable relative flex shrink-0 items-center gap-8 rounded-full px-16 py-8 text-caption font-semibold cursor-pointer transition-colors',
-              tab === tabDef.id ? 'text-deep' : 'text-muted hover:text-ink',
-            )}
-          >
-            {tab === tabDef.id && (
-              <motion.span
-                layoutId="library-tab-pill"
-                className="absolute inset-0 rounded-full bg-chrome"
-                transition={spring.snappy}
-              />
-            )}
-            <span className="relative z-10">{t(tabDef.labelKey)}</span>
-            <span
+      {/* ── S2 tab bar + local search ── */}
+      <div className="flex flex-wrap items-center gap-16">
+        <div className="glass-1 flex w-fit max-w-full gap-4 overflow-x-auto no-scrollbar rounded-full p-4">
+          {TABS.map((tabDef) => (
+            <button
+              key={tabDef.id}
+              type="button"
+              onClick={() => setTab(tabDef.id)}
               className={cn(
-                'relative z-10 rounded-full px-8 py-1 text-micro',
-                tab === tabDef.id ? 'bg-deep/15 text-deep' : 'bg-white/[.06] text-muted',
+                'focusable relative flex shrink-0 items-center gap-8 rounded-full px-16 py-8 text-caption font-semibold cursor-pointer transition-colors',
+                tab === tabDef.id ? 'text-deep' : 'text-muted hover:text-ink',
               )}
             >
-              {counts[tabDef.id]}
-            </span>
-          </button>
-        ))}
+              {tab === tabDef.id && (
+                <motion.span
+                  layoutId="library-tab-pill"
+                  className="absolute inset-0 rounded-full bg-chrome"
+                  transition={spring.snappy}
+                />
+              )}
+              <span className="relative z-10">{t(tabDef.labelKey)}</span>
+              <span
+                className={cn(
+                  'relative z-10 rounded-full px-8 py-1 text-micro',
+                  tab === tabDef.id ? 'bg-deep/15 text-deep' : 'bg-white/[.06] text-muted',
+                )}
+              >
+                {counts[tabDef.id]}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* local search — filters by title, case/diacritic-insensitive */}
+        <div className="glass-1 ml-auto flex items-center gap-8 rounded-full px-16 py-8">
+          <Search size={14} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('app.library.searchPlaceholder')}
+            aria-label={t('app.library.searchInputAria')}
+            spellCheck={false}
+            className="w-180 bg-transparent text-caption text-ink outline-none placeholder:text-muted/60 max-md:w-120"
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label={t('app.library.searchClearAria')}
+              className="focusable flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-muted hover:text-ink cursor-pointer"
+            >
+              <X size={12} strokeWidth={1.75} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── tab content ── */}
@@ -360,10 +419,12 @@ export default function LibraryPage() {
                 caption={t('app.library.emptyContinueCaption')}
                 action={<ButtonNeon to="/app/discover">{t('app.library.browseDiscover')}</ButtonNeon>}
               />
+            ) : fContinue.length === 0 && searching ? (
+              <SearchNoMatch query={query.trim()} onClear={() => setQuery('')} />
             ) : (
               <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-3">
                 <AnimatePresence>
-                  {continueItems.map(({ entry, meta }) => (
+                  {fContinue.map(({ entry, meta }) => (
                     <ContinueCard
                       key={entry.id}
                       meta={meta}
@@ -387,9 +448,11 @@ export default function LibraryPage() {
                 caption={t('app.library.emptyWatchlistCaption')}
                 action={<ButtonNeon to="/app/discover">{t('app.library.discoverSomething')}</ButtonNeon>}
               />
+            ) : fWatchlist.length === 0 && searching ? (
+              <SearchNoMatch query={query.trim()} onClear={() => setQuery('')} />
             ) : (
               <div className="grid grid-cols-2 gap-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {watchlistItems.map((meta, i) => (
+                {fWatchlist.map((meta, i) => (
                   <motion.div
                     key={meta.id}
                     initial={{ opacity: 0, y: 24 }}
@@ -439,9 +502,11 @@ export default function LibraryPage() {
                   )
                 }
               />
+            ) : fFavorites.length === 0 && searching ? (
+              <SearchNoMatch query={query.trim()} onClear={() => setQuery('')} />
             ) : (
               <div className="grid grid-cols-2 gap-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {favoriteItems.map((meta, i) => (
+                {fFavorites.map((meta, i) => (
                   <motion.div
                     key={meta.id}
                     initial={{ opacity: 0, y: 24 }}
@@ -478,9 +543,11 @@ export default function LibraryPage() {
                 caption={t('app.library.emptyHistoryCaption')}
                 action={<ButtonNeon to="/app">{t('app.library.watchSomething')}</ButtonNeon>}
               />
+            ) : fContinue.length === 0 && fWatched.length === 0 && searching ? (
+              <SearchNoMatch query={query.trim()} onClear={() => setQuery('')} />
             ) : (
               <div className="flex max-w-4xl flex-col gap-12">
-                {continueItems.map(({ entry, meta }) => {
+                {fContinue.map(({ entry, meta }) => {
                   const pct = entry.durationSec > 0 ? Math.round((entry.progressSec / entry.durationSec) * 100) : 0;
                   return (
                     <motion.div
@@ -529,13 +596,13 @@ export default function LibraryPage() {
                     </motion.div>
                   );
                 })}
-              {watchedItems.length > 0 && (
+              {fWatched.length > 0 && (
                 <>
                   <h3 className="mt-24 text-micro uppercase tracking-wider text-muted">
-                    {t('app.library.markedWatchedCount', { count: watchedItems.length })}
+                    {t('app.library.markedWatchedCount', { count: fWatched.length })}
                   </h3>
                   <div className="grid grid-cols-3 gap-12 sm:grid-cols-4 md:grid-cols-6">
-                    {watchedItems.map((meta) => (
+                    {fWatched.map((meta) => (
                       <div key={meta.id} className="relative">
                         <PosterCard item={meta} className="w-full" />
                         <div className="absolute right-8 top-8 z-10">

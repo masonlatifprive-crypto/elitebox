@@ -10,11 +10,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
+  Check,
   Clapperboard,
   Flag,
   GripVertical,
+  Loader2,
   Puzzle,
   Radio,
   RefreshCw,
@@ -26,7 +29,8 @@ import {
   Trash2,
   Tv,
 } from 'lucide-react';
-import { addonBlockReason, addonEngine, addonTorrentHint } from '@/lib/addons/engine';
+import { addonBlockReason, addonEngine, addonTorrentHint, manifestUrlForTransport } from '@/lib/addons/engine';
+import type { OfficialAddonEntry } from '@/lib/addons/engine';
 import { useReports } from '@/lib/reports';
 import { useAddons } from '@/lib/store';
 import type { AddonHealth, AddonInfo } from '@/lib/types';
@@ -617,6 +621,179 @@ const DIRECTORY_SLOTS = [
   },
 ];
 
+/* ── official community directory (live addon_catalog resource) ────────── */
+
+type OfficialPhase =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; addons: OfficialAddonEntry[] };
+
+function OfficialCard({ entry, index }: { entry: OfficialAddonEntry; index: number }) {
+  const { t } = useT();
+  const installed = useAddons((s) => s.installed.some((a) => a.id === entry.manifest.id));
+  const [logoOk, setLogoOk] = useState(Boolean(entry.manifest.logo));
+  const [installing, setInstalling] = useState(false);
+
+  const install = async () => {
+    setInstalling(true);
+    try {
+      /* transportUrl is the addon base for some entries and already the
+         manifest URL for others — the engine helper resolves both. The same
+         blocklist / HTTPS-only rules apply as for install-by-URL. */
+      const info = await addonEngine.install(manifestUrlForTransport(entry.transportUrl));
+      toast(t('app.addons.toastInstalled', { name: info.name }));
+    } catch (err) {
+      toast.error(
+        t('app.addons.officialInstallFailed', {
+          name: entry.manifest.name,
+          reason: err instanceof Error ? err.message : String(err),
+        }),
+      );
+    } finally {
+      setInstalling(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ ...spring.smooth, delay: index * 0.05 }}
+      className="glass-2 flex flex-col gap-12 rounded-xl p-16"
+    >
+      <div className="flex items-center gap-12">
+        {logoOk && entry.manifest.logo ? (
+          <img
+            src={entry.manifest.logo}
+            onError={() => setLogoOk(false)}
+            alt=""
+            className="h-48 w-48 shrink-0 rounded-lg object-cover ring-1 ring-white/[.08]"
+          />
+        ) : (
+          <span className="glass-1 flex h-48 w-48 shrink-0 items-center justify-center rounded-lg">
+            <Puzzle size={20} strokeWidth={1.75} className="text-cyan" />
+          </span>
+        )}
+        <div className="flex min-w-0 flex-col gap-4">
+          <span className="text-caption font-semibold text-ink line-clamp-1">{entry.manifest.name}</span>
+          <span className="font-mono text-micro text-muted">v{entry.manifest.version}</span>
+        </div>
+      </div>
+      {entry.manifest.description && (
+        <p className="text-caption text-muted line-clamp-3">{entry.manifest.description}</p>
+      )}
+      {entry.manifest.resources.length > 0 && (
+        <div className="flex flex-wrap gap-6">
+          {entry.manifest.resources.map((r) => (
+            <span key={r} className="glass-1 rounded-full px-8 py-1 text-micro uppercase text-muted">
+              {r}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="mt-auto pt-4">
+        {installed ? (
+          <span className="inline-flex items-center gap-6 text-micro uppercase text-ok">
+            <Check size={14} strokeWidth={1.75} />
+            {t('app.addons.officialInstalled')}
+          </span>
+        ) : (
+          <ButtonNeon
+            onClick={() => void install()}
+            disabled={installing}
+            className="w-fit px-16 py-8 text-micro"
+          >
+            {installing ? t('app.addons.installing') : t('app.addons.install')}
+          </ButtonNeon>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function OfficialDirectory() {
+  const { t } = useT();
+  const [phase, setPhase] = useState<OfficialPhase>({ kind: 'loading' });
+  const aliveRef = useRef(true);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  const load = useCallback(async () => {
+    setPhase({ kind: 'loading' });
+    try {
+      const addons = await addonEngine.getAddonCatalog();
+      if (aliveRef.current) setPhase({ kind: 'ready', addons });
+    } catch (err) {
+      if (aliveRef.current) {
+        setPhase({ kind: 'error', message: err instanceof Error ? err.message : String(err) });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <section className="flex flex-col gap-16">
+      <div className="flex flex-col gap-4">
+        <h2 className="font-display text-title text-ink">{t('app.addons.officialTitle')}</h2>
+        <p className="max-w-[68ch] text-caption text-muted">{t('app.addons.officialNote')}</p>
+      </div>
+
+      {phase.kind === 'loading' && (
+        <div className="glass-1 flex items-center gap-12 rounded-xl px-16 py-20">
+          <Loader2 size={16} strokeWidth={1.75} className="shrink-0 animate-spin text-cyan" />
+          <span className="text-caption text-muted">{t('app.addons.officialLoading')}</span>
+        </div>
+      )}
+
+      {phase.kind === 'error' && (
+        <div className="glass-1 flex flex-wrap items-center gap-16 rounded-xl border border-error/40 px-16 py-16">
+          <AlertTriangle size={18} strokeWidth={1.75} className="shrink-0 text-error" />
+          <div className="flex min-w-200 flex-1 flex-col gap-4">
+            <span className="text-caption font-semibold text-ink">{t('app.addons.officialErrorTitle')}</span>
+            <span className="text-caption text-muted">{t('app.addons.officialErrorBody')}</span>
+            <span className="font-mono text-[11px] text-error line-clamp-1">{phase.message}</span>
+          </div>
+          <ButtonGhost onClick={() => void load()}>
+            <RefreshCw size={14} strokeWidth={1.75} />
+            {t('app.addons.officialRetry')}
+          </ButtonGhost>
+        </div>
+      )}
+
+      {phase.kind === 'ready' && phase.addons.length === 0 && (
+        <EmptyState
+          icon={Puzzle}
+          title={t('app.addons.officialEmptyTitle')}
+          caption={t('app.addons.officialEmptyCaption')}
+          action={
+            <ButtonGhost onClick={() => void load()}>
+              <RefreshCw size={14} strokeWidth={1.75} />
+              {t('app.addons.officialRetry')}
+            </ButtonGhost>
+          }
+        />
+      )}
+
+      {phase.kind === 'ready' && phase.addons.length > 0 && (
+        <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-3">
+          {phase.addons.map((entry, i) => (
+            <OfficialCard key={entry.manifest.id} entry={entry} index={i} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function AddonsPage() {
@@ -762,6 +939,9 @@ export default function AddonsPage() {
           </div>
         )}
       </section>
+
+      {/* ── S3b official directory (live) ── */}
+      <OfficialDirectory />
 
       {/* ── S4 directory ── */}
       <section className="flex flex-col gap-16">

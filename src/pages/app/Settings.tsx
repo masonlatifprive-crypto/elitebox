@@ -482,8 +482,10 @@ export default function SettingsPage() {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
     a.href = url;
-    a.download = 'elitebox-config.json';
+    a.download = `elitebox-export-${stamp}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast(t('app.settings.toastExported', { kb: (blob.size / 1024).toFixed(1) }));
@@ -1060,6 +1062,7 @@ export default function SettingsPage() {
                   }}
                 />
               </SettingRow>
+              <p className="mt-4 text-caption text-muted">{t('app.settings.exportFormatNote')}</p>
               <div className="mt-8 border-t border-error/30 pt-16">
                 <SettingRow label={t('app.settings.resetRow')} desc={t('app.settings.resetRowDesc')}>
                   <ButtonDanger onClick={() => setResetOpen(true)}>{t('app.settings.reset')}</ButtonDanger>

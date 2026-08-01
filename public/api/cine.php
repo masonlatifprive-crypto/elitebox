@@ -11,7 +11,8 @@
  *
  * Security model:
  * - ONLY a strict whitelist of Cinemeta resource paths is proxied:
- *   (catalog|meta)/(movie|series|channel)/<id>.json
+ *   (catalog|meta)/(movie|series|channel)/<id>.json and
+ *   addon_catalog/(all|movie|series|channel)/<id>.json (official addon directory).
  *   The upstream host is hardcoded — arbitrary URLs can never be requested.
  * - Responses are validated (HTTP 200, JSON content type, decodable JSON)
  *   before being cached or served.
@@ -44,7 +45,7 @@ function cine_send($body, $cacheState, $statusCode = 200)
 
 /* ── 1. strict path whitelist — nothing else is ever proxied ──────────── */
 $path = isset($_GET['p']) ? (string) $_GET['p'] : '';
-if (!preg_match('#^(catalog|meta)/(movie|series|channel)/[A-Za-z0-9_.-]+\.json$#', $path)) {
+if (!preg_match('#^((catalog|meta)/(movie|series|channel)|addon_catalog/(all|movie|series|channel))/[A-Za-z0-9_.-]+\.json$#', $path)) {
     cine_send('{"error":"invalid or disallowed path"}', 'none', 400);
 }
 

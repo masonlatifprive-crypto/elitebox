@@ -424,9 +424,221 @@ interface SettingsState {
   resetAll: () => void;
 }
 
+/* ── data export / import (stremio data_export parity) ───────────────────
+   Export snapshots the live slices of every persisted store — the same
+   data the persist middleware writes to localStorage — into one versioned
+   JSON document. Import validates the document shape strictly, builds a
+   full restore plan FIRST (a corrupt slice fails the whole import, never a
+   partial apply), then restores each slice through the store's own
+   setState; the persist middleware writes it back to the correct
+   profile-scoped key, reload-free. Legacy v1 exports (raw localStorage
+   dump under `data`) remain importable. */
+
+interface ImportPlan {
+  profiles?: { profiles: Profile[]; activeProfileId: string | null };
+  library?: {
+    watchlist: string[];
+    favorites: string[];
+    watched: string[];
+    continueWatching: ContinueWatchingEntry[];
+    savedMagnets: SavedMagnet[];
+    historyPaused: boolean;
+  };
+  playback?: { byTitle: Record<string, PlaybackMemoryEntry> };
+  addons?: { installed: AddonInfo[]; enabled: Record<string, boolean> };
+  settings?: { settings: EliteSettings; onboarded: boolean };
+}
+
+function isStrArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((x) => typeof x === 'string');
+}
+
+function validCwEntry(e: unknown): e is ContinueWatchingEntry {
+  if (!e || typeof e !== 'object') return false;
+  const x = e as Record<string, unknown>;
+  return (
+    typeof x.id === 'string' &&
+    (x.type === 'movie' || x.type === 'series' || x.type === 'channel') &&
+    typeof x.progressSec === 'number' &&
+    typeof x.durationSec === 'number' &&
+    typeof x.updatedAt === 'number'
+  );
+}
+
+function validSavedMagnet(m: unknown): m is SavedMagnet {
+  if (!m || typeof m !== 'object') return false;
+  const x = m as Record<string, unknown>;
+  return (
+    typeof x.infoHash === 'string' &&
+    typeof x.name === 'string' &&
+    typeof x.magnetUri === 'string' &&
+    typeof x.addedAt === 'number'
+  );
+}
+
+function validProfile(p: unknown): boolean {
+  if (!p || typeof p !== 'object') return false;
+  const x = p as Record<string, unknown>;
+  return (
+    typeof x.id === 'string' &&
+    x.id.length > 0 &&
+    typeof x.name === 'string' &&
+    typeof x.avatar === 'string' &&
+    (x.pin === undefined || typeof x.pin === 'string') &&
+    (x.createdAt === undefined || typeof x.createdAt === 'number')
+  );
+}
+
+function sanitizeAddon(a: unknown): AddonInfo | undefined {
+  if (!a || typeof a !== 'object') return undefined;
+  const x = a as Record<string, unknown>;
+  if (typeof x.id !== 'string' || !x.id) return undefined;
+  if (typeof x.name !== 'string' || !x.name) return undefined;
+  return {
+    id: x.id,
+    name: x.name,
+    version: typeof x.version === 'string' ? x.version : '0.0.0',
+    description: typeof x.description === 'string' ? x.description : '',
+    icon: typeof x.icon === 'string' && x.icon ? x.icon : '/art/addon-icon-cinema.jpg',
+    resources: isStrArray(x.resources) ? x.resources : [],
+    manifestUrl: typeof x.manifestUrl === 'string' ? x.manifestUrl : undefined,
+    builtin: x.builtin === true ? true : undefined,
+    catalogs: Array.isArray(x.catalogs)
+      ? (x.catalogs.filter(
+          (c) =>
+            c &&
+            typeof c === 'object' &&
+            typeof (c as { id?: unknown }).id === 'string' &&
+            typeof (c as { type?: unknown }).type === 'string',
+        ) as AddonInfo['catalogs'])
+      : undefined,
+    permissions: isStrArray(x.permissions) ? x.permissions : undefined,
+    privacy:
+      x.privacy && typeof x.privacy === 'object' ? (x.privacy as AddonInfo['privacy']) : undefined,
+    legal: x.legal && typeof x.legal === 'object' ? (x.legal as AddonInfo['legal']) : undefined,
+  };
+}
+
+/** Validate every slice and build the restore plan; undefined = reject the file. */
+function buildImportPlan(slices: unknown): ImportPlan | undefined {
+  if (!slices || typeof slices !== 'object') return undefined;
+  const s = slices as Record<string, unknown>;
+  const KNOWN = ['profiles', 'library', 'playback', 'addons', 'settings'];
+  if (!KNOWN.some((k) => s[k] !== undefined)) return undefined;
+  const plan: ImportPlan = {};
+
+  if (s.profiles !== undefined) {
+    const p = s.profiles as Record<string, unknown>;
+    if (!p || typeof p !== 'object') return undefined;
+    if (!Array.isArray(p.profiles) || !p.profiles.every(validProfile)) return undefined;
+    if (p.activeProfileId !== null && p.activeProfileId !== undefined && typeof p.activeProfileId !== 'string') {
+      return undefined;
+    }
+    const profiles = (p.profiles as Profile[]).map((pr) => ({
+      ...pr,
+      createdAt: typeof pr.createdAt === 'number' ? pr.createdAt : Date.now(),
+    }));
+    const requested = typeof p.activeProfileId === 'string' ? p.activeProfileId : null;
+    plan.profiles = {
+      profiles,
+      activeProfileId:
+        requested && profiles.some((x) => x.id === requested) ? requested : (profiles[0]?.id ?? null),
+    };
+  }
+
+  if (s.library !== undefined) {
+    const l = s.library as Record<string, unknown>;
+    if (!l || typeof l !== 'object') return undefined;
+    if (!isStrArray(l.watchlist) || !isStrArray(l.favorites) || !isStrArray(l.watched)) return undefined;
+    if (!Array.isArray(l.continueWatching) || !l.continueWatching.every(validCwEntry)) return undefined;
+    if (!Array.isArray(l.savedMagnets) || !l.savedMagnets.every(validSavedMagnet)) return undefined;
+    if (l.historyPaused !== undefined && typeof l.historyPaused !== 'boolean') return undefined;
+    plan.library = {
+      watchlist: l.watchlist,
+      favorites: l.favorites,
+      watched: l.watched,
+      continueWatching: l.continueWatching,
+      savedMagnets: l.savedMagnets,
+      historyPaused: typeof l.historyPaused === 'boolean' ? l.historyPaused : false,
+    };
+  }
+
+  if (s.playback !== undefined) {
+    const p = s.playback as Record<string, unknown>;
+    if (!p || typeof p !== 'object') return undefined;
+    if (!p.byTitle || typeof p.byTitle !== 'object' || Array.isArray(p.byTitle)) return undefined;
+    const byTitle: Record<string, PlaybackMemoryEntry> = {};
+    for (const [k, v] of Object.entries(p.byTitle as Record<string, unknown>)) {
+      if (!v || typeof v !== 'object') return undefined;
+      const e = v as Record<string, unknown>;
+      if (e.speed !== undefined && typeof e.speed !== 'number') return undefined;
+      if (e.subOffsetSec !== undefined && typeof e.subOffsetSec !== 'number') return undefined;
+      byTitle[k] = {
+        speed: typeof e.speed === 'number' ? e.speed : 1,
+        audioTrack: typeof e.audioTrack === 'string' ? e.audioTrack : undefined,
+        subTrack: typeof e.subTrack === 'string' ? e.subTrack : undefined,
+        subOffsetSec: typeof e.subOffsetSec === 'number' ? e.subOffsetSec : 0,
+      };
+    }
+    plan.playback = { byTitle };
+  }
+
+  if (s.addons !== undefined) {
+    const a = s.addons as Record<string, unknown>;
+    if (!a || typeof a !== 'object' || !Array.isArray(a.installed)) return undefined;
+    const installed = a.installed.map(sanitizeAddon);
+    if (installed.some((x) => x === undefined)) return undefined; // corrupt entry → reject file
+    let list = installed as AddonInfo[];
+    if (!list.some((x) => x.id === SHOWCASE_ADDON.id)) list = [SHOWCASE_ADDON, ...list];
+    const enabled: Record<string, boolean> = { [SHOWCASE_ADDON.id]: true };
+    if (a.enabled && typeof a.enabled === 'object' && !Array.isArray(a.enabled)) {
+      for (const [k, v] of Object.entries(a.enabled as Record<string, unknown>)) {
+        if (typeof v === 'boolean' && list.some((x) => x.id === k)) enabled[k] = v;
+      }
+    }
+    for (const addon of list) if (!(addon.id in enabled)) enabled[addon.id] = true;
+    plan.addons = { installed: list, enabled };
+  }
+
+  if (s.settings !== undefined) {
+    const st = s.settings as Record<string, unknown>;
+    if (!st || typeof st !== 'object') return undefined;
+    if (!st.settings || typeof st.settings !== 'object' || Array.isArray(st.settings)) return undefined;
+    if (st.onboarded !== undefined && typeof st.onboarded !== 'boolean') return undefined;
+    const ps = st.settings as Partial<EliteSettings>;
+    plan.settings = {
+      onboarded: typeof st.onboarded === 'boolean' ? st.onboarded : false,
+      /* Same deep-merge-over-defaults style as the persist merge above, so a
+         slice exported before a new settings section shipped never restores
+         with missing keys. */
+      settings: {
+        general: { ...DEFAULT_SETTINGS.general, ...(ps.general ?? {}) },
+        appearance: { ...DEFAULT_SETTINGS.appearance, ...(ps.appearance ?? {}) },
+        playback: { ...DEFAULT_SETTINGS.playback, ...(ps.playback ?? {}) },
+        subtitles: { ...DEFAULT_SETTINGS.subtitles, ...(ps.subtitles ?? {}) },
+        cache: { ...DEFAULT_SETTINGS.cache, ...(ps.cache ?? {}) },
+        streaming: { ...DEFAULT_SETTINGS.streaming, ...(ps.streaming ?? {}) },
+      },
+    };
+  }
+
+  return plan;
+}
+
+/** Apply a validated plan via each store's own setState (persist writes back). */
+function applyImportPlan(plan: ImportPlan): void {
+  /* Profiles first: the active-profile id decides which scoped namespace
+     the following slice writes land in. */
+  if (plan.profiles) useProfiles.setState(plan.profiles);
+  if (plan.library) useLibrary.setState(plan.library);
+  if (plan.playback) usePlaybackMemory.setState(plan.playback);
+  if (plan.addons) useAddons.setState(plan.addons);
+  if (plan.settings) useSettings.setState(plan.settings);
+}
+
 export const useSettings = create<SettingsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       settings: DEFAULT_SETTINGS,
       onboarded: false,
       setOnboarded: (v) => set({ onboarded: v }),
@@ -444,26 +656,62 @@ export const useSettings = create<SettingsState>()(
           },
         })),
       exportConfig: () => {
-        const dump: Record<string, string> = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith(KEY_PREFIX)) {
-            const v = localStorage.getItem(k);
-            if (v !== null) dump[k] = v;
-          }
-        }
-        return JSON.stringify({ app: 'elitebox', version: 1, exportedAt: Date.now(), data: dump }, null, 2);
+        const lib = useLibrary.getState();
+        const mem = usePlaybackMemory.getState();
+        const ad = useAddons.getState();
+        const prof = useProfiles.getState();
+        return JSON.stringify(
+          {
+            app: 'elitebox',
+            version: 2,
+            exportedAt: Date.now(),
+            slices: {
+              profiles: { profiles: prof.profiles, activeProfileId: prof.activeProfileId },
+              library: {
+                watchlist: lib.watchlist,
+                favorites: lib.favorites,
+                watched: lib.watched,
+                continueWatching: lib.continueWatching,
+                savedMagnets: lib.savedMagnets,
+                historyPaused: lib.historyPaused,
+              },
+              playback: { byTitle: mem.byTitle },
+              addons: { installed: ad.installed, enabled: ad.enabled },
+              settings: { settings: get().settings, onboarded: get().onboarded },
+            },
+          },
+          null,
+          2,
+        );
       },
       importConfig: (json) => {
         try {
-          const parsed = JSON.parse(json) as { app?: string; data?: Record<string, string> };
-          if (parsed.app !== 'elitebox' || !parsed.data || typeof parsed.data !== 'object') return false;
-          for (const [k, v] of Object.entries(parsed.data)) {
-            if (k.startsWith(KEY_PREFIX) && typeof v === 'string') localStorage.setItem(k, v);
+          const parsed = JSON.parse(json) as {
+            app?: string;
+            slices?: unknown;
+            data?: Record<string, string>;
+          };
+          if (!parsed || typeof parsed !== 'object' || parsed.app !== 'elitebox') return false;
+          /* v2: validated slices restored through the stores' own setState. */
+          if (parsed.slices !== undefined) {
+            const plan = buildImportPlan(parsed.slices);
+            if (!plan) return false;
+            applyImportPlan(plan);
+            return true;
           }
-          rebindScopedStores();
-          useProfiles.persist.rehydrate();
-          return true;
+          /* v1 (legacy elitebox-config.json): raw localStorage dump — write
+             the keys back, then rebind every scoped store from storage. */
+          if (parsed.data && typeof parsed.data === 'object') {
+            for (const [k, v] of Object.entries(parsed.data)) {
+              if (k.startsWith(KEY_PREFIX) && typeof v === 'string') localStorage.setItem(k, v);
+            }
+            rebindScopedStores();
+            /* Best-effort: persist attaches its api only when storage was
+               available at store creation — never let it decide honesty. */
+            useProfiles.persist?.rehydrate();
+            return true;
+          }
+          return false;
         } catch {
           return false;
         }

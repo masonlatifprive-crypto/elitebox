@@ -13,6 +13,14 @@ export interface MetaVideo {
   released?: string; // ISO date
 }
 
+/** A trailer attached to a meta (Cinemeta `trailers` / `trailerStreams`). */
+export interface MetaTrailer {
+  /** YouTube video id. */
+  source: string;
+  /** Cinemeta trailer kind, e.g. 'Trailer'. */
+  type?: string;
+}
+
 export interface MetaItem {
   id: string;
   type: MetaType;
@@ -26,6 +34,8 @@ export interface MetaItem {
   runtime?: number; // minutes
   live?: boolean;
   videos?: MetaVideo[];
+  /** YouTube trailers carried by the meta — absent when none exist. */
+  trailers?: MetaTrailer[];
   /** Not yet streamable — presented as "Coming soon" (no sources, watchlist-only). */
   upcoming?: boolean;
   /** Human release framing, e.g. 'Coming soon' or '2026'. */

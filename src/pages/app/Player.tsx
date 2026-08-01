@@ -15,6 +15,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type Hls from 'hls.js';
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   AudioLines,
@@ -58,6 +59,7 @@ import {
 import type { MetaItem, MetaType, MetaVideo, StreamSource, StreamSubtitle } from '@/lib/types';
 import { useT } from '@/i18n';
 import ExternalPlayerMenu from '@/components/ExternalPlayerMenu';
+import PlayerStats from '@/components/PlayerStats';
 import {
   ensureCastFramework,
   isCastEnvironment,
@@ -86,7 +88,10 @@ const INTRO_MARKERS: Record<string, { start: number; end: number }> = {
 const NEXT_UP_SECONDS = 8;
 const AUTO_RETRY_SECONDS = 4;
 const VOLUME_KEY = 'elitebox.v1.volume';
-const SPEED_PRESETS = [1, 1.25, 1.5, 2];
+/* Stremio parity: 0.25×–4× in 0.25 steps, remembered per title. */
+const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
+const SPEED_MIN = 0.25;
+const SPEED_MAX = 4;
 
 function fmtClock(totalSec: number): string {
   if (!Number.isFinite(totalSec)) return '--:--';
@@ -490,6 +495,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['↑ / ↓', 'app.player.scVolume'],
   ['M', 'app.player.scMute'],
   ['C', 'app.player.scSubtitles'],
+  ['I', 'app.player.scStats'],
   ['?', 'app.player.scOverlay'],
   ['Esc', 'app.player.scBack'],
 ];
@@ -519,7 +525,6 @@ function ShortcutsTable() {
 /* ── the player itself ─────────────────────────────────────────────────── */
 
 type PanelKind = 'subs' | 'speed' | 'audio' | 'sources' | 'episodes' | 'external' | null;
-type SubSize = 'S' | 'M' | 'L' | 'XL';
 type SubColor = 'ink' | 'cyan' | 'yellow';
 type SubBg = 'none' | 'scrim' | 'solid';
 type SubWeight = 'normal' | 'semibold' | 'bold';
@@ -531,12 +536,15 @@ interface AudioTrackShim {
   enabled: boolean;
 }
 
-const SUB_SIZE_CLASS: Record<SubSize, string> = {
-  S: 'text-[13px]',
-  M: 'text-[16px]',
-  L: 'text-[20px]',
-  XL: 'text-[26px]',
-};
+/* Stremio parity: subtitle scale 75%–250% in 25% steps of a 16px base.
+   The exact percentage persists in localStorage (the settings store only
+   models a coarse small/normal/large bucket, which we keep in sync). */
+const SUB_SCALE_KEY = 'elitebox.v1.subScale';
+const SUB_SCALE_MIN = 75;
+const SUB_SCALE_MAX = 250;
+const SUB_SCALE_STEP = 25;
+const SUB_BASE_PX = 16;
+
 const SUB_COLOR_CLASS: Record<SubColor, string> = {
   ink: 'text-ink',
   cyan: 'text-cyan',
@@ -642,6 +650,7 @@ function PlayerInner() {
   const [flash, setFlash] = useState<{ kind: 'play' | 'pause'; key: number } | null>(null);
   const [panel, setPanel] = useState<PanelKind>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [pipSupported] = useState(
     () => typeof document !== 'undefined' && Boolean(document.pictureInPictureEnabled),
   );
@@ -660,9 +669,11 @@ function PlayerInner() {
   const [subTrackId, setSubTrackId] = useState<string>('off');
   const [subCues, setSubCues] = useState<Cue[] | null>(null);
   const [subOffset, setSubOffset] = useState(0);
-  const [subSize, setSubSize] = useState<SubSize>(() =>
-    subSettings.size === 'small' ? 'S' : subSettings.size === 'large' ? 'L' : 'M',
-  );
+  const [subScale, setSubScale] = useState<number>(() => {
+    const raw = Number(localStorage.getItem(SUB_SCALE_KEY));
+    if (Number.isFinite(raw) && raw >= SUB_SCALE_MIN && raw <= SUB_SCALE_MAX) return raw;
+    return subSettings.size === 'small' ? 75 : subSettings.size === 'large' ? 125 : 100;
+  });
   const [subColor, setSubColor] = useState<SubColor>(() => subSettings.color ?? 'ink');
   const [subBg, setSubBg] = useState<SubBg>(() => subSettings.bg ?? 'scrim');
   const [subWeight, setSubWeight] = useState<SubWeight>(() => subSettings.weight ?? 'semibold');
@@ -849,8 +860,9 @@ function PlayerInner() {
       memoryAppliedRef.current = true;
       const mem = getMemory(id);
       if (mem) {
-        v.playbackRate = mem.speed;
-        setSpeed(mem.speed);
+        const memSpeed = Math.min(SPEED_MAX, Math.max(SPEED_MIN, mem.speed));
+        v.playbackRate = memSpeed;
+        setSpeed(memSpeed);
         setSubOffset(mem.subOffsetSec);
         if (mem.subTrack) setSubTrackId(mem.subTrack);
         if (mem.audioTrack) setAudioTrackId(mem.audioTrack);
@@ -966,7 +978,7 @@ function PlayerInner() {
   }, [volume, muted]);
 
   const applySpeed = (s: number) => {
-    const clamped = Math.min(2, Math.max(0.5, s));
+    const clamped = Math.min(SPEED_MAX, Math.max(SPEED_MIN, s));
     setSpeed(clamped);
     if (videoRef.current) videoRef.current.playbackRate = clamped;
     setMemory(id, { speed: clamped });
@@ -1054,12 +1066,22 @@ function PlayerInner() {
     });
   }, [allSubTracks, id, setMemory]);
 
-  const applySubSize = (s: SubSize) => {
-    setSubSize(s);
+  const applySubScale = (pct: number) => {
+    const clamped = Math.min(
+      SUB_SCALE_MAX,
+      Math.max(SUB_SCALE_MIN, Math.round(pct / SUB_SCALE_STEP) * SUB_SCALE_STEP),
+    );
+    setSubScale(clamped);
+    localStorage.setItem(SUB_SCALE_KEY, String(clamped));
+    /* coarse bucket stays in sync for the Settings page */
     patchSettings({
-      subtitles: { ...subSettings, size: s === 'S' ? 'small' : s === 'M' ? 'normal' : 'large' },
+      subtitles: {
+        ...subSettings,
+        size: clamped < 100 ? 'small' : clamped > 100 ? 'large' : 'normal',
+      },
     });
   };
+  const subFontPx = Math.round((SUB_BASE_PX * subScale) / 100);
   const applySubColor = (c: SubColor) => {
     setSubColor(c);
     patchSettings({ subtitles: { ...subSettings, color: c } });
@@ -1179,14 +1201,14 @@ function PlayerInner() {
     return () => window.clearTimeout(idleTimer.current);
   }, [poke]);
   useEffect(() => {
-    const keep = !playing || panel !== null || error !== null || shortcutsOpen;
+    const keep = !playing || panel !== null || error !== null || shortcutsOpen || statsOpen;
     if (keep) {
       setChromeVisible(true);
       window.clearTimeout(idleTimer.current);
     } else {
       poke();
     }
-  }, [playing, panel, error, shortcutsOpen, poke]);
+  }, [playing, panel, error, shortcutsOpen, statsOpen, poke]);
 
   useEffect(() => {
     if (!flash) return;
@@ -1345,9 +1367,15 @@ function PlayerInner() {
           cycleSubtitles();
           poke();
           break;
+        case 'i':
+        case 'I':
+          setStatsOpen((v) => !v);
+          poke();
+          break;
         case 'Escape':
           if (tv) return; // tvnav owns back navigation in TV mode
           if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+          else if (statsOpen) setStatsOpen(false);
           else if (panel) setPanel(null);
           else navigate(-1);
           break;
@@ -1373,7 +1401,7 @@ function PlayerInner() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [togglePlay, progressiveSeek, toggleFullscreen, navigate, panel, poke, cycleSubtitles, shortcutsOpen]);
+  }, [togglePlay, progressiveSeek, toggleFullscreen, navigate, panel, poke, cycleSubtitles, shortcutsOpen, statsOpen]);
 
   /* ── touch: double-tap ±10s, tap toggles chrome ────────────────────── */
   const lastTapRef = useRef<{ t: number; x: number } | null>(null);
@@ -1584,18 +1612,25 @@ function PlayerInner() {
           <span
             className={cn(
               'max-w-[70ch] text-center font-sans leading-snug whitespace-pre-line',
-              SUB_SIZE_CLASS[subSize],
               SUB_COLOR_CLASS[subColor],
               SUB_WEIGHT_CLASS[subWeight],
               subBg === 'scrim' && 'rounded-md bg-black/50 px-12 py-4',
               subBg === 'solid' && 'rounded-md bg-black/90 px-12 py-4',
             )}
-            style={subOutline ? { textShadow: SUB_OUTLINE_STYLE } : undefined}
+            style={{
+              fontSize: `${subFontPx}px`,
+              ...(subOutline ? { textShadow: SUB_OUTLINE_STYLE } : {}),
+            }}
           >
             {activeCue.text}
           </span>
         </div>
       )}
+
+      {/* live statistics overlay (I) */}
+      <AnimatePresence>
+        {statsOpen && <PlayerStats key="stats" open={statsOpen} videoRef={videoRef} hlsRef={hlsRef} />}
+      </AnimatePresence>
 
       {/* center feedback */}
       {buffering && !error && <BufferingRing />}
@@ -1848,6 +1883,19 @@ function PlayerInner() {
             </button>
             <button
               type="button"
+              onClick={() => setStatsOpen((v) => !v)}
+              aria-label={t('app.player.statsAria')}
+              aria-pressed={statsOpen}
+              title={t('app.player.statsAria')}
+              className={cn(
+                'focusable flex h-40 w-40 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-90 cursor-pointer',
+                statsOpen ? 'text-cyan' : 'text-muted hover:text-cyan',
+              )}
+            >
+              <Activity size={18} strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
               onClick={() => setPanel(panel === 'audio' ? null : 'audio')}
               aria-label={t('app.player.audioAria')}
               className="focusable hidden h-40 w-40 items-center justify-center rounded-full text-muted hover:text-cyan sm:flex cursor-pointer"
@@ -2012,31 +2060,37 @@ function PlayerInner() {
             <div
               className={cn(
                 'mb-16 rounded-lg bg-black/40 p-16 text-center',
-                SUB_SIZE_CLASS[subSize],
                 SUB_COLOR_CLASS[subColor],
                 SUB_WEIGHT_CLASS[subWeight],
                 subBg === 'scrim' && 'bg-black/50',
                 subBg === 'solid' && 'bg-black/90',
               )}
-              style={subOutline ? { textShadow: SUB_OUTLINE_STYLE } : undefined}
+              style={{
+                fontSize: `${subFontPx}px`,
+                ...(subOutline ? { textShadow: SUB_OUTLINE_STYLE } : {}),
+              }}
             >
               {t('app.player.stylePreview')}
             </div>
-            <div className="mb-12 flex items-center gap-8">
-              {(['S', 'M', 'L', 'XL'] as SubSize[]).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => applySubSize(s)}
-                  aria-pressed={subSize === s}
-                  className={cn(
-                    'focusable flex-1 rounded-full py-8 font-mono text-[12px] cursor-pointer',
-                    subSize === s ? 'bg-chrome text-deep font-bold' : 'glass-1 text-muted hover:text-ink',
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
+            <div className="mb-12">
+              <div className="mb-8 flex items-center justify-between">
+                <span className="text-micro uppercase text-muted">{t('app.player.subSize')}</span>
+                <span className="font-mono text-[12px] text-cyan">{subScale}%</span>
+              </div>
+              <input
+                type="range"
+                min={SUB_SCALE_MIN}
+                max={SUB_SCALE_MAX}
+                step={SUB_SCALE_STEP}
+                value={subScale}
+                onChange={(e) => applySubScale(Number(e.target.value))}
+                aria-label={t('app.player.subSizeAria')}
+                className="w-full cursor-pointer accent-[#7CD9EC]"
+              />
+              <div className="mt-4 flex justify-between font-mono text-[11px] text-muted">
+                <span>{SUB_SCALE_MIN}%</span>
+                <span>{SUB_SCALE_MAX}%</span>
+              </div>
             </div>
             <div className="mb-12 flex items-center gap-8">
               {(['ink', 'cyan', 'yellow'] as SubColor[]).map((c) => (
@@ -2138,8 +2192,8 @@ function PlayerInner() {
           <Sheet key="speed" title={t('app.player.speedAria')} onClose={() => setPanel(null)}>
             <input
               type="range"
-              min={0.5}
-              max={2}
+              min={SPEED_MIN}
+              max={SPEED_MAX}
               step={0.25}
               value={speed}
               onChange={(e) => applySpeed(Number(e.target.value))}
@@ -2147,11 +2201,11 @@ function PlayerInner() {
               className="w-full cursor-pointer accent-[#7CD9EC]"
             />
             <div className="mt-8 flex justify-between font-mono text-[11px] text-muted">
-              <span>0.5×</span>
+              <span>{SPEED_MIN}×</span>
               <span className="text-cyan">{speed}×</span>
-              <span>2×</span>
+              <span>{SPEED_MAX}×</span>
             </div>
-            <div className="mt-16 flex gap-8">
+            <div className="mt-16 grid grid-cols-3 gap-8">
               {SPEED_PRESETS.map((p) => (
                 <button
                   key={p}

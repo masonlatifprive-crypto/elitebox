@@ -253,6 +253,75 @@ async function callRemote<T>(addon: AddonInfo, path: string): Promise<T> {
   }
 }
 
+/* ── official addon directory (Stremio addon_catalog resource) ───────────
+   The community directory is served by the Cinemeta endpoint at
+   /addon_catalog/all/official.json and lists real, installable addons as
+   { transportUrl, manifest } pairs. Fetched through the same timeout +
+   circuit-breaker path as every remote call; entries that lack a usable
+   transportUrl or a manifest with id+name are dropped, never invented. */
+
+/** One entry of the official community addon directory. */
+export interface OfficialAddonEntry {
+  transportUrl: string;
+  manifest: {
+    id: string;
+    name: string;
+    version: string;
+    description: string;
+    logo?: string;
+    resources: string[];
+    types: string[];
+  };
+}
+
+const OFFICIAL_DIRECTORY_PATH = '/addon_catalog/all/official.json';
+const OFFICIAL_DIRECTORY_URL = 'https://v3-cinemeta.strem.io/addon_catalog/all/official.json';
+
+/**
+ * The directory endpoint is inconsistent about transportUrl: some entries
+ * already point at `/manifest.json`, others at the addon base. Resolve the
+ * installable manifest URL for both shapes.
+ */
+export function manifestUrlForTransport(transportUrl: string): string {
+  const trimmed = transportUrl.replace(/\/+$/, '');
+  return /\/manifest(\.json)?$/i.test(trimmed) ? trimmed : `${trimmed}/manifest.json`;
+}
+
+function parseOfficialCatalog(raw: unknown): OfficialAddonEntry[] {
+  if (!raw || typeof raw !== 'object') return [];
+  const list = (raw as { addons?: unknown }).addons;
+  if (!Array.isArray(list)) return [];
+  const out: OfficialAddonEntry[] = [];
+  for (const e of list) {
+    if (!e || typeof e !== 'object') continue;
+    const entry = e as { transportUrl?: unknown; manifest?: unknown };
+    if (typeof entry.transportUrl !== 'string' || !entry.transportUrl) continue;
+    if (!entry.manifest || typeof entry.manifest !== 'object') continue;
+    const m = entry.manifest as Record<string, unknown>;
+    if (typeof m.id !== 'string' || !m.id) continue;
+    if (typeof m.name !== 'string' || !m.name) continue;
+    out.push({
+      transportUrl: entry.transportUrl,
+      manifest: {
+        id: m.id,
+        name: m.name,
+        version: typeof m.version === 'string' ? m.version : '0.0.0',
+        description: typeof m.description === 'string' ? m.description : '',
+        logo: typeof m.logo === 'string' && m.logo ? m.logo : undefined,
+        resources: Array.isArray(m.resources)
+          ? m.resources
+              .map((r) =>
+                typeof r === 'string' ? r : ((r as { name?: unknown })?.name as string | undefined) ?? '',
+              )
+              .filter(Boolean)
+          : [],
+        types: Array.isArray(m.types) ? m.types.filter((x): x is string => typeof x === 'string') : [],
+      },
+    });
+  }
+  return out;
+}
+
 /* ── remote meta normalization ───────────────────────────────────────────
    Stremio-shaped payloads arrive with their own field names (`background`,
    `imdbRating`, `genre`, string years/runtimes, ISO `released`). They are
@@ -324,6 +393,25 @@ function normalizeRemoteMeta(raw: unknown, fallbackType: MetaType): MetaItem | u
     typeof m.released === 'string' && !Number.isNaN(Date.parse(m.released))
       ? new Date(m.released)
       : undefined;
+  /* Cinemeta carries YouTube trailers as `trailers` ({source}) and/or
+     `trailerStreams` ({ytId}) — pass the ids through, deduped. */
+  const trailerIds: string[] = [];
+  const pushTrailerId = (v: unknown) => {
+    if (typeof v === 'string' && v && !trailerIds.includes(v)) trailerIds.push(v);
+  };
+  if (Array.isArray(m.trailers)) {
+    for (const tr of m.trailers) {
+      if (tr && typeof tr === 'object') pushTrailerId((tr as Record<string, unknown>).source);
+    }
+  }
+  if (Array.isArray(m.trailerStreams)) {
+    for (const tr of m.trailerStreams) {
+      if (tr && typeof tr === 'object') {
+        const r = tr as Record<string, unknown>;
+        pushTrailerId(typeof r.ytId === 'string' ? r.ytId : r.source);
+      }
+    }
+  }
   const item: MetaItem = {
     id: m.id,
     type,
@@ -339,6 +427,9 @@ function normalizeRemoteMeta(raw: unknown, fallbackType: MetaType): MetaItem | u
     description: typeof m.description === 'string' ? m.description : '',
     runtime: parseRuntimeMinutes(m.runtime),
     videos: normalizeVideos(m.videos),
+    trailers: trailerIds.length
+      ? trailerIds.map((source) => ({ source, type: 'Trailer' }))
+      : undefined,
   };
   /* Upcoming = confirmed future release only. The label uses the viewer's
      own locale (engine stays locale-agnostic). */
@@ -448,6 +539,22 @@ class AddonEngine {
     return installed.filter(
       (a) => enabled[a.id] && (!resource || a.builtin || a.resources.includes(resource)),
     );
+  }
+
+  /**
+   * Official community addon directory (Stremio `addon_catalog` resource).
+   * Goes through an installed addon that declares the resource (Cinemeta —
+   * timeout, circuit breaker and telemetry included); when the user removed
+   * every such addon, one direct timed fetch to the well-known endpoint
+   * keeps the directory available. Throws on failure — callers render an
+   * honest error state with retry.
+   */
+  async getAddonCatalog(): Promise<OfficialAddonEntry[]> {
+    const host = this.activeAddons('addon_catalog').find((a) => !a.builtin);
+    const data = host
+      ? await callRemote<unknown>(host, OFFICIAL_DIRECTORY_PATH)
+      : await fetchJson<unknown>(OFFICIAL_DIRECTORY_URL);
+    return parseOfficialCatalog(data);
   }
 
   /** Aggregated catalog for a type (all enabled catalog addons). */

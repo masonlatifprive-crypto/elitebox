@@ -41,6 +41,7 @@ import { detectTV } from '@/lib/tvnav';
 import { useAuth } from '@/lib/auth';
 import PaywallCard from '@/components/PaywallCard';
 import Shelf from '@/components/Shelf';
+import TrailerModal from '@/components/TrailerModal';
 import {
   Badge,
   ButtonGhost,
@@ -252,6 +253,7 @@ export default function Detail() {
   const [synopsisOpen, setSynopsisOpen] = useState(false);
   const [spoilerSafe, setSpoilerSafe] = useState(false);
   const [healthRev, setHealthRev] = useState(0);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   const installed = useAddons((s) => s.installed);
   const enabled = useAddons((s) => s.enabled);
@@ -362,6 +364,8 @@ export default function Detail() {
   }, [meta, continueWatching]);
 
   const mainPlayTarget = meta?.type === 'series' ? (resumeEntry?.id ?? firstEpisode?.id ?? id) : id;
+  /* Cinemeta trailers — the action only exists when real trailer ids do */
+  const trailers = useMemo(() => meta?.trailers ?? [], [meta]);
   const inLibrary = meta ? favorites.includes(meta.id) : false;
   const inWatchlist = meta ? watchlist.includes(meta.id) : false;
   const isWatched = meta ? watched.includes(meta.id) : false;
@@ -635,6 +639,12 @@ export default function Detail() {
                     )}
                   </>
                 )}
+                {trailers.length > 0 && (
+                  <ButtonGhost onClick={() => setTrailerOpen(true)}>
+                    <Clapperboard size={16} strokeWidth={1.75} />
+                    {t('app.detail.watchTrailer')}
+                  </ButtonGhost>
+                )}
               </motion.div>
             </div>
 
@@ -883,6 +893,16 @@ export default function Detail() {
       <Modal open={paywallOpen} onClose={() => setPaywallOpen(false)}>
         <PaywallCard />
       </Modal>
+
+      {/* ── trailer (only when the meta carries real trailer ids) ────── */}
+      {trailers.length > 0 && (
+        <TrailerModal
+          open={trailerOpen}
+          onClose={() => setTrailerOpen(false)}
+          trailers={trailers}
+          name={meta.name}
+        />
+      )}
     </div>
   );
 }
