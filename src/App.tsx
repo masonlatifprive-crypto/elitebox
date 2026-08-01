@@ -54,6 +54,7 @@ const Stats = lazy(() => import('@/pages/app/Stats'));
 const Settings = lazy(() => import('@/pages/app/Settings'));
 const Account = lazy(() => import('@/pages/app/Account'));
 const Onboarding = lazy(() => import('@/pages/app/Onboarding'));
+const TvMode = lazy(() => import('@/pages/app/TvMode'));
 
 /** /app/title/:type/:id → /app/detail/:type/:id (spec alias, params preserved). */
 function TitleAlias() {
@@ -125,6 +126,7 @@ function RoutedPages() {
             <Route path="settings" element={<Settings />} />
             <Route path="account" element={<Account />} />
             <Route path="onboarding" element={<Onboarding />} />
+            <Route path="tv" element={<TvMode />} />
             {/* spec-route aliases */}
             <Route path="board" element={<Navigate to="/app" replace />} />
             <Route path="sources" element={<Navigate to="/app/addons" replace />} />
