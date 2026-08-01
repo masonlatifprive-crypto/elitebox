@@ -903,9 +903,9 @@ export default {
     subscription: 'Abonnement',
     statusActive: 'ACTIEF',
     statusCancels: 'LOOPT AF OP {{date}}',
-    demoTitle: 'Demomodus — geen echte betaling. Facturatie is gesimuleerd.',
+    demoTitle: 'Lokale facturatie — geen echte betaling. Facturatie is nog niet gekoppeld.',
     premiumBlurb: '€4,99/maand · Elke film en serie in de catalogus. Helemaal.',
-    demoNeverRenews: 'Demo-abonnement — verlengt nooit, factureert nooit.',
+    demoNeverRenews: 'Lokaal abonnementsvoorbeeld — verlengt nooit, factureert nooit.',
     renews: 'Verlengt op',
     paymentMethod: 'Betaalmethode: {{method}}',
     methodCard: 'Kaart',
@@ -934,7 +934,7 @@ export default {
     avatarTitle: 'Kies je orb',
     done: 'Klaar',
     manageDemoBody:
-      'Demomodus — beheeracties zijn gesimuleerd. In productie opent dit de betaalportal van je betaalprovider.',
+      'De betaalportal is nog niet gekoppeld. In productie opent dit de betaalportal van je betaalprovider.',
     gotIt: 'Begrepen',
     cancelTitle: 'Premium opzeggen?',
     cancelBody:
