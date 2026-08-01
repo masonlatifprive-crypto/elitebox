@@ -896,9 +896,9 @@ export default {
     subscription: 'Subscription',
     statusActive: 'ACTIVE',
     statusCancels: 'CANCELS {{date}}',
-    demoTitle: 'Demo mode — no real charge. Billing is simulated.',
+    demoTitle: 'Preview billing — no real charge. Billing is not connected yet.',
     premiumBlurb: '$4.99/month · Every movie and series in the catalog. Completely.',
-    demoNeverRenews: 'Demo subscription — never renews, never charges.',
+    demoNeverRenews: 'Local subscription preview — never renews, never charges.',
     renews: 'Renews',
     paymentMethod: 'Payment method: {{method}}',
     methodCard: 'Card',
@@ -927,7 +927,7 @@ export default {
     avatarTitle: 'Choose your orb',
     done: 'Done',
     manageDemoBody:
-      "Demo mode — manage actions are simulated. In production this opens your payment provider's billing portal.",
+      "Billing portal is not connected yet. In production this opens your payment provider's billing portal.",
     gotIt: 'Got it',
     cancelTitle: 'Cancel Premium?',
     cancelBody:
