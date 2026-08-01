@@ -3,9 +3,10 @@
  *
  * The zustand settings store (`settings.general.language`) is the source of
  * truth once mounted: the provider reads it reactively, so profile switches,
- * config imports and resets all flow through automatically. On first run (no
- * persisted language choice in the settings slice) the browser language is
- * detected: `nl*` → 'nl', everything else → 'en'.
+ * config imports and resets all flow through automatically. The default
+ * locale is always 'en' (owner directive) — Dutch is only active when the
+ * user picks it explicitly via the language switcher; there is no browser
+ * language auto-detection.
  *
  * Usage:
  *   const { t, locale, setLocale } = useT();
@@ -20,7 +21,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { DICTS } from '@/i18n/locales';
-import { scopedKey, useSettings } from '@/lib/store';
+import { useSettings } from '@/lib/store';
 
 export type Locale = 'en' | 'nl';
 
@@ -60,34 +61,8 @@ function translate(locale: Locale, key: string, vars?: TranslateVars): string {
   return interpolate(message, vars);
 }
 
-/** True when the persisted settings slice already holds an explicit choice. */
-function hasStoredLanguageChoice(): boolean {
-  try {
-    const raw = localStorage.getItem(scopedKey('settings'));
-    if (!raw) return false;
-    const parsed = JSON.parse(raw) as {
-      state?: { settings?: { general?: { language?: unknown } } };
-    };
-    const lang = parsed.state?.settings?.general?.language;
-    return lang === 'en' || lang === 'nl';
-  } catch {
-    return false;
-  }
-}
-
 export function I18nProvider({ children }: { children: ReactNode }) {
   const locale = useSettings((s) => s.settings.general.language);
-
-  /* First run only: persist the browser-detected locale as the choice. Runs
-     after zustand persist has rehydrated (synchronous for localStorage), so a
-     returning user's stored choice is never overwritten. */
-  useEffect(() => {
-    if (hasStoredLanguageChoice()) return;
-    const detected: Locale = (navigator.language || '').toLowerCase().startsWith('nl')
-      ? 'nl'
-      : 'en';
-    useSettings.getState().patchSettings({ general: { language: detected } });
-  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;

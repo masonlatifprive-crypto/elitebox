@@ -47,6 +47,8 @@ export default {
       visual: {
         measuring: 'Measuring…',
         liveNote: 'Live measurement from this visit',
+        local: 'local',
+        example: 'Example',
         subtitlesEn: 'Subtitles: EN',
         resume: 'Resume 42:17',
         timeout: 'Source 1 timed out after 5s',
@@ -630,7 +632,7 @@ export default {
     },
     r1: {
       h1: 'Living Tree hero — the animated Elitebox mark above the headline, calm under reduced motion',
-      h2: 'Upcoming & Originals: honest coming-soon premieres with watchlist tracking and the new Release Calendar',
+      h2: 'Upcoming: honest coming-soon premieres with watchlist tracking and the new Release Calendar',
       h3: 'Addon engine hardened: Manifest 2.0 declarations, HTTPS enforcement, piracy blocklist, reliability scoring',
       h4: 'Player: progressive seek with on-screen target preview, per-title subtitle sync, source failover',
       h5: 'Legal pages, developer guide, downloads matrix and these notes go live',

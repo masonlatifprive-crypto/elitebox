@@ -540,7 +540,7 @@ function TrendingSection({ items }: { items: MetaItem[] }) {
   );
 }
 
-/* ── S3.5 — Upcoming & Originals (wide cinematic cards, coming soon) ───── */
+/* ── S3.5 — Coming soon (wide cinematic cards, watchlist/notify only) ──── */
 
 function UpcomingSection({ items }: { items: MetaItem[] }) {
   const { t } = useT();
@@ -584,7 +584,7 @@ function UpcomingSection({ items }: { items: MetaItem[] }) {
               <div className="absolute bottom-14 left-16 right-16 flex flex-col gap-4">
                 <span className="font-display text-title text-chrome">{item.name}</span>
                 <span className="text-micro uppercase text-muted">
-                  {t('app.home.originalTag')} · {item.genres.slice(0, 2).join(' · ')}
+                  {t('app.home.upcomingTag')} · {item.genres.slice(0, 2).join(' · ')}
                 </span>
               </div>
             </Link>
@@ -595,7 +595,7 @@ function UpcomingSection({ items }: { items: MetaItem[] }) {
   );
 }
 
-/* ── S4 — Elitebox Exclusives (16:9 backdrop cards) ────────────────────── */
+/* ── S4 — Open cinema: free CC-BY open films (16:9 backdrop cards) ─────── */
 
 function ExclusivesSection({ items }: { items: MetaItem[] }) {
   const { t } = useT();
@@ -605,7 +605,7 @@ function ExclusivesSection({ items }: { items: MetaItem[] }) {
   if (exclusives.length === 0) return null;
   return (
     <section className="flex flex-col gap-16">
-      <h2 className="font-display text-title text-ink">{t('app.home.exclusives')}</h2>
+      <h2 className="font-display text-title text-ink">{t('app.home.openCinema')}</h2>
       <div className="shelf-fade-x no-scrollbar -mx-16 flex gap-16 overflow-x-auto overscroll-x-contain px-16 py-8 snap-x snap-mandatory md:-mx-24 md:px-24 xl:-mx-48 xl:px-48">
         {exclusives.map((item, i) => (
           <motion.div
@@ -618,7 +618,7 @@ function ExclusivesSection({ items }: { items: MetaItem[] }) {
           >
             <Link
               to={`/app/detail/${item.type}/${item.id}`}
-              aria-label={t('app.home.exclusiveAria', { name: item.name })}
+              aria-label={t('app.home.openCinemaAria', { name: item.name })}
               className="focusable group/ex relative block aspect-video overflow-hidden rounded-lg ring-1 ring-white/[.08] bg-navy hover:shadow-focus-glow focus-visible:shadow-focus-glow"
             >
               <img
@@ -636,7 +636,7 @@ function ExclusivesSection({ items }: { items: MetaItem[] }) {
                 transition={{ ...spring.snappy, delay: Math.min(i, 6) * 0.06 + 0.15 }}
                 className="glass-1 absolute left-8 top-8 rounded-md px-8 py-2 text-micro uppercase text-gradient-signature"
               >
-                {t('app.home.exclusiveBadge')}
+                {t('app.home.openCinemaBadge')}
               </motion.span>
               <div className="absolute bottom-10 left-12 right-12 flex flex-col gap-2">
                 <span className="text-caption text-ink">{item.name}</span>

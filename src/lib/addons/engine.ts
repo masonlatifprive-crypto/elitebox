@@ -649,7 +649,8 @@ class AddonEngine {
    * recordSuccess/recordFailure map. `measured` is false until at least one
    * real remote call has been recorded this session — consumers must render
    * an honest "measuring" state instead of a number. The builtin addon is
-   * local and always measured at 0ms.
+   * local: no remote call exists to time, so it carries no latency figure at
+   * all (consumers render "local", never a fake 0ms).
    */
   engineHealth(): EngineHealthRow[] {
     return this.list().map((addon) => {
@@ -658,8 +659,8 @@ class AddonEngine {
           id: addon.id,
           name: addon.name,
           builtin: true,
-          measured: true,
-          latencyMs: 0,
+          measured: false,
+          latencyMs: undefined,
           status: 'ok',
           circuit: 'closed',
           successes: 0,

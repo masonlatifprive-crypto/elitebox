@@ -1,8 +1,10 @@
 /**
  * Live TV — /app/live (live.md).
- * Real channels from installed live/catalog addons with health chips,
- * deterministic now-playing schedule (derived from the current hour) and
- * one-tap play. 10-foot first; number keys 1–9 jump to channels on TV.
+ * Real channels from installed live/catalog addons with health chips and
+ * one-tap play. Channels show only their real metadata (name, art, live
+ * status, description) — no program schedule is fabricated: without EPG
+ * data the honest state is "Live now". 10-foot first; number keys 1–9
+ * jump to channels on TV.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
@@ -16,17 +18,6 @@ import { useAddons } from '@/lib/store';
 import type { AddonHealth, MetaItem } from '@/lib/types';
 import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
-
-/** Deterministic, honest now-playing: catalog movies rotate with the hour. */
-function scheduleFor(channelIndex: number, movies: MetaItem[]): { now: string; next: string } | null {
-  if (movies.length === 0) return null;
-  const hour = new Date().getHours();
-  const base = hour + channelIndex;
-  return {
-    now: movies[base % movies.length].name,
-    next: movies[(base + 1) % movies.length].name,
-  };
-}
 
 function signalFor(health?: AddonHealth): 1 | 2 | 3 {
   if (!health || health.status === 'down') return 1;
@@ -48,7 +39,6 @@ export default function Live() {
   const [probing, setProbing] = useState<string | null>(null);
 
   const channels = useMemo(() => items.filter((m) => m.type === 'channel'), [items]);
-  const movies = useMemo(() => items.filter((m) => m.type === 'movie'), [items]);
   const liveAddons = useMemo(
     () => installed.filter((a) => a.builtin || a.resources.includes('catalog')),
     [installed],
@@ -135,7 +125,6 @@ export default function Live() {
     liveAddons.every((a) => health[a.id]?.status === 'down');
 
   const featuredHealth = featured ? health[addonForChannel(featured)?.id ?? ''] : undefined;
-  const featuredSchedule = featured ? scheduleFor(channels.indexOf(featured), movies) : null;
 
   return (
     <div className="flex flex-col gap-32 pb-48 pt-16">
@@ -248,9 +237,7 @@ export default function Live() {
                       >
                         <h2 className="font-display text-display-l text-ink">{featured.name}</h2>
                         <p className="text-caption text-muted">
-                          {featuredSchedule
-                            ? t('app.live.nowNext', { now: featuredSchedule.now, next: featuredSchedule.next })
-                            : featured.description}
+                          {featured.description || t('app.live.liveNow')}
                         </p>
                         <div className="flex flex-wrap items-center gap-12">
                           <ButtonPrimary to={`/app/player/channel/${featured.id}`}>
@@ -274,7 +261,6 @@ export default function Live() {
           <div className="grid grid-cols-1 gap-24 sm:grid-cols-2 lg:grid-cols-3">
             {channels.map((c, i) => {
               const h = health[addonForChannel(c)?.id ?? ''];
-              const schedule = scheduleFor(i, movies);
               const signal = signalFor(h);
               const SignalIcon = signal === 3 ? SignalHigh : signal === 2 ? SignalMedium : SignalLow;
               return (
@@ -380,7 +366,7 @@ export default function Live() {
                       </div>
                     </div>
                     <p className="truncate text-caption text-muted">
-                      {schedule ? t('app.live.nowPrefix', { name: schedule.now }) : c.description}
+                      {c.description || t('app.live.liveNow')}
                     </p>
                     <div className="mt-auto flex items-center justify-between gap-8 pt-4">
                       <ButtonNeon

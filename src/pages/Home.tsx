@@ -259,7 +259,16 @@ function HealthCardVisual() {
         <div key={row.id} className="flex items-center justify-between gap-16">
           <span className="text-caption text-ink">{row.name}</span>
           <span className="flex items-center gap-8">
-            {row.measured ? (
+            {row.builtin ? (
+              /* the builtin showcase answers locally — there is no remote
+                 latency to measure, so say "local" instead of a fake 0ms */
+              <>
+                <HealthDot status={row.status} />
+                <span className="w-[52px] text-right font-mono text-[11px] text-muted">
+                  {t('marketing.home.story.visual.local')}
+                </span>
+              </>
+            ) : row.measured ? (
               <>
                 <HealthDot status={row.status} />
                 <span className="w-[52px] text-right font-mono text-[11px] text-muted">
@@ -301,6 +310,8 @@ function FeatureCardVisual({ cardKey }: { cardKey: string }) {
             </span>
           ))}
         </div>
+        {/* illustrative mock — not the visitor's real playback memory */}
+        <span className="text-micro uppercase text-muted/60">{t('marketing.home.story.visual.example')}</span>
       </div>
     );
   }
@@ -321,6 +332,8 @@ function FeatureCardVisual({ cardKey }: { cardKey: string }) {
           <RefreshCw size={14} strokeWidth={1.75} /> {t('marketing.home.story.visual.retry')}
         </ButtonGhost>
       </div>
+      {/* illustrative mock — not a real source failure on this device */}
+      <span className="text-micro uppercase text-muted/60">{t('marketing.home.story.visual.example')}</span>
     </div>
   );
 }
@@ -425,7 +438,7 @@ function FeatureStory() {
               <p className="text-caption text-muted">{t(`marketing.home.story.cards.${card.key}.copy`)}</p>
               <Link
                 to={card.linkTo}
-                className="focusable w-fit rounded-full text-caption font-semibold text-muted transition-colors hover:text-cyan"
+                className="focusable inline-flex min-h-[36px] w-fit items-center rounded-full text-caption font-semibold text-muted transition-colors hover:text-cyan"
               >
                 {t(`marketing.home.story.cards.${card.key}.link`)}
               </Link>

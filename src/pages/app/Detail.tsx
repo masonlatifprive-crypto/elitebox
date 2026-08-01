@@ -34,6 +34,7 @@ import {
   Star,
 } from 'lucide-react';
 import { addonEngine } from '@/lib/addons/engine';
+import { findShowcaseMeta } from '@/data/showcase';
 import { parseSourceTitle, scoreSource } from '@/lib/sourceScore';
 import { useAddons, useLibrary } from '@/lib/store';
 import { detectTV } from '@/lib/tvnav';
@@ -527,8 +528,11 @@ export default function Detail() {
                   </span>
                 ))}
                 {meta.upcoming ? (
-                  <span className="text-micro uppercase text-highlight">{t('app.home.originalTag')}</span>
+                  <span className="text-micro uppercase text-highlight">{t('app.home.upcomingTag')}</span>
                 ) : (
+                  /* CC-BY attribution is only truthful for the built-in
+                     Blender showcase — never for external catalog titles. */
+                  findShowcaseMeta(meta.id) &&
                   (meta.type === 'movie' || meta.type === 'series') && (
                     <span className="text-micro uppercase text-muted/70">Blender Foundation · CC-BY</span>
                   )

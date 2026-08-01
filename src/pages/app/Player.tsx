@@ -1,5 +1,7 @@
 /**
- * Player — /app/player/:type/:id (player.md). Wrapped in SubscriptionGate.
+ * Player — /app/player/:type/:id (player.md). Wrapped in SubscriptionGate,
+ * except the built-in CC-BY showcase ("open cinema — free & legal"), which
+ * plays for everyone without a subscription.
  *
  * The cinematic playback surface: HTML5 video (+ hls.js for .m3u8), glass
  * auto-hiding chrome, resume + per-title memory (speed / tracks / subtitle
@@ -40,6 +42,7 @@ import {
   X,
 } from 'lucide-react';
 import { addonEngine } from '@/lib/addons/engine';
+import { findShowcaseMeta, getShowcaseStreams } from '@/data/showcase';
 import { useLibrary, usePlaybackMemory, useSettings } from '@/lib/store';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import {
@@ -2344,6 +2347,13 @@ function PlayerInner() {
 }
 
 export default function Player() {
+  const { id = '' } = useParams();
+  /* Open cinema: the built-in CC-BY showcase (movies, series episodes and
+     live channels) is free for everyone — the paywall only applies to
+     non-showcase content. Episode ids are not catalog entries, so the
+     stream table is the authoritative check. */
+  const isShowcase = Boolean(findShowcaseMeta(id)) || getShowcaseStreams(id).length > 0;
+  if (isShowcase) return <PlayerInner />;
   return (
     <SubscriptionGate>
       <PlayerInner />

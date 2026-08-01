@@ -51,6 +51,8 @@ export default {
       visual: {
         measuring: 'Meten…',
         liveNote: 'Live-meting van dit bezoek',
+        local: 'lokaal',
+        example: 'Voorbeeld',
         subtitlesEn: 'Ondertitels: EN',
         resume: 'Hervat 42:17',
         timeout: 'Bron 1 reageerde niet na 5s',
@@ -633,7 +635,7 @@ export default {
     },
     r1: {
       h1: 'Living Tree-hero — het geanimeerde Elitebox-merkteken boven de headline, rustig bij verminderde beweging',
-      h2: 'Upcoming & Originals: eerlijke binnenkort-premières met watchlist-tracking en de nieuwe Releasekalender',
+      h2: 'Binnenkort: eerlijke coming-soon-premières met watchlist-tracking en de nieuwe Releasekalender',
       h3: 'Addonengine verstevigd: Manifest 2.0-declaraties, HTTPS afgedwongen, piraterij-blokkadelijst, betrouwbaarheidsscores',
       h4: 'Player: progressief seeken met on-screen doelpreview, ondertitelsync per titel, bron-failover',
       h5: "Juridische pagina's, ontwikkelaarsgids, downloadmatrix en deze notities gaan live",

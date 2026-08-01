@@ -342,7 +342,7 @@ export default function Downloads() {
         {!user && (
           <div className="pt-4">
             <Link to="/login">
-              <ButtonGhost className="px-16 py-8 text-[12px]">{t('marketing.downloads.footnote.signIn')}</ButtonGhost>
+              <ButtonGhost className="px-16 py-12 text-[12px]">{t('marketing.downloads.footnote.signIn')}</ButtonGhost>
             </Link>
           </div>
         )}

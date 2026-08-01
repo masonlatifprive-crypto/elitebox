@@ -11,6 +11,7 @@ import PosterCard from '@/components/PosterCard';
 import { ButtonGhost, ButtonPrimary, EmptyState, spring, toast } from '@/components/ui-elite';
 import type { SortOption } from '@/pages/app/Discover';
 import { FilterChip, SORT_OPTIONS, SkeletonGrid, SortControl, useCatalogItems } from '@/pages/app/Discover';
+import { findShowcaseMeta } from '@/data/showcase';
 import { scopedKey, useLibrary } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
 import { useT } from '@/i18n';
@@ -50,7 +51,16 @@ const PAGE = 24;
 
 /* ── S1 — type hero strip (36vh, 10s crossfade + Ken Burns) ────────────── */
 
-function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: MetaItem[] }) {
+function HeroStrip({
+  kind,
+  featured,
+  openCinema = false,
+}: {
+  kind: 'movie' | 'series';
+  featured: MetaItem[];
+  /** True when the strip fell back to the built-in CC-BY showcase — labeled honestly. */
+  openCinema?: boolean;
+}) {
   const { t } = useT();
   const [index, setIndex] = useState(0);
   const reduceMotion = useReducedMotion();
@@ -102,7 +112,14 @@ function HeroStrip({ kind, featured }: { kind: 'movie' | 'series'; featured: Met
             transition={spring.smooth}
             className="flex flex-col gap-8"
           >
-            <p className="text-micro uppercase tracking-[0.3em] text-cyan">{t(cfg.eyebrowKey)}</p>
+            <p className="flex flex-wrap items-center gap-10 text-micro uppercase tracking-[0.3em] text-cyan">
+              {t(cfg.eyebrowKey)}
+              {openCinema && (
+                <span className="rounded-full bg-cyan/15 px-10 py-4 tracking-[0.08em] text-cyan ring-1 ring-cyan/40">
+                  {t('app.catalog.openCinema')}
+                </span>
+              )}
+            </p>
             <h1 className="font-display text-display-xl text-ink">{t(cfg.headlineKey)}</h1>
             <p className="text-caption text-muted">
               {t('app.catalog.featuring')} <span className="text-ink">{item.name}</span>
@@ -267,10 +284,20 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
 
   const typed = useMemo(() => items.filter((m) => m.type === kind), [items, kind]);
 
-  const featured = useMemo(
+  /* Hero strip prefers real catalog titles of this type (top of the same
+     addon-fed list the page renders). Only when the real catalog has
+     nothing do we fall back to the built-in CC-BY showcase — and then the
+     strip is labeled "Open cinema" so it never masquerades as the catalog. */
+  const realFeatured = useMemo(
+    () => typed.filter((m) => !m.upcoming && !findShowcaseMeta(m.id)).slice(0, 3),
+    [typed],
+  );
+  const showcaseFeatured = useMemo(
     () => cfg.featured.map((id) => items.find((m) => m.id === id)).filter((m): m is MetaItem => Boolean(m)),
     [items, cfg],
   );
+  const featured = realFeatured.length > 0 ? realFeatured : showcaseFeatured;
+  const openCinema = realFeatured.length === 0 && showcaseFeatured.length > 0;
 
   const genres = useMemo(() => {
     const set = new Set<string>();
@@ -311,7 +338,7 @@ export default function Catalog({ kind }: { kind: 'movie' | 'series' }) {
           <div className="absolute inset-0 animate-beam-slide bg-gradient-to-r from-transparent via-white/[.06] to-transparent [animation-duration:1.4s]" />
         </div>
       ) : (
-        <HeroStrip kind={kind} featured={featured} />
+        <HeroStrip kind={kind} featured={featured} openCinema={openCinema} />
       )}
 
       {/* S2 — toolbar */}
