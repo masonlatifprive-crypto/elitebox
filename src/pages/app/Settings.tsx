@@ -393,7 +393,7 @@ const OPEN_CONTENT_CREDITS = [
   'Big Buck Bunny · Sintel · Tears of Steel · Elephants Dream — Blender Foundation, CC-BY 3.0',
   'Cosmos Laundromat · Caminandes 1–3 · Agent 327 · Sprite Fright — Blender Studio, CC-BY',
   'Charge · Wing It — Blender Studio open films, CC-BY',
-  'Demo streams hosted by the Blender Foundation and public sample mirrors',
+  'Open cinema streams hosted by the Blender Foundation and public sample mirrors',
 ];
 
 /* ── page ──────────────────────────────────────────────────────────────── */
