@@ -1,25 +1,10 @@
 /**
- * Ambience layer (design.md §10.11): fixed canvas particle field behind all
- * shells — 80–120 cyan/purple particles, slow drift, connect-lines within
- * 90px, 0.35 opacity. One instance per shell. Paused when the tab is hidden,
- * disabled entirely under prefers-reduced-motion or when the user turns the
- * ambience off in settings.
+ * AmbienceCanvas — DadGPT-style black-canvas atmosphere.
+ * A very subtle monochrome wave field, no particles, no nebula, no busy drift.
+ * It stays behind every shell and respects reduced-motion / ambience settings.
  */
 import { memo, useEffect, useRef } from 'react';
 import { useSettings } from '@/lib/store';
-
-const PARTICLE_COUNT = 100;
-const LINK_DIST = 90;
-const OPACITY = 0.35;
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  r: number;
-  hue: 'cyan' | 'purple';
-}
 
 const AmbienceCanvas = memo(function AmbienceCanvas({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,16 +13,16 @@ const AmbienceCanvas = memo(function AmbienceCanvas({ className }: { className?:
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !ambienceOn) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     let raf = 0;
     let running = true;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let w = 0;
     let h = 0;
+    let t = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const resize = () => {
       w = window.innerWidth;
@@ -46,80 +31,60 @@ const AmbienceCanvas = memo(function AmbienceCanvas({ className }: { className?:
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-    resize();
-    window.addEventListener('resize', resize);
 
-    const particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      /* Static constellation — premium is still. No drift, no wrap: the
-         field is drawn once per resize and simply holds (owner directive:
-         moving background structures read cheap). */
-      vx: 0,
-      vy: 0,
-      r: 0.8 + Math.random() * 1.8,
-      hue: Math.random() < 0.6 ? 'cyan' : 'purple',
-    }));
-
-    const CYAN = '124,217,236';
-    const PURPLE = '139,124,232';
-
-    const frame = () => {
-      if (!running) return;
+    const draw = () => {
       ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, w, h);
 
-      // drift + wrap
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -20) p.x = w + 20;
-        else if (p.x > w + 20) p.x = -20;
-        if (p.y < -20) p.y = h + 20;
-        else if (p.y > h + 20) p.y = -20;
-      }
+      const cx = w / 2;
+      const cy = h * 0.47;
+      const lines = Math.max(11, Math.min(18, Math.floor(h / 58)));
+      const maxWidth = Math.min(w * 0.76, 1120);
+      const phase = reduced ? 0 : t * 0.006;
 
-      // connect-lines within 90px
       ctx.lineWidth = 1;
-      for (let i = 0; i < particles.length; i++) {
-        const a = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < LINK_DIST * LINK_DIST) {
-            const alpha = (1 - Math.sqrt(d2) / LINK_DIST) * OPACITY * 0.5;
-            ctx.strokeStyle = `rgba(${a.hue === 'cyan' ? CYAN : PURPLE},${alpha.toFixed(3)})`;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // particles
-      for (const p of particles) {
-        ctx.fillStyle = `rgba(${p.hue === 'cyan' ? CYAN : PURPLE},${(OPACITY * 0.9).toFixed(3)})`;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < lines; i++) {
+        const y = cy + (i - lines / 2) * 22;
+        const alpha = 0.035 + (1 - Math.abs(i - lines / 2) / lines) * 0.055;
+        ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
+        for (let x = -maxWidth / 2; x <= maxWidth / 2; x += 18) {
+          const nx = x / maxWidth;
+          const amp = 18 * Math.cos(nx * Math.PI * 0.75);
+          const wave = Math.sin(nx * 10 + phase + i * 0.38) * amp;
+          const yy = y + wave + Math.sin(nx * 24 - phase * 0.65) * 4;
+          if (x === -maxWidth / 2) ctx.moveTo(cx + x, yy);
+          else ctx.lineTo(cx + x, yy);
+        }
+        ctx.stroke();
       }
 
-      raf = requestAnimationFrame(frame);
+      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.55);
+      gradient.addColorStop(0, 'rgba(124,217,236,0.035)');
+      gradient.addColorStop(0.35, 'rgba(124,217,236,0.012)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+
+      if (!reduced) t += 1;
+      if (running) raf = requestAnimationFrame(draw);
     };
 
     const start = () => {
-      if (running) cancelAnimationFrame(raf);
       running = true;
-      raf = requestAnimationFrame(frame);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
     };
     const stop = () => {
       running = false;
       cancelAnimationFrame(raf);
     };
-
     const onVisibility = () => (document.hidden ? stop() : start());
+
+    resize();
+    window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', onVisibility);
     start();
 
@@ -137,7 +102,7 @@ const AmbienceCanvas = memo(function AmbienceCanvas({ className }: { className?:
       ref={canvasRef}
       aria-hidden
       className={className}
-      style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', background: '#000' }}
     />
   );
 });
