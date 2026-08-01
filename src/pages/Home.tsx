@@ -1,800 +1,173 @@
-/**
- * Landing page `/` (home.md): hero S1, top content rail S2, pinned feature
- * story S3 (GSAP ScrollTrigger), addon engine S4, player S5, platforms +
- * downloads S6, final CTA S7. Footer is rendered by MarketingShell.
- *
- * Library isolation: Framer Motion drives UI entrances; GSAP/ScrollTrigger is
- * contained in <FeatureStory/> only.
- */
-import { Fragment, useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { motion, useInView, useReducedMotion } from 'framer-motion';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import {
-  Activity,
-  AlertTriangle,
-  Captions,
-  ChevronRight,
-  Code2,
-  Download,
-  FastForward,
-  Globe,
-  Keyboard,
-  Monitor,
-  Mouse,
-  RefreshCw,
-  Shield,
-  SlidersHorizontal,
-  Smartphone,
-  Tv,
-} from 'lucide-react';
-import { LogoMark } from '@/components/Logo';
+import { Boxes, Gauge, Layers, MonitorSmartphone, ShieldCheck, Subtitles } from 'lucide-react';
 import LivingTree from '@/components/LivingTree';
-import ScrambleText from '@/components/ScrambleText';
-import SpotlightCard from '@/components/SpotlightCard';
 import Shelf from '@/components/Shelf';
-import {
-  ButtonGhost,
-  ButtonNeon,
-  ButtonPrimary,
-  GlassPanel,
-  HealthDot,
-  spring,
-  toast,
-  Eyebrow,
-} from '@/components/ui-elite';
-import { SHOWCASE_CHANNELS, SHOWCASE_MOVIES } from '@/data/showcase';
-import { addonEngine } from '@/lib/addons/engine';
+import { ButtonGhost, ButtonNeon, ButtonPrimary, Eyebrow, GlassPanel } from '@/components/ui-elite';
+import { SHOWCASE_MOVIES } from '@/data/showcase';
 import { usePublicCatalog } from '@/lib/usePublicCatalog';
-import { cn } from '@/lib/utils';
-import { useT } from '@/i18n';
+import type { MetaItem } from '@/lib/types';
 
-gsap.registerPlugin(ScrollTrigger);
+const PLATFORMS = ['Android', 'Android TV', 'Windows', 'macOS', 'Linux', 'LG TV', 'Web'];
 
-/* ── shared bits ───────────────────────────────────────────────────────── */
-
-const riseIn = {
-  initial: { opacity: 0, y: 32 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
-};
-
-/* ── S1 — Hero ─────────────────────────────────────────────────────────── */
-
-function Hero() {
-  const { t } = useT();
-  return (
-    <section className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden">
-      {/* z0 — pure-black stage: the LivingTree is the hero, dadgpt-calm.
-          Deep vignette melts the edges into the lunar night. */}
-      <div className="absolute inset-0 z-0 bg-black" aria-hidden />
-      <div
-        aria-hidden
-        className="absolute inset-0 z-[1] bg-[radial-gradient(120%_90%_at_50%_42%,transparent_38%,rgba(3,6,18,.55)_72%,#030612_100%)]"
-      />
-
-      {/* z2 — DadGPT-calm: no starfield/nebula, only the subtle canvas wave */}
-
-      {/* z3 — content */}
-      <div className="relative z-[3] flex flex-col items-center gap-24 px-16 text-center">
-        <motion.div
-          initial="hidden"
-          animate="show"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.02, delayChildren: 0.35 } } }}
-        >
-          {/* LivingTree — the signature mark: an AI waveform × neural tree,
-              floating and breathing above the headline. Its own lunar halo
-              lifts it clear of the starfield. Static under reduced
-              motion (handled in index.css). */}
-          <motion.div
-            aria-hidden
-            className="relative mb-18 mt-4 flex h-[136px] items-start justify-center md:h-[172px]"
-            initial={{ opacity: 0, scale: 0.82, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            transition={{ delay: 0.55, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div
-              aria-hidden
-              className="absolute left-1/2 top-1/2 -z-0 h-[300px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(3,6,18,.94),rgba(3,6,18,.62)_58%,transparent)] backdrop-blur-[3px]"
-            />
-            <LivingTree className="relative origin-top scale-[.78] [filter:drop-shadow(0_0_14px_rgba(255,255,255,.22))] sm:scale-95 md:scale-[1.05]" />
-          </motion.div>
-
-          <Eyebrow className="mb-16">
-            {t('marketing.home.hero.eyebrow').split(' ').map((word, wi) => (
-              <Fragment key={wi}>
-                {wi > 0 && ' '}
-                <span className="inline-block whitespace-nowrap">
-                  {word.split('').map((ch, i) => (
-                    <motion.span
-                      key={i}
-                      className="inline-block"
-                      variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-                    >
-                      {ch}
-                    </motion.span>
-                  ))}
-                </span>
-              </Fragment>
-            ))}
-          </Eyebrow>
-
-          <h1 className="font-display text-[clamp(2rem,10.5vw,2.75rem)] leading-[1.05] tracking-[-0.04em] font-extrabold md:text-display-2xl">
-            {[t('marketing.home.hero.title1'), t('marketing.home.hero.title2')].map((line, li) => (
-              <span key={line} className={cn('block', li > 0 && 'mt-2')}>
-                {line.split(' ').map((word, wi) => (
-                  <Fragment key={wi}>
-                    {wi > 0 && ' '}
-                    <span className="inline-block whitespace-nowrap">
-                      {word.split('').map((ch, i) => (
-                        <motion.span
-                          key={i}
-                          className="text-chrome inline-block will-change-transform"
-                          variants={{
-                            hidden: { opacity: 0, y: 40, rotate: 4 },
-                            show: { opacity: 1, y: 0, rotate: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
-                          }}
-                        >
-                          {ch}
-                        </motion.span>
-                      ))}
-                    </span>
-                  </Fragment>
-                ))}
-              </span>
-            ))}
-          </h1>
-        </motion.div>
-
-        <motion.p
-          className="max-w-[62ch] text-body-l text-muted"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.15, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {t('marketing.home.hero.sub')}
-        </motion.p>
-
-        <motion.div
-          className="flex flex-col items-center gap-16 sm:flex-row"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.3, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <ButtonPrimary to="/app" className="max-sm:w-full px-32 py-16 text-base">
-            {t('marketing.home.hero.openApp')}
-          </ButtonPrimary>
-          <ButtonNeon to="/app/onboarding" className="max-sm:w-full px-32 py-16 text-base">
-            {t('marketing.home.hero.setup')}
-          </ButtonNeon>
-        </motion.div>
-
-        <motion.p
-          className="text-caption text-muted"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.6, duration: 0.45 }}
-        >
-          {t('marketing.home.hero.meta')}
-        </motion.p>
-      </div>
-
-      {/* z4 — scroll cue */}
-      <div className="absolute bottom-24 left-1/2 z-[4] flex -translate-x-1/2 flex-col items-center gap-8">
-        <Mouse size={20} strokeWidth={1.75} className="text-muted" />
-        <span className="block h-32 w-2 rounded-full bg-cyan animate-scroll-cue" />
-      </div>
-    </section>
-  );
-}
-
-/* ── S2 — Top Content Rail ─────────────────────────────────────────────── */
-
-/** Poster-aspect skeletons while the live catalog loads (shimmer, 1.4s). */
-function RailSkeleton() {
-  return (
-    <div className="no-scrollbar flex gap-16 overflow-hidden px-24 py-8" aria-hidden>
-      {Array.from({ length: 9 }, (_, i) => (
-        <div
-          key={i}
-          className="glass-1 relative aspect-[2/3] w-128 shrink-0 overflow-hidden rounded-lg md:w-160 xl:w-[200px]"
-        >
-          <div className="absolute inset-0 animate-beam-slide bg-gradient-to-r from-transparent via-white/[.07] to-transparent [animation-duration:1.4s] [animation-timing-function:ease-in-out]" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TopContentRail() {
-  const { t } = useT();
-  const { items, loading, failed } = usePublicCatalog();
-  /* Honest fallback: only when the live catalog is unreachable do the open
-     movies appear — under a label that says exactly what they are, so the
-     showcase never masquerades as the main catalog. */
-  const fallbackItems = [...SHOWCASE_MOVIES, ...SHOWCASE_CHANNELS.filter((c) => c.id !== 'launchpad')];
-  const showFallback = !loading && (failed || items.length === 0);
-  return (
-    <section id="top-content" className="relative z-10 flex flex-col gap-8 py-96">
-      <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mx-auto w-full max-w-[1280px] px-16 md:px-24">
-        <Eyebrow>{t('marketing.home.rail.eyebrow')}</Eyebrow>
-        <div className="mt-8 flex flex-wrap items-baseline justify-between gap-16">
-          <h2 className="font-display text-display-l text-ink">
-            {showFallback ? t('marketing.home.rail.fallbackTitle') : t('marketing.home.rail.title')}
-          </h2>
-          <ButtonGhost to="/app/discover">
-            {t('marketing.home.rail.openCatalog')} <ChevronRight size={16} strokeWidth={1.75} />
-          </ButtonGhost>
-        </div>
-      </motion.div>
-      {loading ? <RailSkeleton /> : <Shelf items={showFallback ? fallbackItems : items} autoScroll />}
-    </section>
-  );
-}
-
-/* ── S3 — Feature Story: "Engineered, not patched" (GSAP pinned scene) ─── */
-
-const FEATURE_CARDS = [
-  { key: 'health', accent: 'cyan' as const, linkTo: '/app/addons' },
-  { key: 'memory', accent: 'purple' as const, linkTo: '/app' },
-  { key: 'recovery', accent: 'cyan' as const, linkTo: '/app/settings' },
+const FEATURES = [
+  { icon: Gauge, title: 'Built for speed', body: 'A lean engine and same-origin catalog mean instant browsing, quick search, and smooth playback on every device.' },
+  { icon: Boxes, title: 'Powered by addons', body: 'Add the catalogs and sources you want. EliteBox stays yours — install, reorder, and remove in seconds.' },
+  { icon: ShieldCheck, title: 'Private by design', body: 'We keep only the minimum needed to sync your library. No history of what you watch or where you stream it.' },
+  { icon: Subtitles, title: 'Studio-grade subtitles', body: 'Upload your own tracks, fine-tune timing, and save styling per title so it looks perfect on any screen.' },
+  { icon: MonitorSmartphone, title: 'Seamless across devices', body: 'Start on your phone, finish on your TV. Your library and progress follow you everywhere you sign in on.' },
+  { icon: Layers, title: 'One clean library', body: 'Movies, series, live and free public-domain cinema — organised in a single, calm interface.' },
 ];
 
-/**
- * Live addon telemetry, straight from the engine's runtime map. The shared
- * public-catalog fetch doubles as this visit's measurement; until an addon
- * has recorded a real call it shows an honest "measuring…" — never a number.
- */
-function HealthCardVisual() {
-  const { t } = useT();
-  const { loading } = usePublicCatalog();
-  const rows = addonEngine.engineHealth().slice(0, 3);
+const FAQ = [
+  { q: 'What is EliteBox?', a: 'EliteBox is a modern media hub that brings your catalogs, addons and player together in one calm, cinematic interface.' },
+  { q: 'How does it work?', a: 'Launch the app, pick the addons you want, and start browsing. Your library and watch progress stay available across the app.' },
+  { q: 'What can I watch?', a: 'Real movie and series metadata powers discovery, plus a free Open Cinema collection of public-domain and Creative-Commons films you can play right away.' },
+  { q: 'Is EliteBox safe and private?', a: 'Yes. EliteBox runs a legal addon architecture, blocks known piracy sources, and keeps the browser experience honest.' },
+  { q: 'Does it cost anything?', a: 'The core web experience is free. Premium comfort features can be added without changing the calm interface.' },
+];
+
+function SectionTitle({ eyebrow, title, subtitle, center = false }: { eyebrow?: string; title: string; subtitle?: string; center?: boolean }) {
   return (
-    <div className="flex flex-col gap-10">
-      {rows.map((row) => (
-        <div key={row.id} className="flex items-center justify-between gap-16">
-          <span className="text-caption text-ink">{row.name}</span>
-          <span className="flex items-center gap-8">
-            {row.builtin ? (
-              /* the builtin showcase answers locally — there is no remote
-                 latency to measure, so say "local" instead of a fake 0ms */
-              <>
-                <HealthDot status={row.status} />
-                <span className="w-[52px] text-right font-mono text-[11px] text-muted">
-                  {t('marketing.home.story.visual.local')}
-                </span>
-              </>
-            ) : row.measured ? (
-              <>
-                <HealthDot status={row.status} />
-                <span className="w-[52px] text-right font-mono text-[11px] text-muted">
-                  {row.latencyMs !== undefined ? `${row.latencyMs}ms` : '—'}
-                </span>
-              </>
-            ) : (
-              <span className="animate-pulse font-mono text-[11px] text-muted">
-                {t('marketing.home.story.visual.measuring')}
-              </span>
-            )}
-          </span>
-        </div>
-      ))}
-      <span className="mt-4 text-micro uppercase text-muted/60">
-        {loading
-          ? t('marketing.home.story.visual.measuring')
-          : t('marketing.home.story.visual.liveNote')}
-      </span>
+    <div className={center ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <h2 className="mt-4 font-display text-[clamp(2rem,5vw,3.7rem)] font-semibold leading-[1.05] tracking-[-0.04em] text-ink">{title}</h2>
+      {subtitle && <p className="mt-5 text-body-l text-muted">{subtitle}</p>}
     </div>
   );
 }
 
-function FeatureCardVisual({ cardKey }: { cardKey: string }) {
-  const { t } = useT();
-  if (cardKey === 'health') {
-    return <HealthCardVisual />;
-  }
-  if (cardKey === 'memory') {
-    return (
-      <div className="flex flex-col gap-12">
-        <div className="relative h-6 overflow-hidden rounded-full bg-white/[.08]">
-          <div className="h-full w-[42%] rounded-full bg-signature" />
-        </div>
-        <div className="flex flex-wrap gap-8">
-          {['1.25×', t('marketing.home.story.visual.subtitlesEn'), t('marketing.home.story.visual.resume')].map((chip) => (
-            <span key={chip} className="glass-1 rounded-full px-12 py-6 font-mono text-[11px] text-cyan">
-              {chip}
-            </span>
-          ))}
-        </div>
-        {/* illustrative mock — not the visitor's real playback memory */}
-        <span className="text-micro uppercase text-muted/60">{t('marketing.home.story.visual.example')}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-12">
-      <div className="flex items-center gap-10 text-muted">
-        <AlertTriangle size={18} strokeWidth={1.75} className="text-warn shrink-0" />
-        <span className="text-caption">{t('marketing.home.story.visual.timeout')}</span>
-      </div>
-      <div className="flex flex-wrap gap-8">
-        <ButtonNeon className="px-16 py-8 text-[12px]" onClick={() => toast(t('marketing.home.story.visual.toastSwitched'))}>
-          {t('marketing.home.story.visual.nextSource')}
-        </ButtonNeon>
-        <ButtonGhost onClick={() => toast(t('marketing.home.story.visual.toastSteppedDown'))}>
-          {t('marketing.home.story.visual.lowerQuality')}
-        </ButtonGhost>
-        <ButtonGhost onClick={() => toast(t('marketing.home.story.visual.toastRetrying'))}>
-          <RefreshCw size={14} strokeWidth={1.75} /> {t('marketing.home.story.visual.retry')}
-        </ButtonGhost>
-      </div>
-      {/* illustrative mock — not a real source failure on this device */}
-      <span className="text-micro uppercase text-muted/60">{t('marketing.home.story.visual.example')}</span>
-    </div>
-  );
+function splitCatalog(items: MetaItem[]) {
+  const movies = items.filter((m) => m.type === 'movie').slice(0, 16);
+  const series = items.filter((m) => m.type === 'series').slice(0, 16);
+  return { movies, series };
 }
 
-function FeatureStory() {
-  const { t } = useT();
-  const sectionRef = useRef<HTMLElement>(null);
-  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const mm = gsap.matchMedia();
-
-    mm.add('(min-width: 768px) and (prefers-reduced-motion: no-preference)', () => {
-      const cards = cardRefs.current.filter((c): c is HTMLDivElement => Boolean(c));
-      gsap.set(cards, { opacity: 0.35, x: 64, scale: 0.98 });
-
-      const tl = gsap.timeline({
-        defaults: { ease: 'power2.out' },
-        scrollTrigger: {
-          trigger: section,
-          start: 'top top',
-          end: '+=180%',
-          pin: true,
-          scrub: 0.5,
-        },
-      });
-
-      const positions = [0.05, 0.35, 0.62];
-      const glows = [
-        '0 0 0 1px rgba(124,217,236,.5), 0 0 24px rgba(124,217,236,.25)',
-        '0 0 0 1px rgba(139,124,232,.5), 0 0 24px rgba(139,124,232,.25)',
-        '0 0 0 1px rgba(124,217,236,.5), 0 0 24px rgba(124,217,236,.25)',
-      ];
-
-      cards.forEach((card, i) => {
-        tl.to(
-          card,
-          { opacity: 1, x: 0, scale: 1.03, boxShadow: glows[i], duration: 0.18 },
-          positions[i],
-        ).to(card, { scale: 1, duration: 0.1 }, positions[i] + 0.18);
-        // dim previous cards slightly as the next activates
-        if (i > 0) tl.to(cards[i - 1], { opacity: 0.85, duration: 0.1 }, positions[i]);
-      });
-
-      tl.to({}, { duration: 0.15 }); // hold before unpin
-      return () => {
-        tl.scrollTrigger?.kill();
-        tl.kill();
-      };
-    });
-
-    return () => mm.revert();
-  }, []);
-
+function Hero() {
   return (
-    <section ref={sectionRef} className="relative z-10 flex min-h-[100dvh] items-center py-96">
-      <div className="mx-auto grid w-full max-w-[1280px] gap-48 px-16 md:grid-cols-[40%_1fr] md:px-24">
-        <div className="flex flex-col gap-16 md:sticky md:top-96 md:self-start">
-          <Eyebrow>{t('marketing.home.story.eyebrow')}</Eyebrow>
-          <h2 className="font-display text-display-l text-ink">
-            {t('marketing.home.story.title')}
-          </h2>
-          <p className="max-w-[44ch] text-body-l text-muted">
-            {t('marketing.home.story.copy')}
+    <section className="relative overflow-hidden bg-black">
+      <div className="eb-hero-halo pointer-events-none absolute inset-0" aria-hidden />
+      <div className="relative mx-auto max-w-6xl px-16 pt-40 sm:px-24 sm:pt-64">
+        <div className="mx-auto flex h-[300px] items-center justify-center sm:h-[380px]">
+          <LivingTree className="scale-[1.28] sm:scale-[1.7]" />
+        </div>
+        <div className="mx-auto -mt-12 max-w-3xl text-center sm:-mt-20">
+          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-ink sm:text-6xl lg:text-7xl">
+            Stream freely.<br /><span className="text-white/60">Everything in one place.</span>
+          </h1>
+          <p className="mx-auto mt-20 max-w-xl text-base leading-7 text-white/60 sm:text-lg">
+            EliteBox brings your movies, series, live channels and free public-domain cinema together — fast, private, and beautiful on every screen.
           </p>
-        </div>
-
-        <div className="flex flex-col gap-24">
-          {FEATURE_CARDS.map((card, i) => (
-            <GlassPanel
-              key={card.key}
-              ref={(el) => {
-                cardRefs.current[i] = el;
-              }}
-              level={2}
-              className="group/fc relative flex flex-col gap-16 overflow-hidden p-24 will-change-transform transition-transform duration-300 ease-out hover:-translate-y-[7px]"
-            >
-              {/* dadgpt-style hover light pool rising from the card base */}
-              <div
-                aria-hidden
-                className={cn(
-                  'pointer-events-none absolute -bottom-[45%] -inset-x-[20%] h-[120px] rounded-full opacity-0 transition-opacity duration-[360ms] ease-out group-hover/fc:opacity-100',
-                  card.accent === 'cyan'
-                    ? 'bg-[radial-gradient(closest-side,rgba(124,217,236,.22),transparent)]'
-                    : 'bg-[radial-gradient(closest-side,rgba(139,124,232,.22),transparent)]',
-                )}
-              />
-              <span className="text-micro font-bold uppercase tracking-[0.08em] text-muted/60">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <h3
-                className={cn(
-                  'font-display text-title',
-                  card.accent === 'cyan' ? 'text-cyan' : 'text-purple',
-                )}
-              >
-                {t(`marketing.home.story.cards.${card.key}.title`)}
-              </h3>
-              <FeatureCardVisual cardKey={card.key} />
-              <p className="text-caption text-muted">{t(`marketing.home.story.cards.${card.key}.copy`)}</p>
-              <Link
-                to={card.linkTo}
-                className="focusable inline-flex min-h-[36px] w-fit items-center rounded-full text-caption font-semibold text-muted transition-colors hover:text-cyan"
-              >
-                {t(`marketing.home.story.cards.${card.key}.link`)}
-              </Link>
-            </GlassPanel>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── S4 / S5 — split visual sections ───────────────────────────────────── */
-
-interface SplitBullet {
-  icon: React.ComponentType<{ size?: number | string; className?: string; strokeWidth?: number | string }>;
-  text: string;
-}
-
-function SplitVisual({
-  eyebrow,
-  title,
-  bullets,
-  cta,
-  image,
-  imageAlt,
-  mirrored,
-  overlay,
-}: {
-  eyebrow: string;
-  title: string;
-  bullets: SplitBullet[];
-  cta: ReactNode;
-  image: string;
-  imageAlt: string;
-  mirrored?: boolean;
-  overlay?: ReactNode;
-}) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <section className="relative z-10 py-96">
-      <div
-        className={cn(
-          'mx-auto grid max-w-[1280px] items-center gap-48 px-16 md:px-24 lg:grid-cols-2',
-        )}
-      >
-        <motion.div
-          {...riseIn}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={cn('relative', mirrored ? 'lg:order-2' : '')}
-        >
-          <div className="glass-2 overflow-hidden rounded-2xl shadow-aura-purple">
-            <img
-              src={image}
-              alt={imageAlt}
-              loading="lazy"
-              className={cn('h-auto w-full object-cover', !reduceMotion && 'animate-float-slow')}
-            />
-            {overlay}
+          <div className="mt-32 flex flex-wrap items-center justify-center gap-12">
+            <ButtonPrimary to="/downloads" className="px-28 py-14" data-testid="hero-primary-cta">Get EliteBox 1.0</ButtonPrimary>
+            <ButtonNeon to="/app" className="px-28 py-14" data-testid="hero-secondary-cta">Open the web app</ButtonNeon>
           </div>
-        </motion.div>
-
-        <div className={cn('flex flex-col gap-24', mirrored ? 'lg:order-1' : '')}>
-          <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col gap-16">
-            <Eyebrow>{eyebrow}</Eyebrow>
-            <h2 className="font-display text-display-l text-ink">{title}</h2>
-          </motion.div>
-          <ul className="flex flex-col gap-16">
-            {bullets.map((b, i) => (
-              <motion.li
-                key={b.text}
-                initial={{ opacity: 0, x: 24 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center gap-16"
-              >
-                <span className="glass-1 flex h-40 w-40 shrink-0 items-center justify-center rounded-lg">
-                  <b.icon size={20} strokeWidth={1.75} className="text-cyan" />
-                </span>
-                <span className="text-caption text-ink/90">{b.text}</span>
-              </motion.li>
+          <div data-testid="hero-available-on" className="mt-32 flex flex-wrap items-center justify-center gap-8">
+            {PLATFORMS.map((p) => (
+              <span key={p} className="rounded-full border border-white/10 bg-white/[.035] px-12 py-5 text-xs text-white/70">{p}</span>
             ))}
-          </ul>
-          <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>{cta}</motion.div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function ScrubberBeam() {
+function PosterWalls() {
+  const { items, loading } = usePublicCatalog();
+  const { movies, series } = useMemo(() => splitCatalog(items), [items]);
+  const fallback = SHOWCASE_MOVIES.slice(0, 12);
   return (
-    <div className="pointer-events-none absolute inset-x-24 bottom-24">
-      <div className="relative h-4 overflow-hidden rounded-full bg-white/[.10]">
-        <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-signature opacity-80" />
-        <div className="absolute inset-y-0 w-1/3 animate-beam-slide bg-gradient-to-r from-transparent via-[rgba(124,217,236,.8)] to-transparent" />
-      </div>
-    </div>
+    <section className="mx-auto max-w-6xl space-y-48 px-16 py-80 sm:px-24">
+      {loading && <p className="text-center text-caption text-muted">Loading real catalogs…</p>}
+      <Shelf title="Trending movies" items={movies.length ? movies : fallback} seeAllTo="/app/movies" />
+      <Shelf title="Popular series" items={series.length ? series : fallback} seeAllTo="/app/series" />
+    </section>
   );
 }
 
-/* ── S6 — Platforms + downloads ────────────────────────────────────────── */
-
-const PLATFORM_CHIPS = [
-  { icon: Globe, slug: 'web' },
-  { icon: Monitor, slug: 'windows' },
-  { icon: Smartphone, slug: 'android' },
-  { icon: Tv, slug: 'androidTv' },
-] as const;
-
-function PlatformsAndDownloads() {
-  const { t } = useT();
+function FeatureGrid() {
   return (
-    <section id="downloads" className="relative z-10 flex flex-col gap-48 py-96">
-      <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-16 px-16 text-center md:px-24">
-        <Eyebrow>{t('marketing.home.platforms.eyebrow')}</Eyebrow>
-        <motion.h2
-          {...riseIn}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="font-display text-display-l text-ink max-w-[20ch]"
-        >
-          {t('marketing.home.platforms.title')}
-        </motion.h2>
-        <motion.p
-          {...riseIn}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-[64ch] text-body-l text-muted"
-        >
-          {t('marketing.home.platforms.sub')}
-        </motion.p>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ ...spring.cinematic, duration: 0.7 }}
-        className="mx-auto w-full max-w-5xl px-16"
-      >
-        <img src="/devices-mockup.webp" alt={t('marketing.home.platforms.imageAlt')} loading="lazy" className="w-full rounded-2xl" />
-        {/* reflection */}
-        <div
-          aria-hidden
-          className="pointer-events-none -mt-2 h-96 overflow-hidden opacity-25 [mask-image:linear-gradient(to_bottom,black,transparent)]"
-        >
-          <img src="/devices-mockup.webp" alt="" loading="lazy" className="w-full -scale-y-100 rounded-2xl" />
-        </div>
-      </motion.div>
-
-      {/* platform chips */}
-      <div className="mx-auto flex max-w-[1280px] flex-wrap items-stretch justify-center gap-12 px-16">
-        {PLATFORM_CHIPS.map((chip, i) => (
-          <motion.span
-            key={chip.slug}
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ delay: i * 0.07, ...spring.snappy }}
-            className="glass-1 flex items-center gap-10 rounded-full px-20 py-12 transition-all duration-150 hover:-translate-y-2 hover:shadow-glow-neon"
-          >
-            <chip.icon size={20} strokeWidth={1.75} className="text-cyan" />
-            <span className="flex flex-col">
-              <span className="text-caption font-semibold text-ink">{t(`marketing.home.platforms.chips.${chip.slug}.label`)}</span>
-              {chip.slug !== 'web' && <span className="text-[11px] text-muted">{t(`marketing.home.platforms.chips.${chip.slug}.caption`)}</span>}
-            </span>
-          </motion.span>
-        ))}
-      </div>
-
-      {/* download cards */}
-      <div className="mx-auto grid w-full max-w-[1280px] gap-16 px-16 sm:grid-cols-2 lg:grid-cols-4 md:px-24">
-        {[
-          { icon: Monitor, slug: 'windows' },
-          { icon: Smartphone, slug: 'android' },
-          { icon: Globe, slug: 'web', web: true },
-          { icon: Tv, slug: 'androidTv' },
-        ].map((card, i) => (
-          <motion.div
-            key={card.slug}
-            initial={{ opacity: 0, y: 32 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ delay: i * 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SpotlightCard className="h-full rounded-2xl">
-              <GlassPanel level={2} className="flex h-full flex-col items-start gap-12 p-24">
-                <span className="glass-1 flex h-48 w-48 items-center justify-center rounded-xl">
-                  <card.icon size={24} strokeWidth={1.75} className="text-cyan" />
-                </span>
-                <div>
-                  <h3 className="font-display text-title text-ink">{t(`marketing.platformCards.${card.slug}.name`)}</h3>
-                  <p className="text-caption text-muted">{t(`marketing.platformCards.${card.slug}.detail`)}</p>
-                </div>
-                {card.web ? (
-                  <ButtonPrimary to="/app" className="mt-auto px-16 py-8 text-[12px]">
-                    {t(`marketing.platformCards.${card.slug}.cta`)}
-                  </ButtonPrimary>
-                ) : (
-                  <ButtonNeon to="/downloads" className="mt-auto px-16 py-8 text-[12px]">
-                    <Download size={14} strokeWidth={1.75} /> {t(`marketing.platformCards.${card.slug}.cta`)}
-                  </ButtonNeon>
-                )}
+    <section className="border-t border-white/10">
+      <div className="mx-auto max-w-6xl px-16 py-80 sm:px-24">
+        <SectionTitle eyebrow="Why EliteBox" title="Watch and enjoy — the easy way" subtitle="A calm, cinematic home for everything you watch, with the controls power users love." />
+        <div className="mt-48 grid gap-16 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((f) => {
+            const Icon = f.icon;
+            return (
+              <GlassPanel key={f.title} level={1} className="p-24 transition hover:border-white/20">
+                <Icon className="h-24 w-24 text-cyan" />
+                <h3 className="mt-16 font-display text-title text-ink">{f.title}</h3>
+                <p className="mt-8 text-caption text-muted">{f.body}</p>
               </GlassPanel>
-            </SpotlightCard>
-          </motion.div>
-        ))}
+            );
+          })}
+        </div>
+        <div className="mt-40"><ButtonGhost to="/features">See all features</ButtonGhost></div>
       </div>
     </section>
   );
 }
 
-/* ── S7 — Final CTA ────────────────────────────────────────────────────── */
-
-
-/* ── S6b — FAQ: the questions everyone asks, answered straight ────────── */
-
-const FAQ_IDS = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8'] as const;
-
-function FaqSection() {
-  const { t } = useT();
+function BigScreen() {
+  const { items } = usePublicCatalog();
+  const posters = items.filter((m) => m.poster).slice(0, 8);
   return (
-    <section className="relative z-10 py-96">
-      <div className="mx-auto flex max-w-[880px] flex-col gap-32 px-16 md:px-24">
-        <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col gap-12 text-center">
-          <Eyebrow>{t('marketing.home.faq.eyebrow')}</Eyebrow>
-          <h2 className="font-display text-display-l text-ink">{t('marketing.home.faq.title')}</h2>
-        </motion.div>
-        <div className="flex flex-col gap-12">
-          {FAQ_IDS.map((id, i) => (
-            <motion.details
-              key={id}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ delay: Math.min(i, 6) * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="glass-2 group rounded-xl px-20 py-16 open:border-cyan/30"
-            >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-16 text-caption font-semibold text-ink marker:hidden [&::-webkit-details-marker]:hidden">
-                {t(`marketing.home.faq.${id}.q`)}
-                <ChevronRight size={16} strokeWidth={1.75} className="shrink-0 rotate-90 text-cyan transition-transform group-open:-rotate-90" />
-              </summary>
-              <p className="mt-10 text-caption leading-relaxed text-muted">{t(`marketing.home.faq.${id}.a`)}</p>
-            </motion.details>
+    <section className="border-t border-white/10">
+      <div className="mx-auto grid max-w-6xl items-center gap-40 px-16 py-80 sm:px-24 lg:grid-cols-2">
+        <div>
+          <SectionTitle eyebrow="On the big screen" title="Movie night, made effortless" subtitle="The EliteBox TV experience puts your library one click away on Android TV and living-room devices — lean back and press play." />
+          <div className="mt-32"><ButtonPrimary to="/downloads">All downloads</ButtonPrimary></div>
+        </div>
+        <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#030612]">
+          <div className="absolute inset-0 grid grid-cols-4 gap-8 p-16 opacity-80">
+            {posters.map((m) => (
+              <div key={m.id} className="overflow-hidden rounded-md border border-white/10 bg-white/5">
+                <img src={m.poster} alt={m.name} className="h-full w-full object-cover" loading="lazy" />
+              </div>
+            ))}
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FaqAndFinalCta() {
+  return (
+    <section className="border-t border-white/10">
+      <div className="mx-auto max-w-3xl px-16 py-80 sm:px-24">
+        <SectionTitle center eyebrow="FAQ" title="Good to know" />
+        <div className="mt-40 divide-y divide-white/10" data-testid="home-faq">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group py-18">
+              <summary className="cursor-pointer list-none text-base font-semibold text-ink marker:hidden">{f.q}</summary>
+              <p className="mt-10 text-caption leading-7 text-muted">{f.a}</p>
+            </details>
           ))}
         </div>
+        <GlassPanel level={1} className="mt-48 p-32 text-center">
+          <h3 className="font-display text-2xl font-semibold text-ink">Join the party now</h3>
+          <p className="mt-8 text-caption text-muted">Create your free library and start watching in seconds.</p>
+          <div className="mt-20 flex justify-center"><ButtonPrimary to="/register">Get EliteBox for free</ButtonPrimary></div>
+        </GlassPanel>
       </div>
     </section>
   );
 }
-
-function FinalCta() {
-  const { t } = useT();
-  const ctaRef = useRef<HTMLDivElement>(null);
-  const ctaInView = useInView(ctaRef, { once: true, amount: 0.4 });
-  return (
-    <section className="relative z-10 px-16 py-96">
-      <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mx-auto max-w-3xl"
-      >
-        {/* animated gradient border draw */}
-        <svg aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="cta-border" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#7CD9EC" />
-              <stop offset="55%" stopColor="#8B7CE8" />
-              <stop offset="100%" stopColor="#A99BF0" />
-            </linearGradient>
-          </defs>
-          <motion.rect
-            x="1"
-            y="1"
-            width="calc(100% - 2px)"
-            height="calc(100% - 2px)"
-            rx="24"
-            fill="none"
-            stroke="url(#cta-border)"
-            strokeWidth="1.5"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </svg>
-
-        <GlassPanel level={3} className="flex flex-col items-center gap-24 border-transparent px-24 py-64 text-center">
-          <LogoMark height={48} />
-          <div ref={ctaRef}>
-            <h2 className="font-display text-display-l text-gradient-signature">
-              {ctaInView ? (
-                <ScrambleText text={t('marketing.home.finalCta.title')} caret />
-              ) : (
-                <span className="opacity-0">{t('marketing.home.finalCta.title')}</span>
-              )}
-            </h2>
-          </div>
-          <p className="max-w-[48ch] text-body-l text-muted">
-            {t('marketing.home.finalCta.copy')}
-          </p>
-          <div className="flex flex-col items-center gap-16 sm:flex-row">
-            <ButtonPrimary to="/app" className="px-32 py-16 text-base">
-              {t('marketing.home.finalCta.launch')}
-            </ButtonPrimary>
-            <ButtonNeon to="/app/onboarding" className="px-32 py-16 text-base">
-              {t('marketing.home.finalCta.tour')}
-            </ButtonNeon>
-          </div>
-        </GlassPanel>
-      </motion.div>
-    </section>
-  );
-}
-
-/* ── page assembly ─────────────────────────────────────────────────────── */
 
 export default function Home() {
-  const { t } = useT();
   return (
     <>
       <Hero />
-      <TopContentRail />
-      <FeatureStory />
-      <SplitVisual
-        eyebrow={t('marketing.home.splitLibrary.eyebrow')}
-        title={t('marketing.home.splitLibrary.title')}
-        bullets={[
-          { icon: Shield, text: t('marketing.home.splitLibrary.b1') },
-          { icon: Activity, text: t('marketing.home.splitLibrary.b2') },
-          { icon: SlidersHorizontal, text: t('marketing.home.splitLibrary.b3') },
-          { icon: Code2, text: t('marketing.home.splitLibrary.b4') },
-        ]}
-        cta={<ButtonNeon to="/app/discover">{t('marketing.home.splitLibrary.cta')}</ButtonNeon>}
-        image="/addon-engine-visual.webp"
-        imageAlt={t('marketing.home.splitLibrary.imageAlt')}
-      />
-      <SplitVisual
-        mirrored
-        eyebrow={t('marketing.home.splitPlayer.eyebrow')}
-        title={t('marketing.home.splitPlayer.title')}
-        bullets={[
-          { icon: RefreshCw, text: t('marketing.home.splitPlayer.b1') },
-          { icon: Captions, text: t('marketing.home.splitPlayer.b2') },
-          { icon: Keyboard, text: t('marketing.home.splitPlayer.b3') },
-          { icon: FastForward, text: t('marketing.home.splitPlayer.b4') },
-        ]}
-        cta={<ButtonPrimary to="/app">{t('marketing.home.splitPlayer.cta')}</ButtonPrimary>}
-        image="/player-visual.webp"
-        imageAlt={t('marketing.home.splitPlayer.imageAlt')}
-        overlay={<ScrubberBeam />}
-      />
-      <FaqSection />
-      <PlatformsAndDownloads />
-      <FinalCta />
+      <PosterWalls />
+      <FeatureGrid />
+      <BigScreen />
+      <FaqAndFinalCta />
+      <div className="sr-only">
+        <Link to="/app/tv">TV Focus Mode</Link>
+      </div>
     </>
   );
 }
-
-export { Hero, TopContentRail, FeatureStory };
