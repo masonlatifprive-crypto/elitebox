@@ -1,0 +1,25 @@
+appId: com.elitebox.movies.desktop
+productName: EliteBox
+copyright: Copyright © 2026 EliteBox
+files:
+  - dist/**
+  - electron/**
+directories:
+  output: native-builds/desktop
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: public/favicon-512.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: dmg
+linux:
+  target: AppImage
