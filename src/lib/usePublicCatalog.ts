@@ -4,7 +4,8 @@
  * via the addon engine, interleaved top-movies/top-series.
  *
  * Resilience mirrors the engine's callRemote discipline:
- * - engine-level 5s timeout + circuit breaker on every remote call
+ * - engine-level 7s timeout + circuit breaker on every remote call, plus the
+ *   engine's same-origin proxy fallback for Cinemeta on flaky networks
  * - one retry after a short backoff when no remote titles arrive
  * - sessionStorage SWR cache (10 min): a fresh cache renders instantly while
  *   a background revalidation runs regardless, so engine telemetry always

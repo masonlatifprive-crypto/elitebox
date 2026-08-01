@@ -5,9 +5,12 @@
  *   (no network). External addons speak a Stremio-flavoured HTTP protocol:
  *   GET {base}/manifest, /catalog/{type}/{id}.json, /meta/{type}/{id}.json,
  *   /stream/{type}/{id}.json, /subtitles/{type}/{id}.json
- * - Every remote call: 5s AbortController timeout, timing telemetry, and a
+ * - Every remote call: 7s AbortController timeout, timing telemetry, and a
  *   circuit breaker — 3 consecutive failures open the circuit for 60s, then
  *   one half-open probe decides close/re-open. `recover(id)` force-resets.
+ * - Cinemeta calls additionally get one same-origin proxy fallback
+ *   (`/api/cine.php`, 9s timeout) when the direct fetch fails, so visitors on
+ *   slow/rotating-IP networks still reach the real catalog.
  */
 import type {
   AddonCatalog,
@@ -30,7 +33,9 @@ import {
 } from '@/data/showcase';
 import { SHOWCASE_ADDON, useAddons } from '@/lib/store';
 
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 7000;
+const PROXY_TIMEOUT_MS = 9000;
+const CINEMETA_ADDON_ID = 'com.linvo.cinemeta';
 const CIRCUIT_FAIL_THRESHOLD = 3;
 const CIRCUIT_OPEN_MS = 60_000;
 const DEGRADED_LATENCY_MS = 800;
@@ -202,14 +207,44 @@ function recordFailure(addonId: string): void {
   }
 }
 
-/** Call a remote addon endpoint with timeout + circuit breaker + telemetry. */
+/**
+ * Same-origin Cinemeta proxy URL for a catalog/meta path, or undefined when
+ * the fallback does not apply. Restricted to the Cinemeta addon (the proxy's
+ * whitelist only covers Cinemeta resource shapes) and to real http(s) pages —
+ * skipped entirely under `file://` or non-browser contexts. On a static-only
+ * host (vite dev/preview) the request simply 404s/parse-fails fast and the
+ * caller records the original failure, exactly as before.
+ */
+function cinemetaProxyUrl(addon: AddonInfo, path: string): string | undefined {
+  if (addon.id !== CINEMETA_ADDON_ID) return undefined;
+  if (typeof window === 'undefined' || !window.location.protocol.startsWith('http')) {
+    return undefined;
+  }
+  return `/api/cine.php?p=${encodeURIComponent(path.replace(/^\//, ''))}`;
+}
+
+/**
+ * Call a remote addon endpoint with timeout + circuit breaker + telemetry.
+ * For Cinemeta, one same-origin proxy attempt follows ANY failure of the
+ * direct fetch (timeout, DNS, TLS, HTTP error): the server's network path to
+ * v3-cinemeta is stable even when the visitor's is not. A proxy success is
+ * real user experience, so it records success telemetry and closes a
+ * half-open circuit; when both fail, exactly one failure is recorded.
+ */
 async function callRemote<T>(addon: AddonInfo, path: string): Promise<T> {
   if (!circuitAllows(addon.id)) {
     throw new AddonError(`Circuit open for addon ${addon.id}`, addon.id);
   }
   const started = performance.now();
   try {
-    const data = await fetchJson<T>(`${baseUrl(addon)}${path}`);
+    let data: T;
+    try {
+      data = await fetchJson<T>(`${baseUrl(addon)}${path}`);
+    } catch (directErr) {
+      const proxyUrl = cinemetaProxyUrl(addon, path);
+      if (!proxyUrl) throw directErr;
+      data = await fetchJson<T>(proxyUrl, PROXY_TIMEOUT_MS);
+    }
     recordSuccess(addon.id, performance.now() - started);
     return data;
   } catch (err) {
@@ -334,7 +369,7 @@ class AddonEngine {
   }
 
   /**
-   * Install from a manifest URL. 5s timeout; manifest must contain a valid
+   * Install from a manifest URL. 7s timeout; manifest must contain a valid
    * `id` and `name` or the install is rejected.
    */
   async install(manifestUrl: string): Promise<AddonInfo> {
