@@ -1,0 +1,47 @@
+name: Native Desktop Builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'electron/**'
+      - 'electron-builder.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/native-desktop.yml'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install Electron packaging tools
+        run: npm install electron electron-builder --no-save --no-audit --no-fund
+
+      - name: Build Windows EXE
+        run: npx electron-builder --win --x64 --publish never
+
+      - name: Upload Windows EXE artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: elitebox-windows-exe
+          path: native-builds/desktop/*
+          if-no-files-found: error
