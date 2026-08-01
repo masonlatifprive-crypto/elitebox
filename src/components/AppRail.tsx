@@ -40,6 +40,7 @@ const RAIL_ITEMS = [
   { to: '/app/library', labelKey: 'app.rail.library', icon: LibraryBig },
   { to: '/app/addons', labelKey: 'app.rail.addons', icon: Puzzle },
   { to: '/app/stats', labelKey: 'app.rail.stats', icon: BarChart3 },
+  { to: '/app/tv', labelKey: 'TV Focus', icon: MonitorPlay },
   { to: '/app/settings', labelKey: 'app.rail.settings', icon: Settings },
 ] as const;
 
@@ -48,6 +49,7 @@ const MOBILE_ITEMS = [
   { to: '/app/discover', labelKey: 'app.rail.discover', icon: Compass },
   { to: '/app/search', labelKey: 'app.rail.search', icon: Search },
   { to: '/app/library', labelKey: 'app.rail.library', icon: LibraryBig },
+  { to: '/app/tv', labelKey: 'TV Focus', icon: MonitorPlay },
   { to: '/app/settings', labelKey: 'app.rail.settings', icon: Settings },
 ] as const;
 
@@ -159,7 +161,7 @@ export default function AppRail() {
                     animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -8 }}
                     transition={{ duration: 0.18 }}
                   >
-                    {t(item.labelKey)}
+                    {item.labelKey.includes('.') ? t(item.labelKey) : item.labelKey}
                   </motion.span>
                 </>
               )}
@@ -213,7 +215,7 @@ export default function AppRail() {
                 )}
                 <item.icon size={22} strokeWidth={1.75} />
                 <span className="text-[10px] font-semibold uppercase tracking-[.08em]">
-                  {t(item.labelKey)}
+                  {item.labelKey.includes('.') ? t(item.labelKey) : item.labelKey}
                 </span>
               </>
             )}
