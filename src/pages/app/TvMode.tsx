@@ -44,7 +44,7 @@ export default function TvMode() {
 
   useEffect(() => {
     let alive = true;
-    Promise.resolve(addonEngine.listAddons())
+    Promise.resolve(addonEngine.list())
       .then((list) => { if (alive) setAddons(list); })
       .catch(() => { if (alive) setAddons([]); });
     return () => { alive = false; };
