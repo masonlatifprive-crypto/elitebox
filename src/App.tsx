@@ -109,6 +109,7 @@ function RoutedPages() {
           {/* ── app shell ── */}
           <Route path="/app" element={<AppShell />}>
             <Route index element={<AppHome />} />
+            <Route path="home" element={<Navigate to="/app" replace />} />
             <Route path="discover" element={<Discover />} />
             <Route path="movies" element={<Catalog kind="movie" />} />
             <Route path="series" element={<Catalog kind="series" />} />
