@@ -7,10 +7,10 @@
  *    GET /api/billing/status, POST /api/billing/checkout,
  *    POST /api/billing/paypal/order) with fetch + an 8s AbortController.
  *    Network failures fall back gracefully (demo subscription, honest errors).
- *  • DEMO  — no API URL: `demoMode === true`. Accounts live in localStorage
+ *  • LOCAL  — no API URL: `demoMode === true`. Accounts live in localStorage
  *    with SHA-256 hashed passwords (crypto.subtle), subscribe() creates a
  *    local demo subscription (renewsAt = +30 days), and every surface that
- *    touches billing must label itself "Demo mode — no real charge".
+ *    touches billing must label itself "Billing not connected — no real charge".
  *
  * Other agents import: useAuth, hasAccessFor, type AuthUser, type Subscription.
  */
@@ -67,7 +67,7 @@ interface AuthState {
 const RAW_API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 /** trimmed server base, '' when the build has no backend keys */
 export const API_URL = RAW_API.replace(/\/+$/, '');
-const DEMO = API_URL.length === 0;
+const LOCAL = API_URL.length === 0;
 
 const AUTH_KEY = 'elitebox.v1.auth';
 const ACCOUNTS_KEY = 'elitebox.v1.auth.accounts';
@@ -216,13 +216,13 @@ export const useAuth = create<AuthState>()(
     (set, get) => ({
       user: null,
       subscription: null,
-      demoMode: DEMO,
+      demoMode: LOCAL,
 
       async login(email, password) {
         const mail = normalizeEmail(email);
         if (!mail || !password) return { ok: false, error: 'invalid' };
 
-        if (!DEMO) {
+        if (!LOCAL) {
           try {
             const res = await apiFetch<{ user: AuthUser; token?: string }>('/api/auth/login', {
               method: 'POST',
@@ -266,7 +266,7 @@ export const useAuth = create<AuthState>()(
           return { ok: false, error: 'invalid' };
         }
 
-        if (!DEMO) {
+        if (!LOCAL) {
           try {
             const res = await apiFetch<{ user: AuthUser; token?: string }>('/api/auth/register', {
               method: 'POST',
@@ -325,7 +325,7 @@ export const useAuth = create<AuthState>()(
         const user = get().user;
         if (!user) return { ok: false };
 
-        if (!DEMO) {
+        if (!LOCAL) {
           try {
             const path = method === 'paypal' ? '/api/billing/paypal/order' : '/api/billing/checkout';
             const res = await apiFetch<{ url?: string; subscription?: Subscription }>(path, {
@@ -373,7 +373,7 @@ export const useAuth = create<AuthState>()(
           );
           saveAccounts(accounts);
         }
-        if (!DEMO) {
+        if (!LOCAL) {
           /* best-effort server sync; local state already reflects the cancel */
           void apiFetch('/api/billing/cancel', { method: 'POST', body: '{}' }).catch(() => undefined);
         }
@@ -385,7 +385,7 @@ export const useAuth = create<AuthState>()(
 
       async refreshSubscription() {
         const sub = get().subscription;
-        if (!DEMO) {
+        if (!LOCAL) {
           if (!get().user) return;
           try {
             const res = await apiFetch<{ subscription: Subscription | null }>('/api/billing/status');
