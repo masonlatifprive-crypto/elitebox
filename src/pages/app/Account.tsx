@@ -306,7 +306,7 @@ export default function Account() {
                     title={t('app.account.demoTitle')}
                   >
                     <span className="h-8 w-8 rounded-full bg-warn" />
-                    <span className="text-caption font-semibold text-warn">DEMO</span>
+                    <span className="text-caption font-semibold text-warn">LOCAL</span>
                   </span>
                 )}
               </div>
