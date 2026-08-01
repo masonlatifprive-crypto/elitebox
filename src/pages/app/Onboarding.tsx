@@ -30,6 +30,7 @@ import { switchProfile, useAddons, useProfiles, useSettings } from '@/lib/store'
 import { LogoMark } from '@/components/Logo';
 import MovieWall from '@/components/MovieWall';
 import { ButtonGhost, GlassPanel, spring, toast } from '@/components/ui-elite';
+import { usePublicCatalog } from '@/lib/usePublicCatalog';
 import { useT } from '@/i18n';
 
 /* ── shared profile helpers (also used by Profiles.tsx) ────────────────── */
@@ -517,6 +518,8 @@ export default function Onboarding() {
   const { t } = useT();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
+  /* Real catalog art for the wall; showcase art only while loading/failed. */
+  const { items: wallItems } = usePublicCatalog();
   const profiles = useProfiles((s) => s.profiles);
   const onboarded = useSettings((s) => s.onboarded);
   const installedAddons = useAddons((s) => s.installed);
@@ -618,7 +621,7 @@ export default function Onboarding() {
                     !reduceMotion && 'animate-float-slow',
                   )}
                 >
-                  <MovieWall />
+                  <MovieWall items={wallItems.length ? wallItems : undefined} />
                 </div>
               </motion.div>
 

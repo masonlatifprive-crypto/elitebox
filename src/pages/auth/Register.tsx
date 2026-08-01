@@ -13,6 +13,7 @@ import { LogoMark } from '@/components/Logo';
 import MovieWall from '@/components/MovieWall';
 import { spring, toast } from '@/components/ui-elite';
 import { useAuth } from '@/lib/auth';
+import { usePublicCatalog } from '@/lib/usePublicCatalog';
 import { cn } from '@/lib/utils';
 import { useT } from '@/i18n';
 
@@ -81,6 +82,8 @@ export default function Register() {
   const register = useAuth((s) => s.register);
   const demoMode = useAuth((s) => s.demoMode);
   const reduce = useReducedMotion();
+  /* Real catalog art for the wall; showcase art only while loading/failed. */
+  const { items: wallItems } = usePublicCatalog();
 
   const next = params.get('next');
   const [name, setName] = useState('');
@@ -199,7 +202,7 @@ export default function Register() {
 
   return (
     <div className="relative grid min-h-[100dvh] place-items-center overflow-hidden px-16 py-96">
-      <MovieWall />
+      <MovieWall items={wallItems.length ? wallItems : undefined} />
       <div className="absolute inset-0 bg-deep/40" aria-hidden />
       <motion.div
         className="glass-3 w-full max-w-[460px] rounded-2xl p-28 md:p-40 max-h-[calc(100dvh-64px)] overflow-y-auto overscroll-contain"

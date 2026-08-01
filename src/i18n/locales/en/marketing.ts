@@ -20,6 +20,7 @@ export default {
     rail: {
       eyebrow: 'Now streaming',
       title: 'Now in the catalog',
+      fallbackTitle: 'Open cinema — free & legal',
       openCatalog: 'Open the full catalog',
     },
     story: {
@@ -44,8 +45,8 @@ export default {
         },
       },
       visual: {
-        nextAddon: 'Your next addon',
-        autoRecovering: 'Auto-recovering',
+        measuring: 'Measuring…',
+        liveNote: 'Live measurement from this visit',
         subtitlesEn: 'Subtitles: EN',
         resume: 'Resume 42:17',
         timeout: 'Source 1 timed out after 5s',

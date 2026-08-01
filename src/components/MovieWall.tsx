@@ -1,13 +1,15 @@
 /**
  * MovieWall — the living hero backdrop: three seamless marquee rows of real
- * catalog artwork (the actual movies & series in the demo catalog) drifting
- * at different speeds under a lunar veil. Replaces generic stock imagery —
- * the product presents its own content, the way Netflix/Disney+ heroes do.
+ * catalog artwork drifting at different speeds under a lunar veil. When live
+ * catalog items are passed in (auth pages, onboarding), the wall shows the
+ * actual titles in the public catalog; otherwise it falls back to the
+ * bundled open-movie art (decorative only — never presented as a catalog).
  *
  * Performance: pure CSS transforms on composited layers, no JS animation.
  * Accessibility: purely decorative (aria-hidden), frozen under reduced motion.
  */
 import { useReducedMotion } from 'framer-motion';
+import type { MetaItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const TITLES = [
@@ -25,28 +27,44 @@ const TITLES = [
   'caminandes-3',
 ];
 
+interface WallTile {
+  key: string;
+  src: string;
+}
+
 /** three rows, rotated so no two adjacent rows share an order */
-const ROWS: string[][] = [
-  TITLES,
-  [...TITLES.slice(4), ...TITLES.slice(0, 4)],
-  [...TITLES.slice(8), ...TITLES.slice(0, 8)],
-];
+function rotateRows<T>(base: T[]): T[][] {
+  return [base, [...base.slice(4), ...base.slice(0, 4)], [...base.slice(8), ...base.slice(0, 8)]];
+}
+
+const SHOWCASE_ROWS: WallTile[][] = rotateRows(
+  TITLES.map((t) => ({ key: t, src: `/art/backdrop-${t}.jpg` })),
+);
+
+/** Rows from real catalog items — backdrop art preferred, poster as backup. */
+function rowsFromItems(items: MetaItem[]): WallTile[][] | undefined {
+  const tiles = items
+    .filter((m) => m.backdrop || m.poster)
+    .slice(0, 12)
+    .map((m) => ({ key: m.id, src: (m.backdrop ?? m.poster) as string }));
+  return tiles.length >= 6 ? rotateRows(tiles) : undefined;
+}
 
 const ROW_DURATION = ['110s', '140s', '95s'];
 
-function WallRow({ titles, duration, reverse }: { titles: string[]; duration: string; reverse?: boolean }) {
+function WallRow({ tiles, duration, reverse }: { tiles: WallTile[]; duration: string; reverse?: boolean }) {
   /* content duplicated once — translateX(-50%) loops seamlessly */
-  const loop = [...titles, ...titles];
+  const loop = [...tiles, ...tiles];
   return (
     <div className="flex overflow-hidden">
       <div
         className={cn('flex w-max gap-14 pr-14', reverse ? 'moviewall-drift-r' : 'moviewall-drift')}
         style={{ animationDuration: duration }}
       >
-        {loop.map((t, i) => (
+        {loop.map((tile, i) => (
           <img
-            key={`${t}-${i}`}
-            src={`/art/backdrop-${t}.jpg`}
+            key={`${tile.key}-${i}`}
+            src={tile.src}
             alt=""
             loading={i < 4 ? 'eager' : 'lazy'}
             decoding="async"
@@ -59,8 +77,9 @@ function WallRow({ titles, duration, reverse }: { titles: string[]; duration: st
   );
 }
 
-export default function MovieWall({ className }: { className?: string }) {
+export default function MovieWall({ className, items }: { className?: string; items?: MetaItem[] }) {
   const reduceMotion = useReducedMotion();
+  const rows = (items && rowsFromItems(items)) ?? SHOWCASE_ROWS;
   return (
     <div className={cn('absolute inset-0 overflow-hidden', className)} aria-hidden>
       {/* the wall itself, slightly rotated for depth */}
@@ -68,13 +87,13 @@ export default function MovieWall({ className }: { className?: string }) {
         className="absolute -inset-x-[8%] -top-[12%] -bottom-[12%] flex flex-col justify-center gap-14"
         style={{ transform: 'rotate(-4deg) scale(1.12)' }}
       >
-        {ROWS.map((row, r) =>
+        {rows.map((row, r) =>
           reduceMotion ? (
             <div key={r} className="flex justify-center gap-14">
-              {row.slice(0, 8).map((t) => (
+              {row.slice(0, 8).map((tile) => (
                 <img
-                  key={t}
-                  src={`/art/backdrop-${t}.jpg`}
+                  key={tile.key}
+                  src={tile.src}
                   alt=""
                   loading="lazy"
                   decoding="async"
@@ -84,7 +103,7 @@ export default function MovieWall({ className }: { className?: string }) {
               ))}
             </div>
           ) : (
-            <WallRow key={r} titles={row} duration={ROW_DURATION[r]} reverse={r === 1} />
+            <WallRow key={r} tiles={row} duration={ROW_DURATION[r]} reverse={r === 1} />
           ),
         )}
       </div>

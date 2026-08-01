@@ -24,6 +24,7 @@ export default {
     rail: {
       eyebrow: 'Nu te zien',
       title: 'Nu in de catalogus',
+      fallbackTitle: 'Vrije cinema — gratis & legaal',
       openCatalog: 'Open de volledige catalogus',
     },
     story: {
@@ -48,8 +49,8 @@ export default {
         },
       },
       visual: {
-        nextAddon: 'Je volgende addon',
-        autoRecovering: 'Herstelt automatisch',
+        measuring: 'Meten…',
+        liveNote: 'Live-meting van dit bezoek',
         subtitlesEn: 'Ondertitels: EN',
         resume: 'Hervat 42:17',
         timeout: 'Bron 1 reageerde niet na 5s',

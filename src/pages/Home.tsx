@@ -46,6 +46,8 @@ import {
   Eyebrow,
 } from '@/components/ui-elite';
 import { SHOWCASE_CHANNELS, SHOWCASE_MOVIES } from '@/data/showcase';
+import { addonEngine } from '@/lib/addons/engine';
+import { usePublicCatalog } from '@/lib/usePublicCatalog';
 import { cn } from '@/lib/utils';
 import { useT } from '@/i18n';
 
@@ -192,22 +194,44 @@ function Hero() {
 
 /* ── S2 — Top Content Rail ─────────────────────────────────────────────── */
 
+/** Poster-aspect skeletons while the live catalog loads (shimmer, 1.4s). */
+function RailSkeleton() {
+  return (
+    <div className="no-scrollbar flex gap-16 overflow-hidden px-24 py-8" aria-hidden>
+      {Array.from({ length: 9 }, (_, i) => (
+        <div
+          key={i}
+          className="glass-1 relative aspect-[2/3] w-128 shrink-0 overflow-hidden rounded-lg md:w-160 xl:w-[200px]"
+        >
+          <div className="absolute inset-0 animate-beam-slide bg-gradient-to-r from-transparent via-white/[.07] to-transparent [animation-duration:1.4s] [animation-timing-function:ease-in-out]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function TopContentRail() {
   const { t } = useT();
-  // 12 showcase posters (HD) + the two LIVE channels riding the same rail.
-  const items = [...SHOWCASE_MOVIES, ...SHOWCASE_CHANNELS.filter((c) => c.id !== 'launchpad')];
+  const { items, loading, failed } = usePublicCatalog();
+  /* Honest fallback: only when the live catalog is unreachable do the open
+     movies appear — under a label that says exactly what they are, so the
+     showcase never masquerades as the main catalog. */
+  const fallbackItems = [...SHOWCASE_MOVIES, ...SHOWCASE_CHANNELS.filter((c) => c.id !== 'launchpad')];
+  const showFallback = !loading && (failed || items.length === 0);
   return (
     <section id="top-content" className="relative z-10 flex flex-col gap-8 py-96">
       <motion.div {...riseIn} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mx-auto w-full max-w-[1280px] px-16 md:px-24">
         <Eyebrow>{t('marketing.home.rail.eyebrow')}</Eyebrow>
         <div className="mt-8 flex flex-wrap items-baseline justify-between gap-16">
-          <h2 className="font-display text-display-l text-ink">{t('marketing.home.rail.title')}</h2>
+          <h2 className="font-display text-display-l text-ink">
+            {showFallback ? t('marketing.home.rail.fallbackTitle') : t('marketing.home.rail.title')}
+          </h2>
           <ButtonGhost to="/app/discover">
             {t('marketing.home.rail.openCatalog')} <ChevronRight size={16} strokeWidth={1.75} />
           </ButtonGhost>
         </div>
       </motion.div>
-      <Shelf items={items} autoScroll />
+      {loading ? <RailSkeleton /> : <Shelf items={showFallback ? fallbackItems : items} autoScroll />}
     </section>
   );
 }
@@ -220,34 +244,49 @@ const FEATURE_CARDS = [
   { key: 'recovery', accent: 'cyan' as const, linkTo: '/app/settings' },
 ];
 
+/**
+ * Live addon telemetry, straight from the engine's runtime map. The shared
+ * public-catalog fetch doubles as this visit's measurement; until an addon
+ * has recorded a real call it shows an honest "measuring…" — never a number.
+ */
+function HealthCardVisual() {
+  const { t } = useT();
+  const { loading } = usePublicCatalog();
+  const rows = addonEngine.engineHealth().slice(0, 3);
+  return (
+    <div className="flex flex-col gap-10">
+      {rows.map((row) => (
+        <div key={row.id} className="flex items-center justify-between gap-16">
+          <span className="text-caption text-ink">{row.name}</span>
+          <span className="flex items-center gap-8">
+            {row.measured ? (
+              <>
+                <HealthDot status={row.status} />
+                <span className="w-[52px] text-right font-mono text-[11px] text-muted">
+                  {row.latencyMs !== undefined ? `${row.latencyMs}ms` : '—'}
+                </span>
+              </>
+            ) : (
+              <span className="animate-pulse font-mono text-[11px] text-muted">
+                {t('marketing.home.story.visual.measuring')}
+              </span>
+            )}
+          </span>
+        </div>
+      ))}
+      <span className="mt-4 text-micro uppercase text-muted/60">
+        {loading
+          ? t('marketing.home.story.visual.measuring')
+          : t('marketing.home.story.visual.liveNote')}
+      </span>
+    </div>
+  );
+}
+
 function FeatureCardVisual({ cardKey }: { cardKey: string }) {
   const { t } = useT();
   if (cardKey === 'health') {
-    return (
-      <div className="flex flex-col gap-10">
-        {[
-          { name: 'Elitebox Showcase', ms: 128, status: 'ok' as const },
-          { name: 'Cinemeta', ms: 214, status: 'ok' as const },
-          { name: t('marketing.home.story.visual.nextAddon'), ms: 912, status: 'degraded' as const },
-        ].map((row) => (
-          <div key={row.name} className="flex items-center justify-between gap-16">
-            <span className="text-caption text-ink">{row.name}</span>
-            <span className="flex items-center gap-8">
-              <HealthDot status={row.status} />
-              <span
-                className="font-mono text-[11px] text-muted w-[52px] text-right"
-                data-count-up={row.ms}
-              >
-                0ms
-              </span>
-            </span>
-          </div>
-        ))}
-        <span className="glass-1 mt-4 w-fit rounded-full px-12 py-4 text-micro uppercase text-warn">
-          {t('marketing.home.story.visual.autoRecovering')}
-        </span>
-      </div>
-    );
+    return <HealthCardVisual />;
   }
   if (cardKey === 'memory') {
     return (
@@ -326,24 +365,6 @@ function FeatureStory() {
         ).to(card, { scale: 1, duration: 0.1 }, positions[i] + 0.18);
         // dim previous cards slightly as the next activates
         if (i > 0) tl.to(cards[i - 1], { opacity: 0.85, duration: 0.1 }, positions[i]);
-      });
-
-      // health latency count-ups, fired at each card's activation point
-      const counters = section.querySelectorAll<HTMLElement>('[data-count-up]');
-      counters.forEach((el) => {
-        const target = Number(el.dataset.countUp ?? '0');
-        const state = { v: 0 };
-        tl.to(
-          state,
-          {
-            v: target,
-            duration: 0.12,
-            onUpdate: () => {
-              el.textContent = `${Math.round(state.v)}ms`;
-            },
-          },
-          positions[0],
-        );
       });
 
       tl.to({}, { duration: 0.15 }); // hold before unpin

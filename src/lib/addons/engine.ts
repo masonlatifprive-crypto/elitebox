@@ -15,9 +15,11 @@ import type {
   AddonInfo,
   AddonLegal,
   AddonPrivacy,
+  AddonStatus,
   CircuitState,
   MetaItem,
   MetaType,
+  MetaVideo,
   StreamSource,
 } from '@/lib/types';
 import {
@@ -118,6 +120,20 @@ interface AddonRuntime {
 
 const runtime = new Map<string, AddonRuntime>();
 
+/** One row of live engine telemetry (session-scoped, never persisted). */
+export interface EngineHealthRow {
+  id: string;
+  name: string;
+  builtin: boolean;
+  /** false until ≥1 real remote call has been recorded this session. */
+  measured: boolean;
+  latencyMs?: number;
+  status: AddonStatus;
+  circuit: CircuitState;
+  successes: number;
+  fails: number;
+}
+
 function rt(addonId: string): AddonRuntime {
   let r = runtime.get(addonId);
   if (!r) {
@@ -200,6 +216,107 @@ async function callRemote<T>(addon: AddonInfo, path: string): Promise<T> {
     recordFailure(addon.id);
     throw err instanceof AddonError ? err : new AddonError(String(err), addon.id);
   }
+}
+
+/* ── remote meta normalization ───────────────────────────────────────────
+   Stremio-shaped payloads arrive with their own field names (`background`,
+   `imdbRating`, `genre`, string years/runtimes, ISO `released`). They are
+   normalized into the MetaItem contract once, at the engine boundary. An
+   `upcoming` flag is derived ONLY from a confirmed future `released` date —
+   anything without a real future date is never flagged. */
+
+function asStringArray(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((e): e is string => typeof e === 'string') : [];
+}
+
+function parseYear(v: unknown): number | undefined {
+  if (typeof v === 'number' && v > 1870 && v < 3000) return Math.round(v);
+  if (typeof v === 'string') {
+    const m = v.match(/\b(19|20)\d{2}\b/);
+    if (m) return Number(m[0]);
+  }
+  return undefined;
+}
+
+function parseRating(v: unknown): number | undefined {
+  const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v) : NaN;
+  return Number.isFinite(n) && n >= 0 && n <= 10 ? n : undefined;
+}
+
+function parseRuntimeMinutes(v: unknown): number | undefined {
+  if (typeof v === 'number' && v > 0) return Math.round(v);
+  if (typeof v !== 'string') return undefined;
+  const h = v.match(/(\d+)\s*h/i);
+  const m = v.match(/(\d+)\s*min/i);
+  if (h || m) return (h ? Number(h[1]) * 60 : 0) + (m ? Number(m[1]) : 0);
+  const bare = v.match(/\d+/);
+  return bare ? Number(bare[0]) : undefined;
+}
+
+function normalizeVideos(v: unknown): MetaVideo[] | undefined {
+  if (!Array.isArray(v) || v.length === 0) return undefined;
+  const out: MetaVideo[] = [];
+  for (const e of v) {
+    if (!e || typeof e !== 'object') continue;
+    const raw = e as Record<string, unknown>;
+    if (typeof raw.id !== 'string' || !raw.id) continue;
+    out.push({
+      id: raw.id,
+      title:
+        (typeof raw.title === 'string' && raw.title) ||
+        (typeof raw.name === 'string' && raw.name) ||
+        raw.id,
+      season: typeof raw.season === 'number' ? raw.season : undefined,
+      episode: typeof raw.episode === 'number' ? raw.episode : undefined,
+      released: typeof raw.released === 'string' ? raw.released : undefined,
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+/**
+ * Normalize one remote catalog/meta entry into a MetaItem. Returns undefined
+ * for entries without the minimum honest contract (id, name, poster).
+ */
+function normalizeRemoteMeta(raw: unknown, fallbackType: MetaType): MetaItem | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const m = raw as Record<string, unknown>;
+  if (typeof m.id !== 'string' || !m.id) return undefined;
+  if (typeof m.name !== 'string' || !m.name) return undefined;
+  if (typeof m.poster !== 'string' || !m.poster) return undefined;
+  const type: MetaType = m.type === 'series' || m.type === 'channel' ? m.type : fallbackType;
+  const released =
+    typeof m.released === 'string' && !Number.isNaN(Date.parse(m.released))
+      ? new Date(m.released)
+      : undefined;
+  const item: MetaItem = {
+    id: m.id,
+    type,
+    name: m.name,
+    poster: m.poster,
+    backdrop:
+      (typeof m.backdrop === 'string' && m.backdrop) ||
+      (typeof m.background === 'string' && m.background) ||
+      undefined,
+    year: parseYear(m.year) ?? parseYear(m.releaseInfo) ?? released?.getUTCFullYear(),
+    genres: asStringArray(m.genres).length ? asStringArray(m.genres) : asStringArray(m.genre),
+    rating: parseRating(m.imdbRating) ?? parseRating(m.rating),
+    description: typeof m.description === 'string' ? m.description : '',
+    runtime: parseRuntimeMinutes(m.runtime),
+    videos: normalizeVideos(m.videos),
+  };
+  /* Upcoming = confirmed future release only. The label uses the viewer's
+     own locale (engine stays locale-agnostic). */
+  if (released && released.getTime() > Date.now()) {
+    item.upcoming = true;
+    item.releaseDate = released.toISOString();
+    item.releaseLabel = released.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+  return item;
 }
 
 /* ── showcase (builtin, local) ─────────────────────────────────────────── */
@@ -325,8 +442,12 @@ class AddonEngine {
           const path = declared
             ? `/catalog/${declared.type}/${declared.id}.json`
             : `/catalog/${want}/top.json`;
-          const data = await callRemote<{ metas?: MetaItem[] }>(addon, path);
-          push(data.metas ?? []);
+          const data = await callRemote<{ metas?: unknown[] }>(addon, path);
+          push(
+            (data.metas ?? [])
+              .map((m) => normalizeRemoteMeta(m, want as MetaType))
+              .filter((m): m is MetaItem => Boolean(m)),
+          );
         } catch {
           /* failing addons simply contribute nothing */
         }
@@ -345,8 +466,9 @@ class AddonEngine {
         continue;
       }
       try {
-        const data = await callRemote<{ meta?: MetaItem }>(addon, `/meta/${type}/${id}.json`);
-        if (data.meta) return data.meta;
+        const data = await callRemote<{ meta?: unknown }>(addon, `/meta/${type}/${id}.json`);
+        const meta = normalizeRemoteMeta(data.meta, type);
+        if (meta) return meta;
       } catch {
         /* try next addon */
       }
@@ -420,11 +542,15 @@ class AddonEngine {
         await Promise.all(
           targets.map(async (c) => {
             try {
-              const data = await callRemote<{ metas?: MetaItem[] }>(
+              const data = await callRemote<{ metas?: unknown[] }>(
                 addon,
                 `/catalog/${c.type}/${c.id}/search=${encoded}.json`,
               );
-              push(data.metas ?? []);
+              push(
+                (data.metas ?? [])
+                  .map((m) => normalizeRemoteMeta(m, c.type as MetaType))
+                  .filter((m): m is MetaItem => Boolean(m)),
+              );
             } catch {
               /* addon catalog without search simply contributes nothing */
             }
@@ -481,6 +607,44 @@ class AddonEngine {
     const out: Record<string, AddonHealth> = {};
     for (const addon of this.list()) out[addon.id] = this.health(addon.id);
     return out;
+  }
+
+  /**
+   * Live runtime telemetry for every installed addon, straight from the
+   * recordSuccess/recordFailure map. `measured` is false until at least one
+   * real remote call has been recorded this session — consumers must render
+   * an honest "measuring" state instead of a number. The builtin addon is
+   * local and always measured at 0ms.
+   */
+  engineHealth(): EngineHealthRow[] {
+    return this.list().map((addon) => {
+      if (addon.builtin) {
+        return {
+          id: addon.id,
+          name: addon.name,
+          builtin: true,
+          measured: true,
+          latencyMs: 0,
+          status: 'ok',
+          circuit: 'closed',
+          successes: 0,
+          fails: 0,
+        };
+      }
+      const r = rt(addon.id);
+      const h = this.health(addon.id);
+      return {
+        id: addon.id,
+        name: addon.name,
+        builtin: false,
+        measured: r.successes + r.fails > 0,
+        latencyMs: r.latencyMs,
+        status: h.status,
+        circuit: r.circuit,
+        successes: r.successes,
+        fails: r.fails,
+      };
+    });
   }
 
   /**
