@@ -75,9 +75,7 @@ function Hero() {
         className="absolute inset-0 z-[1] bg-[radial-gradient(120%_90%_at_50%_42%,transparent_38%,rgba(3,6,18,.55)_72%,#030612_100%)]"
       />
 
-      {/* z2 — moonlit starfield + a whisper of nebula */}
-      <div className="starfield z-[2] opacity-60" aria-hidden />
-      <div className="nebula-wash absolute inset-0 z-[2] opacity-50" aria-hidden />
+      {/* z2 — DadGPT-calm: no starfield/nebula, only the subtle canvas wave */}
 
       {/* z3 — content */}
       <div className="relative z-[3] flex flex-col items-center gap-24 px-16 text-center">
@@ -92,7 +90,7 @@ function Hero() {
               motion (handled in index.css). */}
           <motion.div
             aria-hidden
-            className="relative mb-24 mt-8 flex h-[150px] items-start justify-center md:h-[190px]"
+            className="relative mb-18 mt-4 flex h-[136px] items-start justify-center md:h-[172px]"
             initial={{ opacity: 0, scale: 0.82, filter: 'blur(6px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             transition={{ delay: 0.55, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -101,7 +99,7 @@ function Hero() {
               aria-hidden
               className="absolute left-1/2 top-1/2 -z-0 h-[300px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(3,6,18,.94),rgba(3,6,18,.62)_58%,transparent)] backdrop-blur-[3px]"
             />
-            <LivingTree className="relative origin-top scale-[.82] [filter:drop-shadow(0_0_26px_rgba(124,217,236,.62))] sm:scale-100 md:scale-[1.18]" />
+            <LivingTree className="relative origin-top scale-[.78] [filter:drop-shadow(0_0_14px_rgba(255,255,255,.22))] sm:scale-95 md:scale-[1.05]" />
           </motion.div>
 
           <Eyebrow className="mb-16">
