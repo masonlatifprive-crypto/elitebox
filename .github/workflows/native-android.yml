@@ -1,0 +1,85 @@
+name: Native Android Builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/native-android.yml'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install Capacitor tooling
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android --no-save --no-audit --no-fund
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Android mobile debug APK
+        run: cd android && ./gradlew assembleDebug --stacktrace
+
+      - name: Upload Android mobile APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: elitebox-android-mobile-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Apply Android TV manifest metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          if 'android.software.leanback' not in text:
+              text = text.replace('<manifest ', '<manifest ')
+              text = text.replace('<application ', '<uses-feature android:name="android.software.leanback" android:required="false" />\n    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />\n    <application ')
+          if 'android:banner' not in text:
+              text = text.replace('<application ', '<application android:banner="@mipmap/ic_launcher" ')
+          manifest.write_text(text)
+          PY
+
+      - name: Build Android TV debug APK
+        run: cd android && ./gradlew assembleDebug --stacktrace
+
+      - name: Upload Android TV APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: elitebox-android-tv-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
