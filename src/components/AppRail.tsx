@@ -85,7 +85,7 @@ export default function AppRail() {
     <>
       {/* ── desktop / TV left rail ── */}
       <motion.aside
-        className="glass-2 fixed left-0 top-0 z-40 hidden md:flex h-[100dvh] flex-col border-y-0 border-l-0"
+        className="glass-2 fixed left-0 top-0 z-40 hidden lg:flex h-[100dvh] flex-col border-y-0 border-l-0"
         initial={false}
         animate={{ width: expanded ? 224 : 72 }}
         transition={spring.smooth}
@@ -189,7 +189,7 @@ export default function AppRail() {
 
       {/* ── mobile bottom nav ── */}
       <nav
-        className="glass-solid fixed inset-x-0 bottom-0 z-40 flex md:hidden items-stretch justify-around border-x-0 border-b-0"
+        className="glass-solid fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 lg:hidden items-stretch border-x-0 border-b-0 overflow-x-hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label={t('app.rail.appNav')}
       >
@@ -200,7 +200,7 @@ export default function AppRail() {
             end={'end' in item && item.end}
             className={({ isActive }) =>
               cn(
-                'relative flex flex-1 flex-col items-center gap-4 py-12',
+                'relative flex min-w-0 flex-col items-center gap-3 px-1 py-10',
                 isActive ? 'text-cyan' : 'text-muted',
               )
             }
@@ -215,7 +215,7 @@ export default function AppRail() {
                   />
                 )}
                 <item.icon size={22} strokeWidth={1.75} />
-                <span className="text-[10px] font-semibold uppercase tracking-[.08em]">
+                <span className="max-w-full truncate text-[9px] font-semibold uppercase tracking-[.04em]">
                   {item.labelKey.includes('.') ? t(item.labelKey) : item.labelKey}
                 </span>
               </>
