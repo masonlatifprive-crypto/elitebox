@@ -703,3 +703,10 @@ html, body { position: relative; width: 100%; max-width: 100vw; overflow-x: hidd
   .fixed.bottom-0.grid { max-width: 100vw !important; }
   .no-scrollbar, .shelf-fade-x { max-width: 100vw !important; }
 }
+
+
+/* DadGPT-calibrated hero and final responsive polish */
+.hero-title { letter-spacing: -0.025em !important; line-height: 1 !important; }
+@media (max-width: 767px) {
+  .hero-title { font-size: clamp(2.35rem, 12vw, 3rem) !important; letter-spacing: -0.022em !important; }
+}
