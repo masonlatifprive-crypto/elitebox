@@ -67,7 +67,7 @@ export default function MarketingNav() {
       <header className="fixed inset-x-0 top-0 z-50 px-16">
         <nav
           className={cn(
-            'mx-auto mt-16 flex max-w-[1180px] items-center justify-between gap-10 overflow-hidden rounded-full border transition-all duration-300',
+            'mx-auto mt-16 flex max-w-[1180px] items-center justify-between gap-8 overflow-hidden rounded-full border transition-all duration-300',
             scrolled
               ? 'glass-solid py-8 pl-14 pr-8 shadow-panel'
               : 'glass-3 py-10 pl-16 pr-10 border-white/10',
@@ -89,7 +89,7 @@ export default function MarketingNav() {
           </Link>
 
           {/* center links (desktop) */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
             {LINKS.map((l) => (
               <NavLink
                 key={l.to}
@@ -119,7 +119,7 @@ export default function MarketingNav() {
           </div>
 
           {/* right actions */}
-          <div className="flex min-w-0 items-center gap-6">
+          <div className="flex min-w-0 items-center gap-4">
             <button
               type="button"
               aria-label={t('common.nav.openCommandPalette')}
@@ -135,12 +135,12 @@ export default function MarketingNav() {
             <Link
               to="/app/profiles"
               aria-label={t('common.nav.profiles')}
-              className="focusable hidden lg:flex rounded-full p-8 text-muted hover:text-ink hover:bg-white/[.06] transition-colors"
+              className="focusable hidden xl:flex rounded-full p-8 text-muted hover:text-ink hover:bg-white/[.06] transition-colors"
             >
               <User size={20} strokeWidth={1.75} />
             </Link>
-            <LanguageSwitch className="hidden lg:flex" />
-            <ButtonPrimary to="/app" className="hidden lg:inline-flex px-16 py-8 text-[12px] xl:px-20 xl:text-caption">
+            <LanguageSwitch className="hidden xl:flex" />
+            <ButtonPrimary to="/app" className="hidden xl:inline-flex px-16 py-8 text-[12px] xl:px-20 xl:text-caption">
               {t('common.nav.openApp')}
             </ButtonPrimary>
             <button
@@ -148,7 +148,7 @@ export default function MarketingNav() {
               aria-label={menuOpen ? t('common.nav.closeMenu') : t('common.nav.openMenu')}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
-              className="focusable lg:hidden rounded-full p-8 text-ink hover:bg-white/[.06] cursor-pointer"
+              className="focusable xl:hidden rounded-full p-8 text-ink hover:bg-white/[.06] cursor-pointer"
             >
               {menuOpen ? <X size={22} strokeWidth={1.75} /> : <Menu size={22} strokeWidth={1.75} />}
             </button>
