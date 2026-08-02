@@ -32,12 +32,12 @@ function drawBranch(
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(0.7, depth * 0.42);
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = 'rgba(124,217,236,.24)';
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = 'rgba(220,230,248,.16)';
   const grad = ctx.createLinearGradient(x, y, x2, y2);
   grad.addColorStop(0, `rgba(255,255,255,${0.26 * alpha})`);
-  grad.addColorStop(0.62, `rgba(238,244,250,${0.82 * alpha})`);
-  grad.addColorStop(1, `rgba(124,217,236,${0.54 * alpha})`);
+  grad.addColorStop(0.62, `rgba(238,244,250,${0.76 * alpha})`);
+  grad.addColorStop(1, `rgba(124,217,236,${0.28 * alpha})`);
   ctx.strokeStyle = grad;
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -47,7 +47,7 @@ function drawBranch(
   if (depth <= 2) {
     ctx.fillStyle = 'rgba(255,255,255,.78)';
     ctx.shadowBlur = 14;
-    ctx.shadowColor = 'rgba(124,217,236,.28)';
+    ctx.shadowColor = 'rgba(220,230,248,.20)';
     ctx.beginPath();
     ctx.arc(x2, y2, 1.55, 0, Math.PI * 2);
     ctx.fill();
@@ -92,20 +92,20 @@ const LivingTree = memo(function LivingTree({ className, height = 320, loader = 
       const cx = w / 2;
       const baseline = h * 0.78;
       const treeHeight = h * (loader ? 0.60 : 0.68);
-      const breath = reduced ? 1 : 1 + Math.sin(t * 1.22) * (loader ? 0.024 : 0.014);
+      const breath = reduced ? 1 : 1 + Math.sin(t * 0.9) * (loader ? 0.016 : 0.008);
 
       const aura = ctx.createRadialGradient(cx, baseline - treeHeight * 0.55, 0, cx, baseline - treeHeight * 0.55, Math.min(w, h) * 0.62);
-      aura.addColorStop(0, 'rgba(124,217,236,.095)');
-      aura.addColorStop(0.48, 'rgba(255,255,255,.024)');
+      aura.addColorStop(0, 'rgba(220,230,248,.045)');
+      aura.addColorStop(0.48, 'rgba(124,217,236,.012)');
       aura.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = aura;
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
-      ctx.globalAlpha = loader ? 0.55 : 0.42;
+      ctx.globalAlpha = loader ? 0.48 : 0.32;
       ctx.strokeStyle = 'rgba(235,242,250,.48)';
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = 'rgba(124,217,236,.18)';
+      ctx.shadowBlur = 7;
+      ctx.shadowColor = 'rgba(220,230,248,.12)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(cx - Math.min(w * 0.36, 440), baseline);
@@ -123,8 +123,8 @@ const LivingTree = memo(function LivingTree({ className, height = 320, loader = 
       ctx.save();
       const r = 3.4 + (reduced ? 0 : Math.sin(t * 2.2) * 0.75);
       ctx.fillStyle = 'rgba(255,255,255,.92)';
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = 'rgba(124,217,236,.45)';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = 'rgba(220,230,248,.30)';
       ctx.beginPath();
       ctx.arc(cx, baseline, r, 0, Math.PI * 2);
       ctx.fill();
