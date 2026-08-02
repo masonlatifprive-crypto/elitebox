@@ -903,9 +903,9 @@ export default {
     subscription: 'Abonnement',
     statusActive: 'ACTIEF',
     statusCancels: 'LOOPT AF OP {{date}}',
-    demoTitle: 'Lokale facturatie — geen echte betaling. Facturatie is nog niet gekoppeld.',
+    localTitle: 'Lokale facturatie — geen echte betaling. Facturatie is nog niet gekoppeld.',
     premiumBlurb: '€4,99/maand · Elke film en serie in de catalogus. Helemaal.',
-    demoNeverRenews: 'Lokaal abonnementsvoorbeeld — verlengt nooit, factureert nooit.',
+    localNeverRenews: 'Lokaal abonnementsvoorbeeld — verlengt nooit, factureert nooit.',
     renews: 'Verlengt op',
     paymentMethod: 'Betaalmethode: {{method}}',
     methodCard: 'Kaart',
@@ -933,7 +933,7 @@ export default {
       'Verwijdert je account, profielen, bibliotheek en kijkgeschiedenis permanent. Dit kan niet ongedaan worden gemaakt.',
     avatarTitle: 'Kies je orb',
     done: 'Klaar',
-    manageDemoBody:
+    manageLocalBody:
       'De betaalportal is nog niet gekoppeld. In productie opent dit de betaalportal van je betaalprovider.',
     gotIt: 'Begrepen',
     cancelTitle: 'Premium opzeggen?',
