@@ -667,3 +667,21 @@ main, section, header, footer, nav { max-width: 100%; }
   .tv-safe { padding-left: 16px !important; padding-right: 16px !important; }
   h1, h2 { overflow-wrap: anywhere; }
 }
+
+
+/* Final hardening: responsive containment and no horizontal page scroll. */
+html, body, #root { width: 100%; max-width: 100%; overflow-x: clip; }
+@supports not (overflow-x: clip) { html, body, #root { overflow-x: hidden; } }
+* { min-width: 0; }
+img, video, canvas, svg { max-width: 100%; }
+.shelf-fade-x, .no-scrollbar { max-width: 100%; overflow-y: hidden; }
+@media (max-width: 1279px) {
+  header nav { max-width: calc(100vw - 24px) !important; }
+}
+@media (max-width: 1023px) {
+  .tv-safe { padding-left: 16px !important; padding-right: 16px !important; }
+}
+@media (max-width: 767px) {
+  .glass-1, .glass-2, .glass-3, .glass-solid { max-width: 100%; }
+  .shelf-fade-x { padding-left: 16px !important; padding-right: 16px !important; }
+}
