@@ -25,6 +25,7 @@ import PosterCard from '@/components/PosterCard';
 import { ButtonNeon, EmptyState, spring, toast } from '@/components/ui-elite';
 import { DEFAULT_PROFILE_ID, useLibrary, useProfiles } from '@/lib/store';
 import { findShowcaseMeta } from '@/data/showcase';
+import { useCatalogItems } from '@/pages/app/Discover';
 import { useT } from '@/i18n';
 import type { TFunction } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -240,6 +241,13 @@ export default function LibraryPage() {
   const profiles = useProfiles((s) => s.profiles);
   const activeProfileId = useProfiles((s) => s.activeProfileId);
   const profile = profiles.find((p) => p.id === (activeProfileId ?? DEFAULT_PROFILE_ID));
+  const { items: catalogItems } = useCatalogItems();
+  const metaById = useMemo(() => {
+    const map = new Map<string, MetaItem>();
+    for (const item of catalogItems) map.set(item.id, item);
+    return map;
+  }, [catalogItems]);
+  const resolveMeta = (id: string): MetaItem | undefined => metaById.get(id) ?? findShowcaseMeta(id);
 
   const [tab, setTab] = useState<TabId>('continue');
   /* Local search filters the rendered lists only — saved data and tab
@@ -258,22 +266,22 @@ export default function LibraryPage() {
   const continueItems = useMemo(
     () =>
       continueWatching
-        .map((e) => ({ entry: e, meta: findShowcaseMeta(e.id) }))
+        .map((e) => ({ entry: e, meta: resolveMeta(e.id) }))
         .filter((x): x is { entry: (typeof continueWatching)[number]; meta: MetaItem } => Boolean(x.meta)),
-    [continueWatching],
+    [continueWatching, metaById],
   );
 
   const watchlistItems = useMemo(
-    () => watchlist.map((id) => findShowcaseMeta(id)).filter((m): m is MetaItem => Boolean(m)),
-    [watchlist],
+    () => watchlist.map((id) => resolveMeta(id)).filter((m): m is MetaItem => Boolean(m)),
+    [watchlist, metaById],
   );
   const favoriteItems = useMemo(
-    () => favorites.map((id) => findShowcaseMeta(id)).filter((m): m is MetaItem => Boolean(m)),
-    [favorites],
+    () => favorites.map((id) => resolveMeta(id)).filter((m): m is MetaItem => Boolean(m)),
+    [favorites, metaById],
   );
   const watchedItems = useMemo(
-    () => watched.map((id) => findShowcaseMeta(id)).filter((m): m is MetaItem => Boolean(m)),
-    [watched],
+    () => watched.map((id) => resolveMeta(id)).filter((m): m is MetaItem => Boolean(m)),
+    [watched, metaById],
   );
 
   /* Query-filtered views (client-side, stremio local_search parity). */
