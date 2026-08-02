@@ -24,6 +24,7 @@ import Shelf from '@/components/Shelf';
 import ForYouShelf from '@/components/ForYouShelf';
 import { ButtonGhost, ButtonNeon, ButtonPrimary, spring, toast } from '@/components/ui-elite';
 import { COLLECTIONS, useCatalogItems } from '@/pages/app/Discover';
+import { findShowcaseMeta } from '@/data/showcase';
 import { selectProgress, useLibrary } from '@/lib/store';
 import type { ContinueWatchingEntry } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
@@ -54,7 +55,7 @@ function HeroCarousel({ items }: { items: MetaItem[] }) {
   const continueWatching = useLibrary((s) => s.continueWatching);
   const watchlist = useLibrary((s) => s.watchlist);
   const toggleWatchlist = useLibrary((s) => s.toggleWatchlist);
-  const catalog = useCatalogItems().items;
+  const catalog = useCatalogItems().items.filter((m) => !findShowcaseMeta(m.id));
 
   const count = items.length;
   const go = useCallback(
