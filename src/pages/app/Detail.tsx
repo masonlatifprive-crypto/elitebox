@@ -324,7 +324,7 @@ export default function Detail() {
   /* ── play gating ───────────────────────────────────────────────────── */
   const requestPlay = useCallback(
     (srcIndex?: number, targetId?: string) => {
-      if (!hasAccess()) {
+      if (!findShowcaseMeta(targetId ?? id) && !hasAccess()) {
         setPaywallOpen(true);
         return;
       }
