@@ -27,7 +27,7 @@ import { DEFAULT_PROFILE_ID, useLibrary, useProfiles } from '@/lib/store';
 import { findShowcaseMeta } from '@/data/showcase';
 import { useCatalogItems } from '@/pages/app/Discover';
 import { addonEngine } from '@/lib/addons/engine';
-import { getAnimeCatalog, getCuratedGlobalTitles, getUpcomingTitles } from '@/lib/globalCatalog';
+import { getAnimeCatalog, getCuratedGlobalTitles, getKnownTitleAliases, getUpcomingTitles } from '@/lib/globalCatalog';
 import { useT } from '@/i18n';
 import type { TFunction } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -247,14 +247,26 @@ export default function LibraryPage() {
   const [remoteMeta, setRemoteMeta] = useState<Record<string, MetaItem>>({});
   const metaById = useMemo(() => {
     const map = new Map<string, MetaItem>();
-    for (const item of [...getCuratedGlobalTitles(), ...getUpcomingTitles(), ...catalogItems, ...Object.values(remoteMeta)]) {
+    for (const item of [...getKnownTitleAliases(), ...getCuratedGlobalTitles(), ...getUpcomingTitles(), ...catalogItems, ...Object.values(remoteMeta)]) {
       map.set(item.id, item);
       const parts = item.id.split(':');
       if (parts.length > 1 && parts[1]?.startsWith('tt')) map.set(parts[1], item);
     }
     return map;
   }, [catalogItems, remoteMeta]);
-  const resolveMeta = (id: string): MetaItem | undefined => metaById.get(id) ?? findShowcaseMeta(id);
+  const resolveMeta = (id: string): MetaItem | undefined => {
+    const resolved = metaById.get(id) ?? findShowcaseMeta(id);
+    if (resolved) return resolved;
+    return {
+      id,
+      type: id.startsWith('tt') ? 'movie' : 'series',
+      name: id.startsWith('tt') ? `Saved title ${id}` : 'Saved title',
+      poster: '/og-image.png',
+      backdrop: '/og-image.png',
+      genres: ['Saved'],
+      description: 'Saved title metadata is being refreshed from the installed providers.',
+    };
+  };
 
   useEffect(() => {
     const ids = [...new Set([...watchlist, ...favorites, ...watched, ...continueWatching.map((e) => e.id)])]
