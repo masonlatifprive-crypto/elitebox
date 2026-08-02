@@ -34,6 +34,7 @@ import {
   Star,
 } from 'lucide-react';
 import { addonEngine } from '@/lib/addons/engine';
+import { getAnimeCatalog, getCuratedGlobalTitles, getUpcomingTitles } from '@/lib/globalCatalog';
 import { findShowcaseMeta } from '@/data/showcase';
 import { parseSourceTitle, scoreSource } from '@/lib/sourceScore';
 import { useAddons, useLibrary } from '@/lib/store';
@@ -273,9 +274,20 @@ export default function Detail() {
     setSynopsisOpen(false);
     window.scrollTo(0, 0);
     const metaType = type as MetaType;
-    addonEngine.getMeta(metaType, id).then((m) => {
-      if (!cancelled) setMeta(m ?? null);
-    });
+    const curated = [...getCuratedGlobalTitles(), ...getUpcomingTitles()];
+    const direct = curated.find((m) => m.id === id || m.id.split(':').at(-1) === id);
+    if (direct) {
+      setMeta(direct);
+    } else if (id.startsWith('mal:')) {
+      getAnimeCatalog().then((anime) => {
+        if (!cancelled) setMeta(anime.find((m) => m.id === id) ?? null);
+      });
+    } else {
+      const lookupId = id.includes(':') ? id.split(':').at(-1)! : id;
+      addonEngine.getMeta(metaType, lookupId).then((m) => {
+        if (!cancelled) setMeta(m ? { ...m, id } : null);
+      });
+    }
     addonEngine.getCatalog().then((items) => {
       if (!cancelled) setCatalog(items);
     });
@@ -286,13 +298,15 @@ export default function Detail() {
 
   const loadStreams = useCallback(() => {
     const metaType = type as MetaType;
-    return addonEngine.getStreams(metaType, id).then((s) => setStreams(s));
+    const lookupId = id.includes(':') ? id.split(':').at(-1)! : id;
+    return addonEngine.getStreams(metaType, lookupId).then((s) => setStreams(s));
   }, [type, id]);
 
   useEffect(() => {
     if (!meta) return;
     let cancelled = false;
-    addonEngine.getStreams(type as MetaType, id).then((s) => {
+    const lookupId = id.includes(':') ? id.split(':').at(-1)! : id;
+    addonEngine.getStreams(type as MetaType, lookupId).then((s) => {
       if (!cancelled) setStreams(s);
     });
     return () => {
