@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Bug, Code2, HeartHandshake, MessageSquare, Rocket, ShieldCheck, TestTube2, Users } from 'lucide-react';
+import { Bug, Code2, MessageSquare, Rocket, ShieldCheck, TestTube2, Users } from 'lucide-react';
 import { ButtonNeon, ButtonPrimary, Eyebrow, GlassPanel } from '@/components/ui-elite';
 
 const WAYS = [
