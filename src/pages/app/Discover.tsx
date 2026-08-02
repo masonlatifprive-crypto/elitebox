@@ -289,7 +289,7 @@ export function FilterChip({
 
 export function SkeletonGrid({ count = 21, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn('grid grid-cols-3 gap-20 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7', className)} aria-hidden>
+    <div className={cn('grid grid-cols-2 gap-22 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7', className)} aria-hidden>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="glass-1 relative aspect-[2/3] overflow-hidden rounded-lg">
           <div className="absolute inset-0 animate-beam-slide bg-gradient-to-r from-transparent via-white/[.07] to-transparent [animation-duration:1.4s] [animation-timing-function:ease-in-out]" />
@@ -566,7 +566,7 @@ export default function Discover() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-20 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7">
+          <div className="grid grid-cols-2 gap-22 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
             <AnimatePresence mode="popLayout">
               {shown.map((item, i) => (
                 <motion.div
