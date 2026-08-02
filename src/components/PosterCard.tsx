@@ -98,6 +98,12 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
             decoding="async"
             draggable={false}
             className="h-full w-full object-cover"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.dataset.fallbackApplied) return;
+              img.dataset.fallbackApplied = '1';
+              img.src = '/og-image.png';
+            }}
           />
           {/* glare highlight following cursor */}
           <motion.div
