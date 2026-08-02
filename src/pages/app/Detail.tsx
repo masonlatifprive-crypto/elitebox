@@ -331,6 +331,14 @@ export default function Detail() {
         return;
       }
       const playId = targetId ?? id;
+      if (openPlayable && meta) {
+        useLibrary.getState().setProgress({
+          id: playId,
+          type: (type as MetaType),
+          progressSec: 8,
+          durationSec: Math.max(60, (meta.runtime ?? 10) * 60),
+        });
+      }
       const q = srcIndex !== undefined ? `?src=${srcIndex}` : '';
       navigate(`/app/player/${type}/${playId}${q}`);
     },
