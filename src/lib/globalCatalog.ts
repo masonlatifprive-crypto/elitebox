@@ -52,7 +52,31 @@ const CURATED_UPCOMING_TITLES: MetaItem[] = [
   { id: 'upcoming:tt26743210', type: 'movie', name: 'Toy Story 5', poster: 'https://images.metahub.space/poster/medium/tt26743210/img', backdrop: 'https://images.metahub.space/background/medium/tt26743210/img', year: 2026, genres: ['Animation', 'Family', 'Upcoming'], rating: undefined, description: 'Upcoming title metadata. Release timing can change; playback depends on legal providers after release.', upcoming: true, releaseLabel: 'Upcoming' },
 ];
 
-export function getCuratedGlobalTitles(): MetaItem[] { return CURATED_GLOBAL_TITLES; }
+
+const CURATED_ARABIC_CINEMA: MetaItem[] = [
+  { id: 'arabic:tt0112870', type: 'movie', name: 'The Land', poster: 'https://images.metahub.space/poster/medium/tt0112870/img', backdrop: 'https://images.metahub.space/background/medium/tt0112870/img', year: 1969, genres: ['Arabic Cinema', 'Drama', 'Classics'], rating: 8.0, description: 'Real Arabic cinema metadata. Playback depends on legal installed stream providers.' },
+  { id: 'arabic:tt0117262', type: 'movie', name: 'Destiny', poster: 'https://images.metahub.space/poster/medium/tt0117262/img', backdrop: 'https://images.metahub.space/background/medium/tt0117262/img', year: 1997, genres: ['Arabic Cinema', 'Drama', 'History'], rating: 7.1, description: 'Real Arabic cinema metadata. Playback depends on legal installed stream providers.' },
+  { id: 'arabic:tt1017428', type: 'movie', name: 'The Yacoubian Building', poster: 'https://images.metahub.space/poster/medium/tt1017428/img', backdrop: 'https://images.metahub.space/background/medium/tt1017428/img', year: 2006, genres: ['Arabic Cinema', 'Drama'], rating: 7.5, description: 'Real Arabic cinema metadata. Playback depends on legal installed stream providers.' },
+  { id: 'arabic:tt1681425', type: 'movie', name: 'Cairo 678', poster: 'https://images.metahub.space/poster/medium/tt1681425/img', backdrop: 'https://images.metahub.space/background/medium/tt1681425/img', year: 2010, genres: ['Arabic Cinema', 'Drama'], rating: 7.4, description: 'Real Arabic cinema metadata. Playback depends on legal installed stream providers.' },
+  { id: 'arabic:tt3614516', type: 'movie', name: 'Theeb', poster: 'https://images.metahub.space/poster/medium/tt3614516/img', backdrop: 'https://images.metahub.space/background/medium/tt3614516/img', year: 2014, genres: ['Arabic Cinema', 'Adventure', 'Drama'], rating: 7.2, description: 'Real Arabic cinema metadata. Playback depends on legal installed stream providers.' },
+  { id: 'arabic:tt5997928', type: 'movie', name: 'Capernaum', poster: 'https://images.metahub.space/poster/medium/tt5997928/img', backdrop: 'https://images.metahub.space/background/medium/tt5997928/img', year: 2018, genres: ['Arabic Cinema', 'Drama'], rating: 8.4, description: 'Real Arabic cinema metadata. Playback depends on legal installed stream providers.' },
+];
+
+const CURATED_BOLLYWOOD_CINEMA: MetaItem[] = [
+  { id: 'bollywood:tt0048473', type: 'movie', name: 'Pather Panchali', poster: 'https://images.metahub.space/poster/medium/tt0048473/img', backdrop: 'https://images.metahub.space/background/medium/tt0048473/img', year: 1955, genres: ['Indian Cinema', 'Drama', 'Classics'], rating: 8.2, description: 'Real Indian cinema metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt0050188', type: 'movie', name: 'Mother India', poster: 'https://images.metahub.space/poster/medium/tt0050188/img', backdrop: 'https://images.metahub.space/background/medium/tt0050188/img', year: 1957, genres: ['Bollywood', 'Drama', 'Classics'], rating: 7.8, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt0169102', type: 'movie', name: 'Lagaan', poster: 'https://images.metahub.space/poster/medium/tt0169102/img', backdrop: 'https://images.metahub.space/background/medium/tt0169102/img', year: 2001, genres: ['Bollywood', 'Drama', 'Sport'], rating: 8.1, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt0367110', type: 'movie', name: 'Swades', poster: 'https://images.metahub.space/poster/medium/tt0367110/img', backdrop: 'https://images.metahub.space/background/medium/tt0367110/img', year: 2004, genres: ['Bollywood', 'Drama'], rating: 8.2, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt0986264', type: 'movie', name: 'Taare Zameen Par', poster: 'https://images.metahub.space/poster/medium/tt0986264/img', backdrop: 'https://images.metahub.space/background/medium/tt0986264/img', year: 2007, genres: ['Bollywood', 'Drama', 'Family'], rating: 8.3, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt1187043', type: 'movie', name: '3 Idiots', poster: 'https://images.metahub.space/poster/medium/tt1187043/img', backdrop: 'https://images.metahub.space/background/medium/tt1187043/img', year: 2009, genres: ['Bollywood', 'Comedy', 'Drama'], rating: 8.4, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt5074352', type: 'movie', name: 'Dangal', poster: 'https://images.metahub.space/poster/medium/tt5074352/img', backdrop: 'https://images.metahub.space/background/medium/tt5074352/img', year: 2016, genres: ['Bollywood', 'Biography', 'Drama'], rating: 8.3, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+  { id: 'bollywood:tt8108198', type: 'movie', name: 'Andhadhun', poster: 'https://images.metahub.space/poster/medium/tt8108198/img', backdrop: 'https://images.metahub.space/background/medium/tt8108198/img', year: 2018, genres: ['Bollywood', 'Crime', 'Thriller'], rating: 8.2, description: 'Real Bollywood metadata. Playback depends on legal installed stream providers.' },
+];
+
+export function getArabicCinema(): MetaItem[] { return CURATED_ARABIC_CINEMA; }
+export function getBollywoodCinema(): MetaItem[] { return CURATED_BOLLYWOOD_CINEMA; }
+
+export function getCuratedGlobalTitles(): MetaItem[] { return [...CURATED_GLOBAL_TITLES, ...CURATED_ARABIC_CINEMA, ...CURATED_BOLLYWOOD_CINEMA]; }
 export function getUpcomingTitles(): MetaItem[] { return CURATED_UPCOMING_TITLES; }
 
 const cache = new Map<string, { at: number; items: MetaItem[] }>();
