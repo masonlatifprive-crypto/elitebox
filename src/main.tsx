@@ -58,6 +58,21 @@ function installChunkRecovery(): void {
 
 installChunkRecovery()
 
+
+function installImageFallbacks(): void {
+  window.addEventListener('error', (ev) => {
+    const target = ev.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    if (target.dataset.eliteFallback === '1') return;
+    target.dataset.eliteFallback = '1';
+    target.src = '/og-image.png';
+    target.classList.add('object-cover');
+  }, true);
+}
+
+installImageFallbacks()
+
+
 // No <StrictMode>: canvas effects must not double-run (react-dev.md).
 createRoot(document.getElementById('root')!).render(
   <I18nProvider>
