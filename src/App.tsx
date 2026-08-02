@@ -38,6 +38,8 @@ const Features = lazy(() => import('@/pages/marketing/Features'));
 const Technology = lazy(() => import('@/pages/marketing/Technology'));
 const Cookies = lazy(() => import('@/pages/marketing/Cookies'));
 const Updates = lazy(() => import('@/pages/marketing/Updates'));
+const Community = lazy(() => import('@/pages/marketing/Community'));
+const Providers = lazy(() => import('@/pages/marketing/Providers'));
 
 const AppHome = lazy(() => import('@/pages/app/AppHome'));
 const Calendar = lazy(() => import('@/pages/app/Calendar'));
@@ -99,11 +101,17 @@ function RoutedPages() {
             <Route path="/updates" element={<Updates />} />
             <Route path="/features" element={<Features />} />
             <Route path="/technology" element={<Technology />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/providers" element={<Providers />} />
+            <Route path="/addons" element={<Providers />} />
+            <Route path="/addon-sdk" element={<Developers />} />
             <Route path="/cookies" element={<Cookies />} />
             <Route path="/tos" element={<Navigate to="/terms" replace />} />
             {/* spec-route aliases */}
             <Route path="/download" element={<Navigate to="/downloads" replace />} />
             <Route path="/apps" element={<Navigate to="/downloads" replace />} />
+            <Route path="/anime" element={<Navigate to="/app/discover?genre=Anime" replace />} />
+            <Route path="/global-catalog" element={<Navigate to="/app/discover" replace />} />
                         <Route path="*" element={<NotFoundPage />} />
           </Route>
 
@@ -114,6 +122,8 @@ function RoutedPages() {
             <Route path="discover" element={<Discover />} />
             <Route path="movies" element={<Catalog kind="movie" />} />
             <Route path="series" element={<Catalog kind="series" />} />
+            <Route path="anime" element={<Navigate to="/app/discover?genre=Anime" replace />} />
+            <Route path="global" element={<Navigate to="/app/discover" replace />} />
             <Route path="live" element={<Live />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="detail/:type/:id" element={<Detail />} />
