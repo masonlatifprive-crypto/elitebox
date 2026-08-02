@@ -6,10 +6,10 @@
  *    companion server (POST /api/auth/register, POST /api/auth/login,
  *    GET /api/billing/status, POST /api/billing/checkout,
  *    POST /api/billing/paypal/order) with fetch + an 8s AbortController.
- *    Network failures fall back gracefully (demo subscription, honest errors).
+ *    Network failures fall back gracefully (local subscription, honest errors).
  *  • LOCAL  — no API URL: `demoMode === true`. Accounts live in localStorage
  *    with SHA-256 hashed passwords (crypto.subtle), subscribe() creates a
- *    local demo subscription (renewsAt = +30 days), and every surface that
+ *    local local subscription (renewsAt = +30 days), and every surface that
  *    touches billing must label itself "Billing not connected — no real charge".
  *
  * Other agents import: useAuth, hasAccessFor, type AuthUser, type Subscription.
@@ -249,7 +249,7 @@ export const useAuth = create<AuthState>()(
           }
         }
 
-        /* demo mode — local accounts */
+        /* local mode — local accounts */
         const account = loadAccounts().find((a) => a.email === mail);
         if (!account) return { ok: false, error: 'unknown' };
         const hash = await hashPassword(password, account.salt);
@@ -291,7 +291,7 @@ export const useAuth = create<AuthState>()(
           }
         }
 
-        /* demo mode */
+        /* local mode */
         const accounts = loadAccounts();
         if (accounts.some((a) => a.email === mail)) return { ok: false, error: 'duplicate' };
         const salt = uid();
@@ -350,7 +350,7 @@ export const useAuth = create<AuthState>()(
           }
         }
 
-        /* demo mode — simulated checkout, +30 days, never a real charge */
+        /* local mode — simulated checkout, +30 days, never a real charge */
         const sub = demoSubscription(method);
         set({ subscription: sub });
         const accounts = loadAccounts().map((a) =>
