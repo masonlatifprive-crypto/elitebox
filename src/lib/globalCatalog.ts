@@ -38,6 +38,23 @@ function mergeAnime(primary: MetaItem[], extra: MetaItem[]): MetaItem[] {
 }
 
 const CACHE_TTL = 20 * 60_000;
+
+const CURATED_GLOBAL_TITLES: MetaItem[] = [
+  { id: 'global:tt0068646', type: 'movie', name: 'The Godfather', poster: 'https://images.metahub.space/poster/medium/tt0068646/img', backdrop: 'https://images.metahub.space/background/medium/tt0068646/img', year: 1972, genres: ['Crime', 'Drama', 'Classics'], rating: 9.2, description: 'Global metadata entry. Playback depends on legal installed stream providers.' },
+  { id: 'global:tt0111161', type: 'movie', name: 'The Shawshank Redemption', poster: 'https://images.metahub.space/poster/medium/tt0111161/img', backdrop: 'https://images.metahub.space/background/medium/tt0111161/img', year: 1994, genres: ['Drama', 'Classics'], rating: 9.3, description: 'Global metadata entry. Playback depends on legal installed stream providers.' },
+  { id: 'global:tt0468569', type: 'movie', name: 'The Dark Knight', poster: 'https://images.metahub.space/poster/medium/tt0468569/img', backdrop: 'https://images.metahub.space/background/medium/tt0468569/img', year: 2008, genres: ['Action', 'Crime', 'Drama'], rating: 9.0, description: 'Global metadata entry. Playback depends on legal installed stream providers.' },
+  { id: 'global:tt0903747', type: 'series', name: 'Breaking Bad', poster: 'https://images.metahub.space/poster/medium/tt0903747/img', backdrop: 'https://images.metahub.space/background/medium/tt0903747/img', year: 2008, genres: ['Crime', 'Drama', 'Series'], rating: 9.5, description: 'Global metadata entry. Playback depends on legal installed stream providers.' },
+  { id: 'global:tt0944947', type: 'series', name: 'Game of Thrones', poster: 'https://images.metahub.space/poster/medium/tt0944947/img', backdrop: 'https://images.metahub.space/background/medium/tt0944947/img', year: 2011, genres: ['Drama', 'Fantasy', 'Series'], rating: 9.2, description: 'Global metadata entry. Playback depends on legal installed stream providers.' },
+];
+
+const CURATED_UPCOMING_TITLES: MetaItem[] = [
+  { id: 'upcoming:tt12009158', type: 'movie', name: 'Project Hail Mary', poster: 'https://images.metahub.space/poster/medium/tt12009158/img', backdrop: 'https://images.metahub.space/background/medium/tt12009158/img', year: 2026, genres: ['Sci-Fi', 'Adventure', 'Upcoming'], rating: undefined, description: 'Upcoming title metadata. Release timing can change; playback depends on legal providers after release.', upcoming: true, releaseLabel: 'Upcoming' },
+  { id: 'upcoming:tt26743210', type: 'movie', name: 'Toy Story 5', poster: 'https://images.metahub.space/poster/medium/tt26743210/img', backdrop: 'https://images.metahub.space/background/medium/tt26743210/img', year: 2026, genres: ['Animation', 'Family', 'Upcoming'], rating: undefined, description: 'Upcoming title metadata. Release timing can change; playback depends on legal providers after release.', upcoming: true, releaseLabel: 'Upcoming' },
+];
+
+export function getCuratedGlobalTitles(): MetaItem[] { return CURATED_GLOBAL_TITLES; }
+export function getUpcomingTitles(): MetaItem[] { return CURATED_UPCOMING_TITLES; }
+
 const cache = new Map<string, { at: number; items: MetaItem[] }>();
 
 function getCached(key: string): MetaItem[] | undefined {
