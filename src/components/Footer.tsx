@@ -13,6 +13,7 @@ const EXPLORE = [
   { to: '/sports', labelKey: 'common.nav.sports' },
   { to: '/store', labelKey: 'common.nav.store' },
   { to: '/support', labelKey: 'common.nav.support' },
+  { to: '/community', label: 'Community' },
 ] as const;
 
 const PRODUCT = [
@@ -20,6 +21,7 @@ const PRODUCT = [
   { to: '/downloads', labelKey: 'common.footer.downloads' },
   { to: '/technology', labelKey: 'common.footer.technology' },
   { to: '/developers', labelKey: 'common.footer.addonSdk' },
+  { to: '/providers', label: 'Addon Directory' },
   { to: '/updates', labelKey: 'common.footer.updatesStatus' },
   { to: '/support', labelKey: 'common.footer.helpCenter' },
 ] as const;
