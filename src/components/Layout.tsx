@@ -52,7 +52,7 @@ export function MarketingShell() {
   }, []);
 
   return (
-    <div className="grain-overlay relative min-h-[100dvh]">
+    <div className="grain-overlay relative min-h-[100dvh] overflow-x-hidden">
       <AmbienceCanvas />
       <MarketingNav />
       <main className="relative z-10">
@@ -68,11 +68,11 @@ export function MarketingShell() {
 export function AppShell() {
   useSpatialNav();
   return (
-    <div className="grain-overlay relative min-h-[100dvh]">
+    <div className="grain-overlay relative min-h-[100dvh] overflow-x-hidden">
       <AmbienceCanvas />
       <AppRail />
-      <main className="tv-safe relative z-10 min-h-[100dvh] px-16 pb-96 pt-24 md:pl-[96px] md:pr-24 md:pb-48 xl:px-48 xl:pl-[120px]">
-        <div className="mx-auto max-w-[1600px]">
+      <main className="tv-safe relative z-10 min-h-[100dvh] w-full max-w-full overflow-x-hidden px-16 pb-104 pt-32 md:pl-[112px] md:pr-28 md:pb-56 xl:pl-[136px] xl:pr-48">
+        <div className="mx-auto w-full max-w-[1600px]">
           <Outlet />
         </div>
       </main>
