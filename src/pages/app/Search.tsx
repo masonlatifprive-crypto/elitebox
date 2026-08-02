@@ -13,6 +13,7 @@ import { ButtonGhost, EmptyState, spring, toast } from '@/components/ui-elite';
 import { MagnetPasteField, presentMagnetUri } from '@/components/MagnetDrop';
 import { FilterChip, sourceForItem, useCatalogItems } from '@/pages/app/Discover';
 import { addonEngine } from '@/lib/addons/engine';
+import { findShowcaseMeta } from '@/data/showcase';
 import { getCuratedGlobalTitles, getUpcomingTitles, searchAnime } from '@/lib/globalCatalog';
 import { isMagnetUri } from '@/lib/magnet';
 import { scopedKey, useAddons, useLibrary, useSettings } from '@/lib/store';
@@ -174,7 +175,9 @@ export default function Search() {
         const q = debounced.toLowerCase();
         const curated = [...getCuratedGlobalTitles(), ...getUpcomingTitles()].filter((m) => [m.name, m.description, ...(m.genres ?? [])].join(' ').toLowerCase().includes(q));
         const seen = new Set<string>();
+        const allowOpenCinema = /open cinema|blender|creative commons|public domain/i.test(debounced);
         setResults([...curated, ...metas, ...anime].filter((item) => {
+          if (!allowOpenCinema && findShowcaseMeta(item.id)) return false;
           if (seen.has(item.id)) return false;
           seen.add(item.id);
           return true;
