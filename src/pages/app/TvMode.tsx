@@ -59,12 +59,13 @@ export default function TvMode() {
     const movies = searched.filter((m) => m.type === 'movie');
     const series = searched.filter((m) => m.type === 'series');
     const open = searched.filter((m) => !String(m.id).startsWith('tt'));
-    const highRated = searched.filter((m) => (m.rating ?? 0) >= 7);
+    const currentYear = new Date().getFullYear();
+    const highRated = searched.filter((m) => (m.rating ?? 0) >= 7 && !m.upcoming && (!m.year || m.year <= currentYear));
     return [
       { id: 'continue', title: q ? 'Search results' : 'TV Focus picks', caption: q ? `Matching “${query}”` : 'Remote-friendly launch row', items: searched.slice(0, 18) },
       { id: 'movies', title: 'Trending movies', caption: 'Real Cinemeta movie catalog', items: movies.slice(0, 18) },
       { id: 'series', title: 'Popular series', caption: 'Real Cinemeta series catalog', items: series.slice(0, 18) },
-      { id: 'rated', title: 'Critics picks', caption: 'High-rated catalog titles', items: highRated.slice(0, 18) },
+      { id: 'rated', title: 'Critics picks', caption: 'High-rated available titles', items: highRated.slice(0, 18) },
       { id: 'open', title: 'Open cinema — free & legal', caption: 'Playable legal showcase when available', items: open.slice(0, 18) },
     ].filter((row) => row.items.length > 0);
   }, [items, query]);
