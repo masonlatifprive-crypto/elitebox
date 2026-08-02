@@ -35,6 +35,8 @@ const RAIL_ITEMS = [
   { to: '/app/movies', labelKey: 'app.rail.movies', icon: Film },
   { to: '/app/series', labelKey: 'app.rail.series', icon: MonitorPlay },
   { to: '/app/anime', labelKey: 'Anime', icon: MonitorPlay },
+  { to: '/app/arabic', labelKey: 'Arabic', icon: Film },
+  { to: '/app/bollywood', labelKey: 'Bollywood', icon: Film },
   { to: '/app/live', labelKey: 'app.rail.live', icon: Radio },
   { to: '/app/calendar', labelKey: 'app.rail.calendar', icon: CalendarDays },
   { to: '/app/search', labelKey: 'app.rail.search', icon: Search },
