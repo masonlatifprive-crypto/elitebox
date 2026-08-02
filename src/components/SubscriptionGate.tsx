@@ -7,11 +7,14 @@
  */
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router';
 import AmbienceCanvas from '@/components/AmbienceCanvas';
 import PaywallCard from '@/components/PaywallCard';
+import { findShowcaseMeta } from '@/data/showcase';
 import { hasAccessFor, useAuth } from '@/lib/auth';
 
 export default function SubscriptionGate({ children }: { children: ReactNode }) {
+  const location = useLocation();
   const subscription = useAuth((s) => s.subscription);
   const refreshSubscription = useAuth((s) => s.refreshSubscription);
 
@@ -20,7 +23,10 @@ export default function SubscriptionGate({ children }: { children: ReactNode }) 
     void refreshSubscription();
   }, [refreshSubscription]);
 
-  if (hasAccessFor(subscription)) return <>{children}</>;
+  const id = decodeURIComponent(location.pathname.split('/').pop() ?? '');
+  const openPlayable = Boolean(findShowcaseMeta(id));
+
+  if (openPlayable || hasAccessFor(subscription)) return <>{children}</>;
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-deep nebula-wash">
