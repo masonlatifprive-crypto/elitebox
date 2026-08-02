@@ -896,9 +896,9 @@ export default {
     subscription: 'Subscription',
     statusActive: 'ACTIVE',
     statusCancels: 'CANCELS {{date}}',
-    demoTitle: 'Preview billing — no real charge. Billing is not connected yet.',
+    localTitle: 'Preview billing — no real charge. Billing is not connected yet.',
     premiumBlurb: '$4.99/month · Every movie and series in the catalog. Completely.',
-    demoNeverRenews: 'Local subscription preview — never renews, never charges.',
+    localNeverRenews: 'Local subscription preview — never renews, never charges.',
     renews: 'Renews',
     paymentMethod: 'Payment method: {{method}}',
     methodCard: 'Card',
@@ -926,7 +926,7 @@ export default {
       'Permanently removes your account, profiles, library and watch history. This cannot be undone.',
     avatarTitle: 'Choose your orb',
     done: 'Done',
-    manageDemoBody:
+    manageLocalBody:
       "Billing portal is not connected yet. In production this opens your payment provider's billing portal.",
     gotIt: 'Got it',
     cancelTitle: 'Cancel Premium?',
