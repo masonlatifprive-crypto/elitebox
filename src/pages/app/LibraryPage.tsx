@@ -26,6 +26,8 @@ import { ButtonNeon, EmptyState, spring, toast } from '@/components/ui-elite';
 import { DEFAULT_PROFILE_ID, useLibrary, useProfiles } from '@/lib/store';
 import { findShowcaseMeta } from '@/data/showcase';
 import { useCatalogItems } from '@/pages/app/Discover';
+import { addonEngine } from '@/lib/addons/engine';
+import { getAnimeCatalog, getCuratedGlobalTitles, getUpcomingTitles } from '@/lib/globalCatalog';
 import { useT } from '@/i18n';
 import type { TFunction } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -242,12 +244,37 @@ export default function LibraryPage() {
   const activeProfileId = useProfiles((s) => s.activeProfileId);
   const profile = profiles.find((p) => p.id === (activeProfileId ?? DEFAULT_PROFILE_ID));
   const { items: catalogItems } = useCatalogItems();
+  const [remoteMeta, setRemoteMeta] = useState<Record<string, MetaItem>>({});
   const metaById = useMemo(() => {
     const map = new Map<string, MetaItem>();
-    for (const item of catalogItems) map.set(item.id, item);
+    for (const item of [...getCuratedGlobalTitles(), ...getUpcomingTitles(), ...catalogItems, ...Object.values(remoteMeta)]) {
+      map.set(item.id, item);
+      const parts = item.id.split(':');
+      if (parts.length > 1 && parts[1]?.startsWith('tt')) map.set(parts[1], item);
+    }
     return map;
-  }, [catalogItems]);
+  }, [catalogItems, remoteMeta]);
   const resolveMeta = (id: string): MetaItem | undefined => metaById.get(id) ?? findShowcaseMeta(id);
+
+  useEffect(() => {
+    const ids = [...new Set([...watchlist, ...favorites, ...watched, ...continueWatching.map((e) => e.id)])]
+      .filter((id) => !resolveMeta(id));
+    if (ids.length === 0) return;
+    let alive = true;
+    (async () => {
+      const fetched: Record<string, MetaItem> = {};
+      const anime = await getAnimeCatalog().catch(() => [] as MetaItem[]);
+      for (const id of ids) {
+        const animeHit = anime.find((m) => m.id === id);
+        if (animeHit) { fetched[id] = animeHit; continue; }
+        const lookupId = id.includes(':') ? id.split(':').at(-1)! : id;
+        const hit = await addonEngine.getMeta('series', lookupId).then((m) => m ?? addonEngine.getMeta('movie', lookupId)).catch(() => undefined);
+        if (hit) fetched[id] = { ...hit, id };
+      }
+      if (alive && Object.keys(fetched).length > 0) setRemoteMeta((prev) => ({ ...prev, ...fetched }));
+    })();
+    return () => { alive = false; };
+  }, [watchlist, favorites, watched, continueWatching, metaById]);
 
   const [tab, setTab] = useState<TabId>('continue');
   /* Local search filters the rendered lists only — saved data and tab
