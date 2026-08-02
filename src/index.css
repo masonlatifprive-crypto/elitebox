@@ -652,3 +652,18 @@ body,
   0%, 100% { transform: translate(-50%, -50%) scale(.9); opacity: .48; }
   50% { transform: translate(-50%, -50%) scale(1.08); opacity: .82; }
 }
+
+
+/* Final responsive fit pass */
+html, body, #root { max-width: 100%; overflow-x: hidden; }
+main, section, header, footer, nav { max-width: 100%; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.shelf-fade-x { max-width: 100%; }
+@media (max-width: 1023px) {
+  .glass-3, .glass-solid { max-width: calc(100vw - 24px); }
+}
+@media (max-width: 767px) {
+  .tv-safe { padding-left: 16px !important; padding-right: 16px !important; }
+  h1, h2 { overflow-wrap: anywhere; }
+}
