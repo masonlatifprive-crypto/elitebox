@@ -459,6 +459,11 @@ class AddonEngine {
     return useAddons.getState().installed;
   }
 
+  /** Backwards-compatible alias for older lazy chunks / callers. */
+  listAddons(): AddonInfo[] {
+    return this.list();
+  }
+
   /**
    * Install from a manifest URL. 7s timeout; manifest must contain a valid
    * `id` and `name` or the install is rejected.
