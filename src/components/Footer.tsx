@@ -72,8 +72,8 @@ export default function Footer() {
         <nav aria-label={t('common.footer.explore')} className="flex flex-col gap-12">
           <h3 className="text-micro uppercase text-muted">{t('common.footer.explore')}</h3>
           {EXPLORE.map((l) => (
-            <Link key={l.labelKey} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
-              {t(l.labelKey)}
+            <Link key={l.label} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
+              {l.label}
             </Link>
           ))}
         </nav>
@@ -81,8 +81,8 @@ export default function Footer() {
         <nav aria-label={t('common.footer.product')} className="flex flex-col gap-12">
           <h3 className="text-micro uppercase text-muted">{t('common.footer.product')}</h3>
           {PRODUCT.map((l) => (
-            <Link key={l.labelKey} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
-              {t(l.labelKey)}
+            <Link key={l.label} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
+              {l.label}
             </Link>
           ))}
         </nav>
@@ -90,8 +90,8 @@ export default function Footer() {
         <nav aria-label={t('common.footer.legal')} className="flex flex-col gap-12">
           <h3 className="text-micro uppercase text-muted">{t('common.footer.legal')}</h3>
           {LEGAL.map((l) => (
-            <Link key={l.labelKey} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
-              {t(l.labelKey)}
+            <Link key={l.label} to={l.to} className="focusable rounded-sm text-caption text-ink/80 hover:text-cyan transition-colors w-fit">
+              {l.label}
             </Link>
           ))}
           <p className="text-[11px] leading-relaxed text-muted/70 max-w-[30ch]">
