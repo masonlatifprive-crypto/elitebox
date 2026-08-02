@@ -104,7 +104,7 @@ export default function MarketingNav() {
               >
                 {({ isActive }) => (
                   <>
-                    {t(l.labelKey)}
+                    {l.label}
                     {isActive && (
                       <motion.span
                         layoutId="nav-beam"
@@ -192,7 +192,7 @@ export default function MarketingNav() {
                     )
                   }
                 >
-                  {t(l.labelKey)}
+                  {l.label}
                 </NavLink>
               </motion.div>
             ))}
