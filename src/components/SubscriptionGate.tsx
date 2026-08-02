@@ -13,6 +13,12 @@ import PaywallCard from '@/components/PaywallCard';
 import { findShowcaseMeta } from '@/data/showcase';
 import { hasAccessFor, useAuth } from '@/lib/auth';
 
+const OPEN_CINEMA_IDS = new Set([
+  'big-buck-bunny', 'sintel', 'tears-of-steel', 'elephants-dream',
+  'cosmos-laundromat', 'agent-327', 'sprite-fright', 'charge', 'wing-it',
+  'caminandes-series', 'caminandes-series-s01e01', 'caminandes-series-s01e02', 'caminandes-series-s01e03',
+]);
+
 export default function SubscriptionGate({ children }: { children: ReactNode }) {
   const location = useLocation();
   const subscription = useAuth((s) => s.subscription);
@@ -23,8 +29,8 @@ export default function SubscriptionGate({ children }: { children: ReactNode }) 
     void refreshSubscription();
   }, [refreshSubscription]);
 
-  const id = decodeURIComponent(location.pathname.split('/').pop() ?? '');
-  const openPlayable = Boolean(findShowcaseMeta(id));
+  const id = decodeURIComponent(location.pathname.split('/').pop()?.split('?')[0] ?? '');
+  const openPlayable = Boolean(findShowcaseMeta(id)) || OPEN_CINEMA_IDS.has(id);
 
   if (openPlayable || hasAccessFor(subscription)) return <>{children}</>;
 
