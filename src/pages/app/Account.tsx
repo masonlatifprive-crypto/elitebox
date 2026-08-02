@@ -303,7 +303,7 @@ export default function Account() {
                 {subscription?.demo && (
                   <span
                     className="glass-1 inline-flex items-center gap-8 rounded-full px-12 py-4"
-                    title={t('app.account.demoTitle')}
+                    title={t('app.account.localTitle')}
                   >
                     <span className="h-8 w-8 rounded-full bg-warn" />
                     <span className="text-caption font-semibold text-warn">LOCAL</span>
@@ -322,7 +322,7 @@ export default function Account() {
                 {subscription?.demo ? (
                   <span className="inline-flex items-center gap-8">
                     <Calendar size={14} strokeWidth={1.75} />
-                    {t('app.account.demoNeverRenews')}
+                    {t('app.account.localNeverRenews')}
                   </span>
                 ) : (
                   renewsLabel && (
@@ -486,7 +486,7 @@ export default function Account() {
       {/* ── manage (demo explainer) ───────────────────────────────────── */}
       <Modal open={manageOpen} onClose={() => setManageOpen(false)} title={t('app.account.manageSubscription')}>
         <p className="text-caption text-muted">
-          {t('app.account.manageDemoBody')}
+          {t('app.account.manageLocalBody')}
         </p>
         <div className="mt-24 flex justify-end">
           <ButtonPrimary onClick={() => setManageOpen(false)}>{t('app.account.gotIt')}</ButtonPrimary>
