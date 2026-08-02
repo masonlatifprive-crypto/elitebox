@@ -4,7 +4,6 @@ import { Boxes, Gauge, Layers, MonitorSmartphone, ShieldCheck, Subtitles } from 
 import LivingTree from '@/components/LivingTree';
 import Shelf from '@/components/Shelf';
 import { ButtonGhost, ButtonNeon, ButtonPrimary, Eyebrow, GlassPanel } from '@/components/ui-elite';
-import { SHOWCASE_MOVIES } from '@/data/showcase';
 import { usePublicCatalog } from '@/lib/usePublicCatalog';
 import type { MetaItem } from '@/lib/types';
 
@@ -76,12 +75,11 @@ function Hero() {
 function PosterWalls() {
   const { items, loading } = usePublicCatalog();
   const { movies, series } = useMemo(() => splitCatalog(items), [items]);
-  const fallback = SHOWCASE_MOVIES.slice(0, 12);
   return (
     <section className="mx-auto max-w-6xl space-y-48 px-16 py-80 sm:px-24">
       {loading && <p className="text-center text-caption text-muted">Loading real catalogs…</p>}
-      <Shelf title="Trending movies" items={movies.length ? movies : fallback} seeAllTo="/app/movies" />
-      <Shelf title="Popular series" items={series.length ? series : fallback} seeAllTo="/app/series" />
+      {movies.length > 0 && <Shelf title="Trending movies" items={movies} seeAllTo="/app/movies" />}
+      {series.length > 0 && <Shelf title="Popular series" items={series} seeAllTo="/app/series" />}
     </section>
   );
 }
