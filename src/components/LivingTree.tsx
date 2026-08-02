@@ -1,8 +1,7 @@
 /**
  * LivingTree — EliteBox signature mark.
- * Canvas-based mirrored fractal tree inspired by the approved motion reference:
- * upward branch crown + downward root system around a fine central divider.
- * Original EliteBox palette, lightweight 2D canvas, responsive fixed-ratio draw.
+ * DadGPT-style 2D canvas fractal: a single centered tree growing upward from
+ * a clean baseline, with EliteBox silver/cyan glow and subtle breathing motion.
  */
 import { memo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -21,31 +20,24 @@ function drawBranch(
   length: number,
   depth: number,
   seed: number,
-  root = false,
 ) {
-  if (depth <= 0 || length < 2) return;
-  const sway = Math.sin(seed + depth * 0.73) * 0.035;
+  if (depth <= 0 || length < 2.2) return;
+  const sway = Math.sin(seed + depth * 0.84) * 0.045;
   const a = angle + sway;
   const x2 = x + Math.cos(a) * length;
   const y2 = y + Math.sin(a) * length;
-  const alpha = Math.max(0.08, depth / 9);
+  const alpha = Math.max(0.09, depth / 9);
 
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(0.65, depth * 0.34);
-  ctx.shadowBlur = root ? 9 : 7;
-  ctx.shadowColor = root ? 'rgba(124,217,236,.30)' : 'rgba(255,255,255,.22)';
+  ctx.lineWidth = Math.max(0.7, depth * 0.42);
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = 'rgba(124,217,236,.24)';
   const grad = ctx.createLinearGradient(x, y, x2, y2);
-  if (root) {
-    grad.addColorStop(0, `rgba(255,255,255,${0.16 * alpha})`);
-    grad.addColorStop(0.55, `rgba(124,217,236,${0.58 * alpha})`);
-    grad.addColorStop(1, `rgba(255,255,255,${0.78 * alpha})`);
-  } else {
-    grad.addColorStop(0, `rgba(255,255,255,${0.18 * alpha})`);
-    grad.addColorStop(0.6, `rgba(230,238,246,${0.68 * alpha})`);
-    grad.addColorStop(1, `rgba(124,217,236,${0.36 * alpha})`);
-  }
+  grad.addColorStop(0, `rgba(255,255,255,${0.26 * alpha})`);
+  grad.addColorStop(0.62, `rgba(238,244,250,${0.82 * alpha})`);
+  grad.addColorStop(1, `rgba(124,217,236,${0.54 * alpha})`);
   ctx.strokeStyle = grad;
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -53,25 +45,23 @@ function drawBranch(
   ctx.stroke();
 
   if (depth <= 2) {
-    ctx.fillStyle = root ? 'rgba(124,217,236,.75)' : 'rgba(255,255,255,.72)';
-    ctx.shadowBlur = 12;
+    ctx.fillStyle = 'rgba(255,255,255,.78)';
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = 'rgba(124,217,236,.28)';
     ctx.beginPath();
-    ctx.arc(x2, y2, root ? 1.55 : 1.35, 0, Math.PI * 2);
+    ctx.arc(x2, y2, 1.55, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
 
-  const split = 0.57 + Math.sin(seed + depth) * 0.035;
-  const next = length * split;
-  const spread = (root ? 0.46 : 0.41) + (9 - depth) * 0.012;
-  drawBranch(ctx, x2, y2, a - spread, next, depth - 1, seed + 1.7, root);
-  drawBranch(ctx, x2, y2, a + spread, next * 0.94, depth - 1, seed + 2.3, root);
-  if (depth > 4) {
-    drawBranch(ctx, x2, y2, a + (root ? -0.16 : 0.16), next * 0.58, depth - 2, seed + 3.1, root);
-  }
+  const next = length * (0.66 + Math.sin(seed + depth) * 0.025);
+  const spread = 0.43 + (9 - depth) * 0.014;
+  drawBranch(ctx, x2, y2, a - spread, next, depth - 1, seed + 1.6);
+  drawBranch(ctx, x2, y2, a + spread, next * 0.96, depth - 1, seed + 2.2);
+  if (depth > 4) drawBranch(ctx, x2, y2, a + 0.12, next * 0.58, depth - 2, seed + 3.4);
 }
 
-const LivingTree = memo(function LivingTree({ className, height = 260, loader = false }: LivingTreeProps) {
+const LivingTree = memo(function LivingTree({ className, height = 320, loader = false }: LivingTreeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -84,13 +74,12 @@ const LivingTree = memo(function LivingTree({ className, height = 260, loader = 
     let running = true;
     let w = 0;
     let h = 0;
-    const ratio = 1476 / 520;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      w = Math.max(280, rect.width || height * ratio);
-      h = Math.max(120, rect.height || height);
+      w = Math.max(320, rect.width || 760);
+      h = Math.max(180, rect.height || height);
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -101,50 +90,43 @@ const LivingTree = memo(function LivingTree({ className, height = 260, loader = 
       const t = reduced ? 0 : time / 1000;
       ctx.clearRect(0, 0, w, h);
       const cx = w / 2;
-      const mid = h * 0.5;
-      const scale = Math.min(w / 1476, h / 520);
-      const breath = reduced ? 1 : 1 + Math.sin(t * 1.35) * (loader ? 0.018 : 0.01);
-      const drawScale = scale * breath;
+      const baseline = h * 0.78;
+      const treeHeight = h * (loader ? 0.60 : 0.68);
+      const breath = reduced ? 1 : 1 + Math.sin(t * 1.22) * (loader ? 0.024 : 0.014);
 
-      // subtle central aura
-      const aura = ctx.createRadialGradient(cx, mid, 0, cx, mid, Math.min(w, h) * 0.45);
-      aura.addColorStop(0, 'rgba(124,217,236,.075)');
-      aura.addColorStop(0.45, 'rgba(255,255,255,.026)');
+      const aura = ctx.createRadialGradient(cx, baseline - treeHeight * 0.55, 0, cx, baseline - treeHeight * 0.55, Math.min(w, h) * 0.62);
+      aura.addColorStop(0, 'rgba(124,217,236,.095)');
+      aura.addColorStop(0.48, 'rgba(255,255,255,.024)');
       aura.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = aura;
       ctx.fillRect(0, 0, w, h);
 
-      // horizontal divider like the reference, now EliteBox-silver/cyan.
       ctx.save();
-      ctx.globalAlpha = loader ? 0.55 : 0.38;
-      ctx.strokeStyle = 'rgba(235,242,250,.42)';
-      ctx.shadowBlur = 10;
+      ctx.globalAlpha = loader ? 0.55 : 0.42;
+      ctx.strokeStyle = 'rgba(235,242,250,.48)';
+      ctx.shadowBlur = 12;
       ctx.shadowColor = 'rgba(124,217,236,.18)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(cx - 390 * scale, mid);
-      ctx.lineTo(cx + 390 * scale, mid);
+      ctx.moveTo(cx - Math.min(w * 0.36, 440), baseline);
+      ctx.lineTo(cx + Math.min(w * 0.36, 440), baseline);
       ctx.stroke();
       ctx.restore();
 
       ctx.save();
-      ctx.translate(cx, mid);
-      ctx.scale(drawScale, drawScale);
-      ctx.translate(-cx / drawScale, -mid / drawScale);
-      const baseLen = 82;
-      const seed = t * (loader ? 1.6 : 0.55);
-      drawBranch(ctx, cx, mid - 2, -Math.PI / 2, baseLen, 8, seed, false);
-      drawBranch(ctx, cx, mid + 2, Math.PI / 2, baseLen * 0.92, 8, seed + 4.2, true);
+      ctx.translate(cx, baseline);
+      ctx.scale(breath, breath);
+      ctx.translate(-cx, -baseline);
+      drawBranch(ctx, cx, baseline, -Math.PI / 2, treeHeight * 0.29, 9, t * (loader ? 1.65 : 0.62));
       ctx.restore();
 
-      // center pulse node
       ctx.save();
-      const r = 3.2 + (reduced ? 0 : Math.sin(t * 2.2) * 0.8);
-      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      const r = 3.4 + (reduced ? 0 : Math.sin(t * 2.2) * 0.75);
+      ctx.fillStyle = 'rgba(255,255,255,.92)';
       ctx.shadowBlur = 18;
       ctx.shadowColor = 'rgba(124,217,236,.45)';
       ctx.beginPath();
-      ctx.arc(cx, mid, r, 0, Math.PI * 2);
+      ctx.arc(cx, baseline, r, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
@@ -152,25 +134,20 @@ const LivingTree = memo(function LivingTree({ className, height = 260, loader = 
     };
 
     resize();
-    window.addEventListener('resize', resize);
     const ro = new ResizeObserver(() => { resize(); render(0); });
     ro.observe(canvas);
+    window.addEventListener('resize', resize);
     raf = requestAnimationFrame(render);
     return () => {
       running = false;
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
       ro.disconnect();
+      window.removeEventListener('resize', resize);
     };
   }, [height, loader]);
 
   return (
-    <div
-      className={cn('relative mx-auto w-full max-w-[760px]', className)}
-      style={{ height }}
-      aria-hidden="true"
-      data-testid={loader ? 'elitebox-tree-loader' : 'elitebox-living-tree'}
-    >
+    <div className={cn('relative mx-auto w-full max-w-[820px]', className)} style={{ height }} aria-hidden="true" data-testid={loader ? 'elitebox-tree-loader' : 'elitebox-living-tree'}>
       <canvas ref={canvasRef} className="block h-full w-full" />
     </div>
   );
