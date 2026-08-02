@@ -118,6 +118,18 @@ export const COLLECTIONS: CollectionDef[] = [
     match: (m) => Boolean(m.upcoming) || m.genres.includes('Upcoming'),
   },
   {
+    id: 'arabic-cinema',
+    nameKey: 'Arabic Cinema',
+    captionKey: 'Arabic-language films and MENA cinema metadata',
+    match: (m) => m.genres.includes('Arabic Cinema'),
+  },
+  {
+    id: 'bollywood',
+    nameKey: 'Bollywood',
+    captionKey: 'Bollywood and Indian cinema metadata',
+    match: (m) => m.genres.includes('Bollywood') || m.genres.includes('Indian Cinema'),
+  },
+  {
     id: 'global',
     nameKey: 'Global',
     captionKey: 'Global movies, series and anime metadata',
