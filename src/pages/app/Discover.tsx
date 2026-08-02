@@ -13,7 +13,7 @@ import { RotateCcw, SearchX, Store } from 'lucide-react';
 import PosterCard from '@/components/PosterCard';
 import { ButtonGhost, EmptyState, HealthDot, spring } from '@/components/ui-elite';
 import { addonEngine } from '@/lib/addons/engine';
-import { getAnimeCatalog } from '@/lib/globalCatalog';
+import { getAnimeCatalog, getCuratedGlobalTitles, getUpcomingTitles } from '@/lib/globalCatalog';
 import { findShowcaseMeta } from '@/data/showcase';
 import { useAddons } from '@/lib/store';
 import type { AddonHealth, MetaItem } from '@/lib/types';
@@ -35,8 +35,9 @@ export function useCatalogItems(): { items: MetaItem[]; loading: boolean; reload
       .then((results) => {
         const metas = results[0].status === 'fulfilled' ? results[0].value : [];
         const anime = results[1].status === 'fulfilled' ? results[1].value : [];
+        const curated = [...getCuratedGlobalTitles(), ...getUpcomingTitles()];
         const seen = new Set<string>();
-        const merged = [...metas, ...anime].filter((item) => {
+        const merged = [...curated, ...metas, ...anime].filter((item) => {
           if (seen.has(item.id)) return false;
           seen.add(item.id);
           return true;
@@ -97,6 +98,30 @@ export const COLLECTIONS: CollectionDef[] = [
     nameKey: 'app.collections.shortName',
     captionKey: 'app.collections.shortCaption',
     match: (m) => (m.runtime ?? 999) < 15 && m.type === 'movie',
+  },
+  {
+    id: 'anime',
+    nameKey: 'Anime',
+    captionKey: 'Japanese animation and global anime metadata',
+    match: (m) => m.genres.includes('Anime'),
+  },
+  {
+    id: 'new-releases',
+    nameKey: 'New releases',
+    captionKey: 'Recent movie and series metadata from legal catalogs',
+    match: (m) => (m.year ?? 0) >= new Date().getFullYear() - 2 && !m.upcoming,
+  },
+  {
+    id: 'upcoming',
+    nameKey: 'Upcoming',
+    captionKey: 'Announced upcoming titles, metadata only until release',
+    match: (m) => Boolean(m.upcoming) || m.genres.includes('Upcoming'),
+  },
+  {
+    id: 'global',
+    nameKey: 'Global',
+    captionKey: 'Global movies, series and anime metadata',
+    match: (m) => ['movie', 'series'].includes(m.type),
   },
 ];
 
@@ -396,9 +421,9 @@ export default function Discover() {
             className="glass-2 flex flex-wrap items-center justify-between gap-12 rounded-xl border-l-[3px] border-l-cyan p-16"
           >
             <div className="flex flex-col gap-4">
-              <h2 className="font-display text-title text-ink">{t(collection.nameKey)}</h2>
+              <h2 className="font-display text-title text-ink">{collection.nameKey.includes('.') ? t(collection.nameKey) : collection.nameKey}</h2>
               <p className="font-mono text-micro uppercase tracking-wider text-muted">
-                {t(collection.captionKey)} · {t('app.discover.computedFromAddons')}
+                {collection.captionKey.includes('.') ? t(collection.captionKey) : collection.captionKey} · {t('app.discover.computedFromAddons')}
               </p>
             </div>
             <ButtonGhost onClick={() => patchParams({ collection: null })}>{t('app.discover.clear')}</ButtonGhost>
