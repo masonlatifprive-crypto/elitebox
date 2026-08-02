@@ -6,6 +6,7 @@ import { useCatalogItems } from '@/pages/app/Discover';
 import { addonEngine } from '@/lib/addons/engine';
 import type { AddonInfo, MetaItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { findShowcaseMeta } from '@/data/showcase';
 
 interface TvRow {
   id: string;
@@ -52,13 +53,15 @@ export default function TvMode() {
 
   const rows = useMemo<TvRow[]>(() => {
     const clean = unique(items).filter((m) => m.poster && m.name);
+    const realCatalog = clean.filter((m) => !findShowcaseMeta(m.id));
     const q = query.trim().toLowerCase();
     const searched = q
-      ? clean.filter((m) => [m.name, m.description, ...(m.genres ?? [])].join(' ').toLowerCase().includes(q))
-      : clean;
+      ? realCatalog.filter((m) => [m.name, m.description, ...(m.genres ?? [])].join(' ').toLowerCase().includes(q))
+      : realCatalog;
     const movies = searched.filter((m) => m.type === 'movie');
     const series = searched.filter((m) => m.type === 'series');
-    const open = searched.filter((m) => !String(m.id).startsWith('tt'));
+    const open = clean.filter((m) => findShowcaseMeta(m.id));
+    const upcoming = searched.filter((m) => m.upcoming || m.genres?.includes('Upcoming'));
     const currentYear = new Date().getFullYear();
     const highRated = searched.filter((m) => (m.rating ?? 0) >= 7 && !m.upcoming && (!m.year || m.year <= currentYear));
     return [
@@ -66,7 +69,8 @@ export default function TvMode() {
       { id: 'movies', title: 'Trending movies', caption: 'Real Cinemeta movie catalog', items: movies.slice(0, 18) },
       { id: 'series', title: 'Popular series', caption: 'Real Cinemeta series catalog', items: series.slice(0, 18) },
       { id: 'rated', title: 'Critics picks', caption: 'High-rated available titles', items: highRated.slice(0, 18) },
-      { id: 'open', title: 'Open cinema — free & legal', caption: 'Playable legal showcase when available', items: open.slice(0, 18) },
+      { id: 'upcoming', title: 'Upcoming', caption: 'Announced upcoming titles, metadata only until release', items: upcoming.slice(0, 18) },
+      { id: 'open', title: 'Open cinema — free & legal', caption: 'Playable public-domain and Creative-Commons showcase', items: open.slice(0, 18) },
     ].filter((row) => row.items.length > 0);
   }, [items, query]);
 
