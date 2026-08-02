@@ -11,7 +11,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToastHost } from '@/components/ui-elite';
-import { LogoMark } from '@/components/Logo';
+import { TreeLoader } from '@/components/LivingTree';
 
 // Shells are heavy (AmbienceCanvas, nav, rail, tvnav) — split like pages.
 const MarketingShell = lazy(() =>
@@ -65,11 +65,7 @@ function TitleAlias() {
 }
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-[100dvh] items-center justify-center">
-      <LogoMark height={56} glow className="animate-pulse" />
-    </div>
-  );
+  return <TreeLoader label="Loading EliteBox" className="min-h-[100dvh]" />;
 }
 
 function RoutedPages() {
