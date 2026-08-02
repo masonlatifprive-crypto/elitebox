@@ -13,6 +13,7 @@ import { RotateCcw, SearchX, Store } from 'lucide-react';
 import PosterCard from '@/components/PosterCard';
 import { ButtonGhost, EmptyState, HealthDot, spring } from '@/components/ui-elite';
 import { addonEngine } from '@/lib/addons/engine';
+import { getAnimeCatalog } from '@/lib/globalCatalog';
 import { findShowcaseMeta } from '@/data/showcase';
 import { useAddons } from '@/lib/store';
 import type { AddonHealth, MetaItem } from '@/lib/types';
@@ -30,10 +31,17 @@ export function useCatalogItems(): { items: MetaItem[]; loading: boolean; reload
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    addonEngine
-      .getCatalog()
-      .then((metas) => {
-        if (alive) setItems(metas);
+    Promise.allSettled([addonEngine.getCatalog(), getAnimeCatalog()])
+      .then((results) => {
+        const metas = results[0].status === 'fulfilled' ? results[0].value : [];
+        const anime = results[1].status === 'fulfilled' ? results[1].value : [];
+        const seen = new Set<string>();
+        const merged = [...metas, ...anime].filter((item) => {
+          if (seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        });
+        if (alive) setItems(merged);
       })
       .catch(() => {
         if (alive) setItems([]);
