@@ -9,29 +9,30 @@ import LanguageSwitch from '@/components/LanguageSwitch';
 import { useT } from '@/i18n';
 
 const EXPLORE = [
-  { to: '/', labelKey: 'common.nav.movies' },
-  { to: '/sports', labelKey: 'common.nav.sports' },
-  { to: '/store', labelKey: 'common.nav.store' },
-  { to: '/support', labelKey: 'common.nav.support' },
+  { to: '/', label: 'Movies' },
+  { to: '/features', label: 'Features' },
+  { to: '/downloads', label: 'Downloads' },
+  { to: '/providers', label: 'Addons' },
   { to: '/community', label: 'Community' },
+  { to: '/support', label: 'Support' },
 ] as const;
 
 const PRODUCT = [
-  { to: '/features', labelKey: 'common.footer.features' },
-  { to: '/downloads', labelKey: 'common.footer.downloads' },
-  { to: '/technology', labelKey: 'common.footer.technology' },
-  { to: '/developers', labelKey: 'common.footer.addonSdk' },
+  { to: '/features', label: 'Features' },
+  { to: '/downloads', label: 'Downloads' },
+  { to: '/technology', label: 'Technology' },
+  { to: '/developers', label: 'Addon SDK' },
   { to: '/providers', label: 'Addon Directory' },
-  { to: '/updates', labelKey: 'common.footer.updatesStatus' },
-  { to: '/support', labelKey: 'common.footer.helpCenter' },
+  { to: '/updates', label: 'Updates' },
+  { to: '/support', label: 'Help Center' },
 ] as const;
 
 const LEGAL = [
-  { to: '/privacy', labelKey: 'common.footer.privacy' },
-  { to: '/terms', labelKey: 'common.footer.terms' },
-  { to: '/cookies', labelKey: 'common.footer.cookies' },
-  { to: '/security', labelKey: 'common.footer.security' },
-  { to: '/support#licenses', labelKey: 'common.footer.openContentLicenses' },
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
+  { to: '/cookies', label: 'Cookies' },
+  { to: '/security', label: 'Security' },
+  { to: '/support#licenses', label: 'Open content licenses' },
 ] as const;
 
 const PLATFORMS = [
@@ -41,10 +42,6 @@ const PLATFORMS = [
   { icon: Tv, label: 'TV' },
 ];
 
-
-function footerLabel(item: { label?: string; labelKey?: string }, t: (key: string) => string): string {
-  return item.label ?? (item.labelKey ? t(item.labelKey) : '');
-}
 
 export default function Footer() {
   const { t } = useT();
