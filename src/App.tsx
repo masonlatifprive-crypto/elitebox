@@ -7,7 +7,7 @@
  * a 200ms out-expo crossfade between pages. Opacity-only so fixed-position
  * pages (Player) are never reflowed mid-transition.
  */
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToastHost } from '@/components/ui-elite';
@@ -66,6 +66,23 @@ function TitleAlias() {
 
 function RouteFallback() {
   return <TreeLoader label="Loading EliteBox" className="min-h-[100dvh]" />;
+}
+
+
+function RouteChangeTreeMoment() {
+  const location = useLocation();
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    setVisible(true);
+    const t = window.setTimeout(() => setVisible(false), 520);
+    return () => window.clearTimeout(t);
+  }, [location.pathname]);
+  if (!visible) return null;
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center bg-black/82 backdrop-blur-[2px]">
+      <TreeLoader label="Loading EliteBox" className="min-h-[260px]" />
+    </div>
+  );
 }
 
 function RoutedPages() {
@@ -150,6 +167,7 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
         <RoutedPages />
+        <RouteChangeTreeMoment />
       </Suspense>
       <ToastHost />
     </BrowserRouter>
