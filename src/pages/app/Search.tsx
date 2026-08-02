@@ -13,6 +13,7 @@ import { ButtonGhost, EmptyState, spring, toast } from '@/components/ui-elite';
 import { MagnetPasteField, presentMagnetUri } from '@/components/MagnetDrop';
 import { FilterChip, sourceForItem, useCatalogItems } from '@/pages/app/Discover';
 import { addonEngine } from '@/lib/addons/engine';
+import { searchAnime } from '@/lib/globalCatalog';
 import { isMagnetUri } from '@/lib/magnet';
 import { scopedKey, useAddons, useLibrary, useSettings } from '@/lib/store';
 import type { MetaItem } from '@/lib/types';
@@ -156,11 +157,17 @@ export default function Search() {
     }
     let alive = true;
     setSearching(true);
-    addonEngine
-      .search(debounced)
-      .then((metas) => {
+    Promise.allSettled([addonEngine.search(debounced), searchAnime(debounced)])
+      .then((results) => {
         if (!alive) return;
-        setResults(metas);
+        const metas = results[0].status === 'fulfilled' ? results[0].value : [];
+        const anime = results[1].status === 'fulfilled' ? results[1].value : [];
+        const seen = new Set<string>();
+        setResults([...metas, ...anime].filter((item) => {
+          if (seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        }));
         setSearched(true);
       })
       .catch(() => {
