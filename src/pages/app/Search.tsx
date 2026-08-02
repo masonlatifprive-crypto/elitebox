@@ -21,6 +21,7 @@ import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const MAX_RECENTS = 8;
+const SEARCH_TIMEOUT_MS = 8500;
 
 function recentsKey(): string {
   return scopedKey('search.recent');
@@ -157,7 +158,15 @@ export default function Search() {
     }
     let alive = true;
     setSearching(true);
-    Promise.allSettled([addonEngine.search(debounced), searchAnime(debounced)])
+    Promise.race([
+        Promise.allSettled([addonEngine.search(debounced), searchAnime(debounced)]),
+        new Promise<PromiseSettledResult<MetaItem[]>[]>((resolve) => {
+          window.setTimeout(() => resolve([
+            { status: 'fulfilled', value: [] } as PromiseFulfilledResult<MetaItem[]>,
+            { status: 'fulfilled', value: [] } as PromiseFulfilledResult<MetaItem[]>,
+          ]), SEARCH_TIMEOUT_MS);
+        }),
+      ])
       .then((results) => {
         if (!alive) return;
         const metas = results[0].status === 'fulfilled' ? results[0].value : [];
