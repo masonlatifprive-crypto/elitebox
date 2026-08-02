@@ -24,6 +24,11 @@ const LINKS = [
   { to: '/developers', label: 'Developers' },
 ] as const;
 
+
+function linkLabel(link: (typeof LINKS)[number], t: (key: string) => string): string {
+  return 'label' in link ? link.label : t(link.labelKey);
+}
+
 export default function MarketingNav() {
   const { t } = useT();
   const [scrolled, setScrolled] = useState(false);
