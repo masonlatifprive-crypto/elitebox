@@ -1,104 +1,188 @@
 /**
- * LivingTree — the EliteBox signature mark: a DadGPT-style "AI waveform ×
- * neural tree" that floats, breathes and pulses above the hero headline.
- *
- * Motion contract (from the motion reference, exact):
- *  - whole-tree float   4.6s  y 0 → -15px → 0        (cubic-bezier .76,0,.24,1)
- *  - glow breathing     3.4s  scale .94→1.08, opacity .45→.85 (alternate)
- *  - spine pulse        2.8s  height 116→142px, opacity .54→1
- *  - branch pulse       2.7s  scaleX .72→1.08, opacity .34→1, staggered
- *  - node pulse         2.2s  scale .86→1.25, opacity .35→1
- *
- * Recolored from the white/red reference to the lunar EliteBox identity:
- * right-hand branches glow ice cyan, left-hand branches glow violet — the
- * logo gradient rendered as a living organism. Branches mirror the reference
- * silhouette: crown branches sweep upward, root branches sweep downward.
- *
- * Accessibility: purely decorative (aria-hidden); the full reduced-motion
- * fallback lives in index.css (`@media (prefers-reduced-motion: reduce)`),
- * rendering a static, fully-formed tree with no animation.
+ * LivingTree — EliteBox signature mark.
+ * Canvas-based mirrored fractal tree inspired by the approved motion reference:
+ * upward branch crown + downward root system around a fine central divider.
+ * Original EliteBox palette, lightweight 2D canvas, responsive fixed-ratio draw.
  */
-import type { CSSProperties } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-type Branch = {
-  /** width (length) px */ w: number;
-  /** vertical offset from center px */ y: number;
-  /** rotation deg (sign tuned per side for crown-up / roots-down) */ r: number;
-  /** pulse stagger delay s */ d: number;
-  side: 'l' | 'r';
-  /** grow a small secondary twig at ~52% length */ twig?: boolean;
-};
+interface LivingTreeProps {
+  className?: string;
+  height?: number;
+  loader?: boolean;
+}
 
-/** Ten branches — widths/offsets/staggers from the motion reference (.b1–.b10),
- *  mirrored left/right with rotation signs set for upward crown + downward roots. */
-const BRANCHES: Branch[] = [
-  { w: 78, y: -58, r: -16, d: -0.2, side: 'r' },
-  { w: 104, y: -35, r: 10, d: -0.8, side: 'l', twig: true },
-  { w: 62, y: -12, r: -8, d: -1.4, side: 'r' },
-  { w: 92, y: 16, r: -14, d: -0.55, side: 'l', twig: true },
-  { w: 68, y: 42, r: 13, d: -1.1, side: 'r' },
-  { w: 88, y: 59, r: -16, d: -0.35, side: 'l' },
-  { w: 110, y: 36, r: 10, d: -1.25, side: 'r', twig: true },
-  { w: 70, y: 10, r: -8, d: -0.7, side: 'l' },
-  { w: 96, y: -18, r: -14, d: -1.6, side: 'r', twig: true },
-  { w: 74, y: -44, r: 12, d: -0.95, side: 'l' },
-];
+function drawBranch(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  angle: number,
+  length: number,
+  depth: number,
+  seed: number,
+  root = false,
+) {
+  if (depth <= 0 || length < 2) return;
+  const sway = Math.sin(seed + depth * 0.73) * 0.035;
+  const a = angle + sway;
+  const x2 = x + Math.cos(a) * length;
+  const y2 = y + Math.sin(a) * length;
+  const alpha = Math.max(0.08, depth / 9);
 
-/** Waveform rungs crossing the spine — the "AI waveform" half of the hybrid. */
-const RUNGS = [
-  { top: '24%', w: 13, d: -0.3 },
-  { top: '35%', w: 22, d: -1.1 },
-  { top: '47%', w: 15, d: -1.9 },
-  { top: '58%', w: 24, d: -0.7 },
-  { top: '69%', w: 12, d: -1.5 },
-  { top: '80%', w: 18, d: -2.3 },
-];
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(0.65, depth * 0.34);
+  ctx.shadowBlur = root ? 9 : 7;
+  ctx.shadowColor = root ? 'rgba(124,217,236,.30)' : 'rgba(255,255,255,.22)';
+  const grad = ctx.createLinearGradient(x, y, x2, y2);
+  if (root) {
+    grad.addColorStop(0, `rgba(255,255,255,${0.16 * alpha})`);
+    grad.addColorStop(0.55, `rgba(124,217,236,${0.58 * alpha})`);
+    grad.addColorStop(1, `rgba(255,255,255,${0.78 * alpha})`);
+  } else {
+    grad.addColorStop(0, `rgba(255,255,255,${0.18 * alpha})`);
+    grad.addColorStop(0.6, `rgba(230,238,246,${0.68 * alpha})`);
+    grad.addColorStop(1, `rgba(124,217,236,${0.36 * alpha})`);
+  }
+  ctx.strokeStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
 
-/** Free-floating motes around the tree (reference nodes n1–n4). */
-const FREE_NODES = [
-  { left: '48%', top: '14%', d: -0.5 },
-  { left: '58%', top: '38%', d: -1.3 },
-  { left: '38%', top: '60%', d: -1.8 },
-  { left: '54%', top: '82%', d: -0.9 },
-];
+  if (depth <= 2) {
+    ctx.fillStyle = root ? 'rgba(124,217,236,.75)' : 'rgba(255,255,255,.72)';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(x2, y2, root ? 1.55 : 1.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 
-export default function LivingTree({ className }: { className?: string }) {
+  const split = 0.57 + Math.sin(seed + depth) * 0.035;
+  const next = length * split;
+  const spread = (root ? 0.46 : 0.41) + (9 - depth) * 0.012;
+  drawBranch(ctx, x2, y2, a - spread, next, depth - 1, seed + 1.7, root);
+  drawBranch(ctx, x2, y2, a + spread, next * 0.94, depth - 1, seed + 2.3, root);
+  if (depth > 4) {
+    drawBranch(ctx, x2, y2, a + (root ? -0.16 : 0.16), next * 0.58, depth - 2, seed + 3.1, root);
+  }
+}
+
+const LivingTree = memo(function LivingTree({ className, height = 260, loader = false }: LivingTreeProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let raf = 0;
+    let running = true;
+    let w = 0;
+    let h = 0;
+    const ratio = 1476 / 520;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      w = Math.max(280, rect.width || height * ratio);
+      h = Math.max(120, rect.height || height);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const render = (time = 0) => {
+      if (!running) return;
+      const t = reduced ? 0 : time / 1000;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2;
+      const mid = h * 0.5;
+      const scale = Math.min(w / 1476, h / 520);
+      const breath = reduced ? 1 : 1 + Math.sin(t * 1.35) * (loader ? 0.018 : 0.01);
+      const drawScale = scale * breath;
+
+      // subtle central aura
+      const aura = ctx.createRadialGradient(cx, mid, 0, cx, mid, Math.min(w, h) * 0.45);
+      aura.addColorStop(0, 'rgba(124,217,236,.075)');
+      aura.addColorStop(0.45, 'rgba(255,255,255,.026)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.fillRect(0, 0, w, h);
+
+      // horizontal divider like the reference, now EliteBox-silver/cyan.
+      ctx.save();
+      ctx.globalAlpha = loader ? 0.55 : 0.38;
+      ctx.strokeStyle = 'rgba(235,242,250,.42)';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'rgba(124,217,236,.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 390 * scale, mid);
+      ctx.lineTo(cx + 390 * scale, mid);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(cx, mid);
+      ctx.scale(drawScale, drawScale);
+      ctx.translate(-cx / drawScale, -mid / drawScale);
+      const baseLen = 82;
+      const seed = t * (loader ? 1.6 : 0.55);
+      drawBranch(ctx, cx, mid - 2, -Math.PI / 2, baseLen, 8, seed, false);
+      drawBranch(ctx, cx, mid + 2, Math.PI / 2, baseLen * 0.92, 8, seed + 4.2, true);
+      ctx.restore();
+
+      // center pulse node
+      ctx.save();
+      const r = 3.2 + (reduced ? 0 : Math.sin(t * 2.2) * 0.8);
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = 'rgba(124,217,236,.45)';
+      ctx.beginPath();
+      ctx.arc(cx, mid, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      if (!reduced) raf = requestAnimationFrame(render);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+    const ro = new ResizeObserver(() => { resize(); render(0); });
+    ro.observe(canvas);
+    raf = requestAnimationFrame(render);
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+      ro.disconnect();
+    };
+  }, [height, loader]);
+
   return (
-    <div className={cn('living-tree', className)} aria-hidden="true">
-      <div className="lt-glow" />
-      <span className="lt-spine" />
-      {RUNGS.map((rung) => (
-        <span
-          key={rung.top}
-          className="lt-rung"
-          style={{ top: rung.top, width: rung.w, '--d': `${rung.d}s` } as CSSProperties}
-        />
-      ))}
-      {FREE_NODES.map((n) => (
-        <span
-          key={`${n.left}-${n.top}`}
-          className="lt-free-node"
-          style={{ left: n.left, top: n.top, '--d': `${n.d}s` } as CSSProperties}
-        />
-      ))}
-      {BRANCHES.map((b, i) => (
-        <span
-          key={i}
-          className={cn('lt-branch', b.side)}
-          style={
-            {
-              '--w': `${b.w}px`,
-              '--y': `${b.y}px`,
-              '--r': `${b.r}deg`,
-              '--d': `${b.d}s`,
-            } as CSSProperties
-          }
-        >
-          {b.twig && <span className="lt-twig" />}
-          <span className="lt-node" />
-        </span>
-      ))}
+    <div
+      className={cn('relative mx-auto w-full max-w-[760px]', className)}
+      style={{ height }}
+      aria-hidden="true"
+      data-testid={loader ? 'elitebox-tree-loader' : 'elitebox-living-tree'}
+    >
+      <canvas ref={canvasRef} className="block h-full w-full" />
+    </div>
+  );
+});
+
+export function TreeLoader({ label = 'Loading EliteBox', className }: { label?: string; className?: string }) {
+  return (
+    <div className={cn('flex min-h-[220px] flex-col items-center justify-center gap-10 text-center', className)} role="status" aria-live="polite">
+      <LivingTree height={150} loader className="max-w-[360px]" />
+      <span className="text-micro uppercase tracking-[0.24em] text-muted">{label}</span>
     </div>
   );
 }
+
+export default LivingTree;
