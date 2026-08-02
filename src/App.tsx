@@ -124,6 +124,8 @@ function RoutedPages() {
             <Route path="/download" element={<Navigate to="/downloads" replace />} />
             <Route path="/apps" element={<Navigate to="/downloads" replace />} />
             <Route path="/anime" element={<Navigate to="/app/discover?genre=Anime" replace />} />
+            <Route path="/arabic" element={<Navigate to="/app/discover?collection=arabic-cinema" replace />} />
+            <Route path="/bollywood" element={<Navigate to="/app/discover?collection=bollywood" replace />} />
             <Route path="/global-catalog" element={<Navigate to="/app/discover" replace />} />
                         <Route path="*" element={<NotFoundPage />} />
           </Route>
@@ -136,6 +138,8 @@ function RoutedPages() {
             <Route path="movies" element={<Catalog kind="movie" />} />
             <Route path="series" element={<Catalog kind="series" />} />
             <Route path="anime" element={<Navigate to="/app/discover?genre=Anime" replace />} />
+            <Route path="arabic" element={<Navigate to="/app/discover?collection=arabic-cinema" replace />} />
+            <Route path="bollywood" element={<Navigate to="/app/discover?collection=bollywood" replace />} />
             <Route path="global" element={<Navigate to="/app/discover" replace />} />
             <Route path="live" element={<Live />} />
             <Route path="calendar" element={<Calendar />} />
