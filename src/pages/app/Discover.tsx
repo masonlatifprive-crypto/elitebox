@@ -60,7 +60,7 @@ export function useCatalogItems(): { items: MetaItem[]; loading: boolean; reload
 /** Which addon an item came from (builtin showcase vs. first external). */
 export function sourceForItem(item: MetaItem, installedIds: string[]): string {
   if (findShowcaseMeta(item.id)) return 'elitebox.showcase';
-  return installedIds.find((id) => id !== 'elitebox.showcase') ?? 'elitebox.showcase';
+  return installedIds.find((id) => id !== 'elitebox.showcase') ?? 'com.linvo.cinemeta';
 }
 
 /* ── Smart collections (rule-filtered rows, computed live from metadata) ── */
