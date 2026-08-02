@@ -68,9 +68,9 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
 
   return (
     <motion.div
-      className={cn('shrink-0', wide ? 'w-[320px] xl:w-[380px]' : 'w-128 md:w-160 xl:w-[200px]', className)}
-      whileHover={reduceMotion ? undefined : { y: -6, scale: 1.05 }}
-      whileFocus={reduceMotion ? undefined : { y: -6, scale: 1.05 }}
+      className={cn('shrink-0', wide ? 'w-[340px] xl:w-[420px]' : 'w-[150px] md:w-[184px] xl:w-[220px] 2xl:w-[240px]', className)}
+      whileHover={reduceMotion ? undefined : { y: -8, scale: 1.035 }}
+      whileFocus={reduceMotion ? undefined : { y: -8, scale: 1.035 }}
       transition={spring.smooth}
       style={{ perspective: 900 }}
     >
@@ -78,7 +78,7 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
         ref={ref}
         to={`/app/detail/${item.type}/${item.id}`}
         className={cn(
-          'focusable group relative block overflow-hidden rounded-lg ring-1 ring-white/[.08] bg-navy',
+          'focusable group relative block overflow-hidden rounded-xl ring-1 ring-white/[.10] bg-navy shadow-[0_18px_50px_rgba(0,0,0,.25)]',
           wide ? 'aspect-video' : 'aspect-[2/3]',
           'hover:shadow-focus-glow focus-visible:shadow-focus-glow',
         )}
@@ -128,7 +128,7 @@ const PosterCard = memo(function PosterCard({ item, progress, className }: Poste
         </div>
 
         {/* title + meta */}
-        <div className="absolute inset-x-10 bottom-10 flex flex-col gap-2">
+        <div className="absolute inset-x-12 bottom-12 flex flex-col gap-3">
           <span className="text-caption text-ink leading-tight line-clamp-2">{item.name}</span>
           <span className="text-micro uppercase text-muted">{meta}</span>
         </div>
