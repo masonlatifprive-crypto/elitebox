@@ -16,10 +16,12 @@ import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
-  { to: '/', labelKey: 'common.nav.movies', end: true },
-  { to: '/sports', labelKey: 'common.nav.sports' },
-  { to: '/store', labelKey: 'common.nav.store' },
-  { to: '/support', labelKey: 'common.nav.support' },
+  { to: '/', label: 'Movies', end: true },
+  { to: '/features', label: 'Features' },
+  { to: '/downloads', label: 'Downloads' },
+  { to: '/providers', label: 'Addons' },
+  { to: '/community', label: 'Community' },
+  { to: '/developers', label: 'Developers' },
 ] as const;
 
 export default function MarketingNav() {
