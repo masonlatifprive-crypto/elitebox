@@ -34,7 +34,7 @@ import {
   Star,
 } from 'lucide-react';
 import { addonEngine } from '@/lib/addons/engine';
-import { getAnimeCatalog, getCuratedGlobalTitles, getUpcomingTitles } from '@/lib/globalCatalog';
+import { getAnimeCatalog, getCuratedGlobalTitles, getKnownTitleAliases, getUpcomingTitles } from '@/lib/globalCatalog';
 import { findShowcaseMeta } from '@/data/showcase';
 import { parseSourceTitle, scoreSource } from '@/lib/sourceScore';
 import { useAddons, useLibrary } from '@/lib/store';
@@ -274,7 +274,7 @@ export default function Detail() {
     setSynopsisOpen(false);
     window.scrollTo(0, 0);
     const metaType = type as MetaType;
-    const curated = [...getCuratedGlobalTitles(), ...getUpcomingTitles()];
+    const curated = [...getKnownTitleAliases(), ...getCuratedGlobalTitles(), ...getUpcomingTitles()];
     const direct = curated.find((m) => m.id === id || m.id.split(':').at(-1) === id);
     if (direct) {
       setMeta(direct);
