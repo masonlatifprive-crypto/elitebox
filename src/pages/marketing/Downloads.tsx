@@ -9,7 +9,7 @@
  *  • Bytes only ever leave the server for an active Premium subscription
  *    via short-lived signed URLs — this page renders that gate faithfully:
  *    locked → subscribe CTA, unstaged → "being packaged", no invented files.
- *  • Demo mode (no API linked) shows the same matrix with the gate logic
+ *  • Local mode (no API linked) shows the same matrix with the gate logic
  *    intact and an honest note that the build service isn't linked here.
  */
 import { useEffect, useMemo, useState } from 'react';
