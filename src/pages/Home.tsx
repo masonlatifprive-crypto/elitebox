@@ -53,14 +53,14 @@ function Hero() {
         </div>
         <div className="mx-auto -mt-12 max-w-3xl text-center sm:-mt-20">
           <h1 className="hero-title font-display text-[clamp(2.5rem,7.2vw,3.75rem)] font-semibold leading-none tracking-[-0.025em] text-ink">
-            Stream freely.<br /><span className="text-white/60">Everything in one place.</span>
+            Freedom to watch.<br /><span className="text-white/60">Everything in one calm app.</span>
           </h1>
           <p className="mx-auto mt-20 max-w-xl text-base leading-7 text-white/60 sm:text-lg">
-            EliteBox brings your movies, series, live channels and free public-domain cinema together — fast, private, and beautiful on every screen.
+            EliteBox brings movies, series, anime, live channels, subtitles and legal open cinema into one fast, private experience across every screen.
           </p>
           <div className="mt-32 flex flex-wrap items-center justify-center gap-12">
-            <ButtonPrimary to="/downloads" className="px-28 py-14" data-testid="hero-primary-cta">Get EliteBox 1.0</ButtonPrimary>
-            <ButtonNeon to="/app" className="px-28 py-14" data-testid="hero-secondary-cta">Open the web app</ButtonNeon>
+            <ButtonPrimary to="/downloads" className="px-28 py-14" data-testid="hero-primary-cta">Download EliteBox</ButtonPrimary>
+            <ButtonNeon to="/app" className="px-28 py-14" data-testid="hero-secondary-cta">Open Web App</ButtonNeon>
           </div>
           <div data-testid="hero-available-on" className="mt-32 flex flex-wrap items-center justify-center gap-8">
             {PLATFORMS.map((p) => (
@@ -90,7 +90,7 @@ function FeatureGrid() {
   return (
     <section className="border-t border-white/10">
       <div className="mx-auto max-w-6xl px-16 py-80 sm:px-24">
-        <SectionTitle eyebrow="Why EliteBox" title="Watch and enjoy — the easy way" subtitle="A calm, cinematic home for everything you watch, with the controls power users love." />
+        <SectionTitle eyebrow="Why EliteBox" title="Watch and enjoy, the easy way" subtitle="A clean entertainment hub with addon-powered discovery, reliable playback tools, and a library that feels effortless." />
         <div className="mt-48 grid gap-16 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => {
             const Icon = f.icon;
@@ -116,7 +116,7 @@ function BigScreen() {
     <section className="border-t border-white/10">
       <div className="mx-auto grid max-w-6xl items-center gap-40 px-16 py-80 sm:px-24 lg:grid-cols-2">
         <div>
-          <SectionTitle eyebrow="On the big screen" title="Movie night, made effortless" subtitle="The EliteBox TV experience puts your library one click away on Android TV and living-room devices — lean back and press play." />
+          <SectionTitle eyebrow="On the big screen" title="Big-screen browsing, made simple" subtitle="The EliteBox TV experience keeps discovery, search, subtitles and playback controls easy to reach from the couch." />
           <div className="mt-32"><ButtonPrimary to="/downloads">All downloads</ButtonPrimary></div>
         </div>
         <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#030612]">
@@ -148,8 +148,8 @@ function FaqAndFinalCta() {
           ))}
         </div>
         <GlassPanel level={1} className="mt-48 p-32 text-center">
-          <h3 className="font-display text-2xl font-semibold text-ink">Join the party now</h3>
-          <p className="mt-8 text-caption text-muted">Create your free library and start watching in seconds.</p>
+          <h3 className="font-display text-2xl font-semibold text-ink">Start watching with EliteBox</h3>
+          <p className="mt-8 text-caption text-muted">Open the web app, add legal providers, and build a library that follows your devices.</p>
           <div className="mt-20 flex justify-center"><ButtonPrimary to="/register">Get EliteBox for free</ButtonPrimary></div>
         </GlassPanel>
       </div>
