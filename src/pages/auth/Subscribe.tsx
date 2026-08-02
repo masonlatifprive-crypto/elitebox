@@ -175,12 +175,12 @@ export default function Subscribe() {
 
   const ctaLabel = processing
     ? demoMode
-      ? t('marketing.auth.subscribe.cta.processingDemo')
+      ? t('marketing.auth.subscribe.cta.processingLocal')
       : method === 'paypal'
         ? t('marketing.auth.subscribe.cta.redirectPaypal')
         : t('marketing.auth.subscribe.cta.openingCheckout')
     : demoMode
-      ? t('marketing.auth.subscribe.cta.subscribeDemo')
+      ? t('marketing.auth.subscribe.cta.subscribeLocal')
       : method === 'paypal'
         ? t('marketing.auth.subscribe.cta.continuePaypal')
         : t('marketing.auth.subscribe.cta.subscribe');
@@ -378,7 +378,7 @@ export default function Subscribe() {
                     {demoMode && (
                       <p className="glass-1 mx-auto inline-flex items-center gap-8 rounded-full px-12 py-6 text-micro uppercase text-warn">
                         <FlaskConical size={14} strokeWidth={1.75} />
-                        {t('marketing.auth.subscribe.demoBadge')}
+                        {t('marketing.auth.subscribe.localBadge')}
                       </p>
                     )}
 
@@ -428,7 +428,7 @@ export default function Subscribe() {
               </p>
               {demoMode && (
                 <p className="max-w-[46ch] text-micro uppercase text-muted/70">
-                  {t('marketing.auth.subscribe.fineprintDemo')}
+                  {t('marketing.auth.subscribe.fineprintLocal')}
                 </p>
               )}
               <button
