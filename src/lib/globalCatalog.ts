@@ -37,6 +37,16 @@ function mergeAnime(primary: MetaItem[], extra: MetaItem[]): MetaItem[] {
   });
 }
 
+
+const CURATED_ID_ALIASES: MetaItem[] = [
+  { id: 'tt0409591', type: 'series', name: 'Naruto', poster: 'https://cdn.myanimelist.net/images/anime/13/17405l.jpg', backdrop: 'https://cdn.myanimelist.net/images/anime/13/17405l.jpg', year: 2002, genres: ['Anime', 'Action', 'Adventure'], rating: 7.99, description: 'Anime metadata provided by public anime databases. Playback depends on legal installed stream providers.', videos: Array.from({ length: 48 }, (_, i) => ({ id: `tt0409591:${i + 1}`, title: `Episode ${i + 1}`, episode: i + 1 })), officialUrl: 'https://myanimelist.net/anime/20/Naruto' },
+  { id: 'tt0068646', type: 'movie', name: 'The Godfather', poster: 'https://images.metahub.space/poster/medium/tt0068646/img', backdrop: 'https://images.metahub.space/background/medium/tt0068646/img', year: 1972, genres: ['Crime', 'Drama', 'Classics'], rating: 9.2, description: 'Global movie metadata. Playback depends on legal installed stream providers.' },
+  { id: 'tt0111161', type: 'movie', name: 'The Shawshank Redemption', poster: 'https://images.metahub.space/poster/medium/tt0111161/img', backdrop: 'https://images.metahub.space/background/medium/tt0111161/img', year: 1994, genres: ['Drama', 'Classics'], rating: 9.3, description: 'Global movie metadata. Playback depends on legal installed stream providers.' },
+  { id: 'tt0903747', type: 'series', name: 'Breaking Bad', poster: 'https://images.metahub.space/poster/medium/tt0903747/img', backdrop: 'https://images.metahub.space/background/medium/tt0903747/img', year: 2008, genres: ['Crime', 'Drama', 'Series'], rating: 9.5, description: 'Global series metadata. Playback depends on legal installed stream providers.' },
+];
+
+export function getKnownTitleAliases(): MetaItem[] { return CURATED_ID_ALIASES; }
+
 const CACHE_TTL = 20 * 60_000;
 
 const CURATED_GLOBAL_TITLES: MetaItem[] = [
@@ -76,7 +86,7 @@ const CURATED_BOLLYWOOD_CINEMA: MetaItem[] = [
 export function getArabicCinema(): MetaItem[] { return CURATED_ARABIC_CINEMA; }
 export function getBollywoodCinema(): MetaItem[] { return CURATED_BOLLYWOOD_CINEMA; }
 
-export function getCuratedGlobalTitles(): MetaItem[] { return [...CURATED_GLOBAL_TITLES, ...CURATED_ARABIC_CINEMA, ...CURATED_BOLLYWOOD_CINEMA]; }
+export function getCuratedGlobalTitles(): MetaItem[] { return [...CURATED_ID_ALIASES, ...CURATED_GLOBAL_TITLES, ...CURATED_ARABIC_CINEMA, ...CURATED_BOLLYWOOD_CINEMA]; }
 export function getUpcomingTitles(): MetaItem[] { return CURATED_UPCOMING_TITLES; }
 
 const cache = new Map<string, { at: number; items: MetaItem[] }>();
