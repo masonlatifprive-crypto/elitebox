@@ -48,11 +48,11 @@ function Hero() {
     <section className="relative overflow-hidden bg-black">
       <div className="eb-hero-halo pointer-events-none absolute inset-0" aria-hidden />
       <div className="relative mx-auto max-w-6xl px-16 pt-40 sm:px-24 sm:pt-64">
-        <div className="mx-auto flex h-[300px] items-center justify-center sm:h-[380px]">
-          <LivingTree className="scale-[1.28] sm:scale-[1.7]" />
+        <div className="mx-auto flex h-[290px] items-center justify-center sm:h-[360px] lg:h-[390px]">
+          <LivingTree className="w-full max-w-[760px] scale-100" />
         </div>
         <div className="mx-auto -mt-12 max-w-3xl text-center sm:-mt-20">
-          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-ink sm:text-6xl lg:text-7xl">
+          <h1 className="hero-title font-display text-[clamp(2.5rem,7.2vw,3.75rem)] font-semibold leading-none tracking-[-0.025em] text-ink">
             Stream freely.<br /><span className="text-white/60">Everything in one place.</span>
           </h1>
           <p className="mx-auto mt-20 max-w-xl text-base leading-7 text-white/60 sm:text-lg">
