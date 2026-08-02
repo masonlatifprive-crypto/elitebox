@@ -41,6 +41,11 @@ const PLATFORMS = [
   { icon: Tv, label: 'TV' },
 ];
 
+
+function footerLabel(item: { label?: string; labelKey?: string }, t: (key: string) => string): string {
+  return item.label ?? (item.labelKey ? t(item.labelKey) : '');
+}
+
 export default function Footer() {
   const { t } = useT();
   return (
