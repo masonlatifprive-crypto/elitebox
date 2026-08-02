@@ -20,6 +20,23 @@ interface JikanAnime {
 interface JikanResponse { data?: JikanAnime[] }
 
 const BASE = 'https://api.jikan.moe/v4';
+
+const CURATED_ANIME: MetaItem[] = [
+  { id: 'mal:20', type: 'series', name: 'Naruto', poster: 'https://cdn.myanimelist.net/images/anime/13/17405l.jpg', backdrop: 'https://cdn.myanimelist.net/images/anime/13/17405l.jpg', year: 2002, genres: ['Anime', 'Action', 'Adventure'], rating: 7.99, description: 'Anime metadata provided by public anime databases. Playback depends on legal installed stream providers.', videos: Array.from({ length: 48 }, (_, i) => ({ id: `mal:20:${i + 1}`, title: `Episode ${i + 1}`, episode: i + 1 })), officialUrl: 'https://myanimelist.net/anime/20/Naruto' },
+  { id: 'mal:21', type: 'series', name: 'One Piece', poster: 'https://cdn.myanimelist.net/images/anime/6/73245l.jpg', backdrop: 'https://cdn.myanimelist.net/images/anime/6/73245l.jpg', year: 1999, genres: ['Anime', 'Action', 'Adventure'], rating: 8.72, description: 'Anime metadata provided by public anime databases. Playback depends on legal installed stream providers.', videos: Array.from({ length: 48 }, (_, i) => ({ id: `mal:21:${i + 1}`, title: `Episode ${i + 1}`, episode: i + 1 })), officialUrl: 'https://myanimelist.net/anime/21/One_Piece' },
+  { id: 'mal:38000', type: 'series', name: 'Demon Slayer: Kimetsu no Yaiba', poster: 'https://cdn.myanimelist.net/images/anime/1286/99889l.jpg', backdrop: 'https://cdn.myanimelist.net/images/anime/1286/99889l.jpg', year: 2019, genres: ['Anime', 'Action', 'Fantasy'], rating: 8.43, description: 'Anime metadata provided by public anime databases. Playback depends on legal installed stream providers.', videos: Array.from({ length: 26 }, (_, i) => ({ id: `mal:38000:${i + 1}`, title: `Episode ${i + 1}`, episode: i + 1 })), officialUrl: 'https://myanimelist.net/anime/38000/Kimetsu_no_Yaiba' },
+  { id: 'mal:5114', type: 'series', name: 'Fullmetal Alchemist: Brotherhood', poster: 'https://cdn.myanimelist.net/images/anime/1208/94745l.jpg', backdrop: 'https://cdn.myanimelist.net/images/anime/1208/94745l.jpg', year: 2009, genres: ['Anime', 'Action', 'Adventure'], rating: 9.09, description: 'Anime metadata provided by public anime databases. Playback depends on legal installed stream providers.', videos: Array.from({ length: 48 }, (_, i) => ({ id: `mal:5114:${i + 1}`, title: `Episode ${i + 1}`, episode: i + 1 })), officialUrl: 'https://myanimelist.net/anime/5114/Fullmetal_Alchemist__Brotherhood' },
+];
+
+function mergeAnime(primary: MetaItem[], extra: MetaItem[]): MetaItem[] {
+  const seen = new Set<string>();
+  return [...primary, ...extra].filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
 const CACHE_TTL = 20 * 60_000;
 const cache = new Map<string, { at: number; items: MetaItem[] }>();
 
@@ -83,7 +100,7 @@ export async function getAnimeCatalog(): Promise<MetaItem[]> {
   const cached = getCached(key);
   if (cached) return cached;
   const data = await fetchJson(`${BASE}/top/anime?filter=bypopularity&limit=24`);
-  const items = (data.data ?? []).map(normalize).filter((m) => m.poster && m.name);
+  const items = mergeAnime(CURATED_ANIME, (data.data ?? []).map(normalize).filter((m) => m.poster && m.name));
   setCached(key, items);
   return items;
 }
@@ -95,7 +112,9 @@ export async function searchAnime(query: string): Promise<MetaItem[]> {
   const cached = getCached(key);
   if (cached) return cached;
   const data = await fetchJson(`${BASE}/anime?q=${encodeURIComponent(q)}&limit=18&sfw=true`);
-  const items = (data.data ?? []).map(normalize).filter((m) => m.poster && m.name);
+  const live = (data.data ?? []).map(normalize).filter((m) => m.poster && m.name);
+  const curated = CURATED_ANIME.filter((m) => m.name.toLowerCase().includes(q.toLowerCase()));
+  const items = mergeAnime(curated, live);
   setCached(key, items);
   return items;
 }
