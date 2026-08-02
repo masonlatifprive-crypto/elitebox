@@ -234,6 +234,31 @@ function SearchNoMatch({ query, onClear }: { query: string; onClear: () => void 
   );
 }
 
+
+const LIBRARY_STATIC_FALLBACKS: Record<string, MetaItem> = {
+  tt0409591: {
+    id: 'tt0409591', type: 'series', name: 'Naruto',
+    poster: 'https://cdn.myanimelist.net/images/anime/13/17405l.jpg',
+    backdrop: 'https://cdn.myanimelist.net/images/anime/13/17405l.jpg',
+    year: 2002, genres: ['Anime', 'Action', 'Adventure'], rating: 7.99,
+    description: 'Anime metadata provided by public anime databases. Playback depends on legal installed stream providers.',
+  },
+  tt0068646: {
+    id: 'tt0068646', type: 'movie', name: 'The Godfather',
+    poster: 'https://images.metahub.space/poster/medium/tt0068646/img',
+    backdrop: 'https://images.metahub.space/background/medium/tt0068646/img',
+    year: 1972, genres: ['Crime', 'Drama', 'Classics'], rating: 9.2,
+    description: 'Global movie metadata. Playback depends on legal installed stream providers.',
+  },
+  tt0111161: {
+    id: 'tt0111161', type: 'movie', name: 'The Shawshank Redemption',
+    poster: 'https://images.metahub.space/poster/medium/tt0111161/img',
+    backdrop: 'https://images.metahub.space/background/medium/tt0111161/img',
+    year: 1994, genres: ['Drama', 'Classics'], rating: 9.3,
+    description: 'Global movie metadata. Playback depends on legal installed stream providers.',
+  },
+};
+
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function LibraryPage() {
@@ -255,8 +280,9 @@ export default function LibraryPage() {
     return map;
   }, [catalogItems, remoteMeta]);
   const resolveMeta = (id: string): MetaItem | undefined => {
-    const resolved = metaById.get(id) ?? findShowcaseMeta(id);
-    if (resolved) return resolved;
+    const normalized = id.includes(':') ? id.split(':').at(-1)! : id;
+    const resolved = metaById.get(id) ?? metaById.get(normalized) ?? LIBRARY_STATIC_FALLBACKS[id] ?? LIBRARY_STATIC_FALLBACKS[normalized] ?? findShowcaseMeta(id) ?? findShowcaseMeta(normalized);
+    if (resolved) return { ...resolved, id };
     return {
       id,
       type: id.startsWith('tt') ? 'movie' : 'series',
