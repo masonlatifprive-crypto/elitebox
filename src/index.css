@@ -150,31 +150,31 @@
 @layer components {
   /* ── Glass elevation system (design.md §5) ─────────────────────────── */
   .glass-1 {
-    background: rgba(190, 212, 250, 0.04);
+    background: rgba(255, 255, 255, 0.028);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(220, 230, 248, 0.06);
+    border: 1px solid rgba(220, 230, 248, 0.075);
     box-shadow: inset 0 1px 0 rgba(240, 246, 255, 0.05);
   }
   .glass-2 {
-    background: rgba(190, 212, 250, 0.05);
+    background: rgba(255, 255, 255, 0.038);
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(220, 230, 248, 0.08);
+    border: 1px solid rgba(220, 230, 248, 0.09);
     box-shadow: inset 0 1px 0 rgba(240, 246, 255, 0.05);
   }
   .glass-3 {
-    background: rgba(190, 212, 250, 0.07);
+    background: rgba(3, 6, 18, 0.72);
     -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
     border: 1px solid rgba(220, 230, 248, 0.11);
-    box-shadow: 0 0 28px rgba(196, 211, 245, 0.10), 0 12px 40px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(240, 246, 255, 0.06);
+    box-shadow: 0 18px 42px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.055);
   }
   .glass-solid {
     background: rgba(3, 6, 18, 0.92);
     -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
-    border: 1px solid rgba(220, 230, 248, 0.08);
+    border: 1px solid rgba(220, 230, 248, 0.09);
   }
 
   /* ── Chrome-silver gradient text (wordmark / hero H1 only) ─────────── */
@@ -710,3 +710,13 @@ html, body { position: relative; width: 100%; max-width: 100vw; overflow-x: hidd
 @media (max-width: 767px) {
   .hero-title { font-size: clamp(2.35rem, 12vw, 3rem) !important; letter-spacing: -0.022em !important; }
 }
+
+
+/* Final premium polish: calmer cards, cleaner glow, tighter typography rhythm. */
+.glass-1, .glass-2, .glass-3, .glass-solid { border-color: rgba(220,230,248,.085) !important; }
+.glass-1:hover, .glass-2:hover { border-color: rgba(220,230,248,.14) !important; }
+.shadow-focus-glow { box-shadow: 0 0 0 1px rgba(124,217,236,.45), 0 14px 38px rgba(0,0,0,.42) !important; }
+.hover\:shadow-glow-neon:hover { box-shadow: 0 0 0 1px rgba(124,217,236,.28), 0 10px 28px rgba(0,0,0,.38) !important; }
+.text-chrome { text-shadow: 0 1px 18px rgba(255,255,255,.045) !important; }
+.hero-title { letter-spacing: -0.018em !important; }
+@media (min-width: 1024px) { .hero-title { font-size: clamp(3rem, 5.6vw, 4.5rem) !important; } }
