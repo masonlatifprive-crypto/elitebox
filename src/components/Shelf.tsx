@@ -78,16 +78,16 @@ export default function Shelf({ title, items, seeAllTo, progressFor, autoScroll,
     const rail = railRef.current;
     if (!rail) return;
     const card = rail.querySelector<HTMLElement>(':scope > *');
-    const step = card ? (card.offsetWidth + 16) * 3 : rail.clientWidth * 0.8;
+    const step = card ? (card.offsetWidth + 28) * 3 : rail.clientWidth * 0.8;
     rail.scrollBy({ left: dir * step, behavior: 'smooth' });
   };
 
   if (items.length === 0) return null;
 
   return (
-    <section className={cn('group/shelf relative flex flex-col gap-16', className)}>
+    <section className={cn('group/shelf relative flex flex-col gap-20', className)}>
       {(title || seeAllTo) && (
-      <div className="flex items-baseline justify-between gap-16 px-16 md:px-24">
+      <div className="flex items-baseline justify-between gap-20 px-18 md:px-32 xl:px-44">
         {title && <h2 className="font-display text-title text-ink">{title}</h2>}
         {seeAllTo && (
           <Link
@@ -103,7 +103,7 @@ export default function Shelf({ title, items, seeAllTo, progressFor, autoScroll,
       <div className="relative">
         <div
           ref={railRef}
-          className="shelf-fade-x no-scrollbar flex gap-16 overflow-x-auto overscroll-x-contain scroll-smooth px-24 py-8 snap-x snap-mandatory"
+          className="shelf-fade-x no-scrollbar flex gap-22 md:gap-28 overflow-x-auto overscroll-x-contain scroll-smooth px-18 py-12 md:px-32 xl:px-44 snap-x snap-mandatory"
         >
           {items.map((item, i) => (
             <motion.div
