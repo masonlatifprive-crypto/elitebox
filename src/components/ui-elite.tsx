@@ -2,8 +2,10 @@ import React, { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
+export const spring = { type: 'spring', stiffness: 300, damping: 30 };
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'neon';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   asChild?: boolean;
   to?: string;
@@ -36,6 +38,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
           variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
           size === 'md' && 'h-10 px-4 py-2',
+          size === 'sm' && 'h-9 rounded-md px-3',
+          size === 'icon' && 'h-10 w-10',
           className
         )}
         {...props}
@@ -43,16 +47,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
-Button.displayName = 'Button';
 
-export const toast = (msg: string) => {
-  console.log('Toast:', msg);
-  // Simple fallback toast if full implementation is missing
-  if (typeof window !== 'undefined') {
-    alert(msg);
-  }
-};
-
-export const Card = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)}>{children}</div>
-);
+export const ButtonPrimary = Button;
+export const ButtonGhost = (props: ButtonProps) => <Button {...props} variant="ghost" />;
+export const ButtonNeon = (props: ButtonProps) => <Button {...props} variant="neon" />;
