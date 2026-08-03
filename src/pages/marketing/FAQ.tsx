@@ -1,1 +1,39 @@
-import React from 'react';\nimport { Card, CardContent } from '@/components/ui/card';\n\nexport default function FAQ() {\n  return (\n    <div className=\"container mx-auto py-12 px-4\">\n      <h1 className=\"text-4xl font-bold mb-8\">Frequently Asked Questions</h1>\n      <div className=\"space-y-6\">\n        <Card>\n          <CardContent className=\"pt-6\">\n            <h3 className=\"text-xl font-semibold mb-2\">What is EliteBoxMovies?</h3>\n            <p className=\"text-muted-foreground\">\n              EliteBoxMovies is a premium streaming interface for legal addons and content providers.\n            </p>\n          </CardContent>\n        </Card>\n\n        <Card>\n          <CardContent className=\"pt-6\">\n            <h3 className=\"text-xl font-semibold mb-2\">How do I use it?</h3>\n            <p className=\"text-muted-foreground\">\n              Simply browse through our catalog and connect your legal streaming providers to start watching.\n            </p>\n          </CardContent>\n        </Card>\n      </div>\n    </div>\n  );\n}
+import React from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+const FAQ = () => {
+  const faqs = [
+    {
+      question: "What is EliteBox Movies?",
+      answer: "EliteBox Movies is a premium streaming platform offering high-quality movies and TV shows across multiple devices."
+    },
+    {
+      question: "How do I install the app?",
+      answer: "You can download the app for Android, Windows, and Android TV from our official downloads page."
+    },
+    {
+      question: "Is there a subscription fee?",
+      answer: "We offer various tiers of service. Check our store for the latest pricing and features."
+    }
+  ];
+
+  return (
+    <div className="container mx-auto py-10 px-4">
+      <h1 className="text-4xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
+      <div className="grid gap-6 max-w-3xl mx-auto">
+        {faqs.map((faq, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <CardTitle className="text-xl">{faq.question}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">{faq.answer}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default FAQ;
