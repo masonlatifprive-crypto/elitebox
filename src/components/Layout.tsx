@@ -15,7 +15,7 @@ export function Layout() {
       <AppRail />
 
       {/* Right: Main Content Area */}
-      <main id="main-content" className="relative flex-1 overflow-y-auto overflow-x-hidden">
+      <main id="main-content" className="relative flex-1 overflow-y-auto o verflow-x-hidden">
         {/* Ambient Top/Bottom Fade Masks */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-background to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background to-transparent" />
