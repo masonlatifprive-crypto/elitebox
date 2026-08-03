@@ -1,10 +1,9 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router';
-import TreeLoader from '@/components/ui/TreeLoader';
-import { ToastHost } from '@/components/ui/ToastHost';
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router'
+import { TreeLoader } from '@/components/LivingTree'
+import { ToastHost } from '@/components/ui-elite'
 
 // Lazy load components with fallback for default/named exports
-
 const AppShell = lazy(() => import('@/components/layout/AppShell').then(m => ({ default: m.default || m.AppShell })));
 
 // Marketing Pages
@@ -31,17 +30,16 @@ const NotFoundPage = lazy(() => import('@/pages/NotFound').then(m => ({ default:
 export default function App() {
   return (
     <BrowserRouter>
+      <ToastHost />
       <Suspense fallback={<TreeLoader />}>
         <Routes>
           {/* Marketing Routes */}
-          <Route element={<MarketingShell />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/sports" element={<Sports />} />
-            <Route path="/store" element={<Store />} />
-            <Route path="/support" element={<Support />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/downloads" element={<Downloads />} />
-          </Route>
+          <Route path="/" element={<Home />} />
+          <Route path="/sports" element={<Sports />} />
+          <Route path="/store" element={<Store />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/downloads" element={<Downloads />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
@@ -53,15 +51,13 @@ export default function App() {
             <Route index element={<AppHome />} />
             <Route path="discover" element={<Discover />} />
             <Route path="collections" element={<Collections />} />
-            <Route path="detail/:id" element={<Detail />} />
-            <Route path="player/:id" element={<Player />} />
+            <Route path="view/:id" element={<Detail />} />
+            <Route path="play/:id" element={<Player />} />
           </Route>
 
-          {/* 404 Route */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
-      <ToastHost />
     </BrowserRouter>
   );
 }
