@@ -1,1 +1,58 @@
-/** * Elitebox shared UI primitives (design.md §10.6–§10.10). * Every button is wired: renders as <Link>/<button> and always does something. */import {  forwardRef,  useCallback,  useEffect,  useId,  useRef,  useState,  useSyncExternalStore,} from 'react';import type { HTMLAttributes, ReactNode } from 'react';import { Link } from 'react-router-dom';import { AnimatePresence, motion } from 'framer-motion';import { CheckCircle2, OctagonX, X } from 'lucide-react';import { useT } from '@/i18n';import { cn } from '@/lib/utils';import type { AddonHealth } from '@/lib/types';/* ── spring presets (design.md §7) ─────────────────────────────────────── */export const spring = {  snappy: { type: 'spring', stiffness: 400, damping: 30 },  smooth: { type: 'spring', stiffness: 260, damping: 30 },  cinematic: { type: 'spring', stiffness: 120, damping: 22 },} as const;/* ── Buttons ───────────────────────────────────────────────────────────── */type CommonProps = {  to?: string;  href?: string;  onClick?: () => void;  className?: string;  children?: ReactNode;  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';  size?: 'sm' | 'md' | 'lg' | 'icon';  disabled?: boolean;};export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, CommonProps>(  ({ to, href, onClick, className, children, variant = 'primary', size = 'md', disabled }, ref) => {    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50';    const variants = {      primary: 'bg-primary text-primary-foreground hover:bg-primary/90',      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',      ghost: 'hover:bg-accent hover:text-accent-foreground',      danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',      success: 'bg-green-600 text-white hover:bg-green-700',    };    const sizes = {      sm: 'h-9 px-3 text-xs',      md: 'h-10 px-4 py-2',      lg: 'h-11 px-8 text-lg',      icon: 'h-10 w-10',    };    const combinedClassName = cn(baseStyles, variants[variant], sizes[size], className);    if (to && !disabled) {      return (        <Link to={to} className={combinedClassName} onClick={onClick}>          {children}        </Link>      );    }    if (href && !disabled) {      return (        <a href={href} target="_blank" rel="noopener noreferrer" className={combinedClassName} onClick={onClick}>          {children}        </a>      );    }    return (      <button ref={ref as any} disabled={disabled} className={combinedClassName} onClick={onClick}>        {children}      </button>    );  });Button.displayName = 'Button';
+import React, { forwardRef } from 'react';
+import { Link } from 'react-router-dom';
+import { cn } from '../lib/utils';
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
+  asChild?: boolean;
+  to?: string;
+}
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = 'primary', size = 'md', asChild, to, ...props }, ref) => {
+    if (to) {
+      return (
+        <Link
+          to={to}
+          className={cn(
+            'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
+            variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
+            variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+            size === 'md' && 'h-10 px-4 py-2',
+            size === 'sm' && 'h-9 rounded-md px-3',
+            size === 'icon' && 'h-10 w-10',
+            className
+          )}
+          {...(props as any)}
+        />
+      );
+    }
+    return (
+      <button
+        ref={ref}
+        className={cn(
+          'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
+          variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
+          variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+          size === 'md' && 'h-10 px-4 py-2',
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = 'Button';
+
+export const toast = (msg: string) => {
+  console.log('Toast:', msg);
+  // Simple fallback toast if full implementation is missing
+  if (typeof window !== 'undefined') {
+    alert(msg);
+  }
+};
+
+export const Card = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <div className={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)}>{children}</div>
+);
