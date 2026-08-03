@@ -7,7 +7,7 @@
  */
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import AmbienceCanvas from '@/components/AmbienceCanvas';
 import PaywallCard from '@/components/PaywallCard';
 import { findShowcaseMeta } from '@/data/showcase';
@@ -34,12 +34,3 @@ export default function SubscriptionGate({ children }: { children: ReactNode }) 
 
   if (openPlayable || hasAccessFor(subscription)) return <>{children}</>;
 
-  return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto bg-deep nebula-wash">
-      <AmbienceCanvas />
-      <div className="relative z-10 grid min-h-[100dvh] place-items-center px-16 py-48">
-        <PaywallCard />
-      </div>
-    </div>
-  );
-}
