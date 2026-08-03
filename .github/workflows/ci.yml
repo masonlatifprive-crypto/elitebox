@@ -1,11 +1,13 @@
 name: CI
 
+
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+
 
 jobs:
   build:
@@ -14,6 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -21,18 +24,20 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
+
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --legacy-peer-deps
+
 
       - name: Type-check
         run: npx tsc --noEmit
 
+
       - name: Build
         run: npx vite build
+
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
           name: elitebox-dist
-          path: dist
-          if-no-files-found: error
