@@ -31,29 +31,36 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
       variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
       variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+      variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
+      variant === 'neon' && 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)] hover:bg-cyan-400',
       className
     );
 
     if (to) {
       return (
-        <Link to={to} className={classes}>
+        <Link to={to} className={classes} {...(props as any)}>
           {props.children}
         </Link>
       );
     }
 
-    return <button ref={ref} className={classes} {...props} />;
+    return (
+      <button ref={ref} className={classes} {...props}>
+        {props.children}
+      </button>
+    );
   }
 );
 
-export const ButtonPrimary = Button;
+export const ButtonPrimary = (props: ButtonProps) => <Button variant="primary" {...props} />;
+export const ButtonGhost = (props: ButtonProps) => <Button variant="ghost" {...props} />;
+export const ButtonNeon = (props: ButtonProps) => <Button variant="neon" {...props} />;
 
-export const Modal = ({ children, isOpen, onClose }: any) => {
+export const Modal = ({ children, isOpen, onClose }: { children: React.ReactNode; isOpen: boolean; onClose: () => void }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background p-6 rounded-lg shadow-xl max-w-md w-full relative">
-        <button onClick={onClose} className="absolute top-2 right-2">✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl max-w-lg w-full">
         {children}
       </div>
     </div>
