@@ -9,6 +9,8 @@
     "skipLibCheck": true,
 
 
+
+
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -24,13 +26,16 @@
     "jsx": "react-jsx",
 
 
+
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitAny": false, "suppressImplicitAnyIndexErrors": true,
+    "noImplicitAny": false,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
 }
+
