@@ -3,7 +3,7 @@
  * on this device and sets zero trackers. Dismiss persists per device.
  */
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useT } from '@/i18n';
