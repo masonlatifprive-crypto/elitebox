@@ -20,18 +20,65 @@ import CommandPalette from '@/components/CommandPalette';
 import MagnetDrop from '@/components/MagnetDrop';
 import { useSpatialNav } from '@/lib/tvnav';
 
-
 export function MarketingShell() {
-  // Lenis smooth scroll (lerp 0.09) synced to GSAP ScrollTrigger, code-split
-  // out of the eager chunk (design.md §8/§14).
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let cancelled = false;
-    let cleanup: (() => void) | undefined;
-    (async () => {
-      const [{ default: Lenis }, { ScrollTrigger }, { default: gsap }] = await Promise.all([
+    let cleanup = () => {};
+
+    const initLenis = async () => {
+      const [Lenis, { ScrollTrigger }, { default: gsap }] = await Promise.all([
         import('lenis'),
         import('gsap/ScrollTrigger'),
-        import('gsap'),
+        import('gsap')
       ]);
+
       if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
+      const lenis = new Lenis.default({ lerp: 0.09, smoothWheel: true });
+      lenis.on('scroll', ScrollTrigger.update);
+      gsap.ticker.add((time) => lenis.raf(time * 1000));
+      gsap.ticker.lagSmoothing(0);
+      cleanup = () => {
+        lenis.destroy();
+        gsap.ticker.remove(lenis.raf);
+      };
+    };
+
+    initLenis();
+    return () => {
+      cancelled = true;
+      cleanup();
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-black text-white relative flex flex-col items-center">
+      <AmbienceCanvas />
+      <MarketingNav />
+      <main className="w-full flex flex-col items-center">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export function AppShell() {
+  useSpatialNav();
+
+  return (
+    <div className="min-h-screen bg-black text-white selection:bg-neon-cyan/30">
+      <AmbienceCanvas opacity={0.4} />
+      <AppRail />
+      <CommandPalette />
+      <MagnetDrop />
+      <div className="lg:pl-[72px] pb-20 lg:pb-0">
+        <StorageBanner />
+        <main>
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
