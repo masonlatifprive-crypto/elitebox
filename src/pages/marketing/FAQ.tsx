@@ -9,13 +9,18 @@ export default function FAQ() {
         <Card>
           <CardContent className="pt-6">
             <h3 className="text-xl font-semibold mb-2">What is EliteBoxMovies?</h3>
-            <p className="text-muted-foreground">EliteBoxMovies is a premium streaming interface for legal addons and content providers.</p>
+            <p className="text-muted-foreground">
+              EliteBoxMovies is a premium streaming interface for legal addons and content providers.
+            </p>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="pt-6">
             <h3 className="text-xl font-semibold mb-2">How do I use it?</h3>
-            <p className="text-muted-foreground">Simply browse through our catalog and connect your legal streaming providers to start watching.</p>
+            <p className="text-muted-foreground">
+              Simply browse through our catalog and connect your legal streaming providers to start watching.
+            </p>
           </CardContent>
         </Card>
       </div>
