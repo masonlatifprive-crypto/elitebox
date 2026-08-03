@@ -4,14 +4,20 @@ import { MarketingShell, AppShell } from './components/Layout';
 import { Toaster as ToastHost } from './components/ui/sonner';
 
 
+
+
 // Stub missing components
 const TreeLoader = () => <div className='p-4 text-center'>Loading...</div>;
 
 
-const Landing = lazy(() => import('./pages/marketing/Landing'));
+
+
+const Landing = lazy(() => import('./pages/Home'));
 const Collections = lazy(() => import('./pages/app/Collections'));
 const Detail = lazy(() => import('./pages/app/Detail'));
-const FAQ = lazy(() => import('./pages/marketing/FAQ'));
+const FAQ = lazy(() => import('./pages/Home'));
+
+
 
 
 function App() {
@@ -34,5 +40,3 @@ function App() {
   );
 }
 
-
-export default App;
