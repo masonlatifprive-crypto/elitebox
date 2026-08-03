@@ -30,7 +30,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastHost />
-      <Suspense fallback={<TreeLoader loader />}>
+      <Suspense fallback={<TreeLoader />}>
         <Routes>
           {/* Marketing Routes */}
           <Route element={<MarketingShell />}>
@@ -48,16 +48,14 @@ export default function App() {
           <Route path="/subscribe" element={<Subscribe />} />
 
           {/* App Routes */}
-          <Route element={<AppShell />}>
-            <Route path="/app" element={<AppHome />} />
-            <Route path="/app/discover" element={<Discover />} />
-            <Route path="/app/collections" element={<Collections />} />
-            <Route path="/app/movie/:id" element={<Detail type="movie" />} />
-            <Route path="/app/tv/:id" element={<Detail type="tv" />} />
-            <Route path="/app/player/:id" element={<Player />} />
+          <Route path="/app" element={<AppShell />}>
+            <Route index element={<AppHome />} />
+            <Route path="discover" element={<Discover />} />
+            <Route path="collections" element={<Collections />} />
+            <Route path="watch/:id" element={<Detail />} />
+            <Route path="player/:id" element={<Player />} />
           </Route>
 
-          {/* 404 Route */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
