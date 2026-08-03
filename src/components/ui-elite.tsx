@@ -1,11 +1,24 @@
+import React, { forwardRef } from 'react';
+import { Link } from 'react-router-dom';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export const spring = {
+  type: 'spring',
+  stiffness: 260,
+  damping: 20
+};
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'neon';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   asChild?: boolean;
   to?: string;
 }
-
-
-
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', asChild, to, ...props }, ref) => {
@@ -22,7 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             size === 'icon' && 'h-10 w-10',
             className
           )}
-          {...(props as any)}
+          {...props as any}
         />
       );
     }
@@ -44,14 +57,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 
-
-
+Button.displayName = 'Button';
 
 export const ButtonPrimary = Button;
-export const ButtonGhost = (props: ButtonProps) => <Button {...props} variant="ghost" />;
-export const ButtonNeon = (props: ButtonProps) => <Button {...props} variant="neon" />;
 
-
-
-
-export const toast = { success: (msg: string) => console.log(msg), error: (msg: string) => console.error(msg) };
+export const toast = {
+  success: (msg: string) => console.log('Success:', msg),
+  error: (msg: string) => console.error('Error:', msg)
+};
