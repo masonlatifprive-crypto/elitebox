@@ -21,6 +21,7 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const Subscribe = lazy(() => import('./pages/auth/Subscribe'));
 
 
+
 // App Pages
 const AppHome = lazy(() => import('./pages/app/AppHome'));
 const Discover = lazy(() => import('./pages/app/Discover'));
