@@ -1,10 +1,12 @@
 name: Deploy to Cloud86 FTP
 
+
 on: 
   workflow_dispatch:
   push:
     branches:
       - main
+
 
 jobs:
   deploy:
@@ -13,10 +15,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
       - name: Install and Build
         run: |
-          npm install
+          npm install --legacy-peer-deps
           npm run build
+
 
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
