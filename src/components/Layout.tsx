@@ -1,41 +1,32 @@
 /**
- * Layout (design.md §10): The core app shell.
- * Includes the AppRail (left sidebar), the main scrollable content area,
- * and the global CommandPalette/TrailerModal/Player layers.
+ * Layout (design.md §10): Root structural wrapper with ambient fade masks,
+ * global navigation rail (AppRail), and responsive content area.
  */
-import { useEffect, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import AppRail from '@/components/AppRail';
-import CommandPalette from '@/components/CommandPalette';
-import TrailerModal from '@/components/TrailerModal';
-import AmbienceCanvas from '@/components/AmbienceCanvas';
-import { useSpatialNav } from '@/lib/tvnav';
-import { cn } from '@/lib/utils';
+import { Outlet } from 'react-router-dom';
+import AppRail from './AppRail';
+import { useT } from '@/i18n';
 
-
-export default function Layout() {
-  const location = useLocation();
-  const [isCPOpen, setIsCPOpen] = useState(false);
-  
-  // Initialize TV spatial navigation logic
-  useSpatialNav();
-
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsCPOpen(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
+export function Layout() {
+  const { t } = useT();
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-black text-white selection:bg-neon-blue/30">
-      {/* Background Ambience (design.md §3.1) */}
+    <div className=\"relative flex h-screen w-full overflow-hidden bg-background text-foreground\">
+      {/* Left: Global Navigation Rail */}
+      <AppRail />
+
+      {/* Right: Main Content Area */}
+      <main id=\"main-content\" className=\"relative flex-1 overflow-y-auto overflow-x-hidden\">
+        {/* Ambient Top/Bottom Fade Masks */}
+        <div className=\"pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-background to-transparent\" />
+        <div className=\"pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background to-transparent\" />
+
+        {/* Content Outlet */}
+        <div className=\"relative z-0 min-h-full pb-24\">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default Layout;
