@@ -1,24 +1,15 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MarketingShell, AppShell } from './components/Layout';
-import { Toaster as ToastHost } from './components/ui/sonner';
+import MarketingShell, { AppShell } from './components/Layout';
+import { Toaster } from './components/ui/sonner';
 
-
-
-
-// Stub missing components
+// Stub missing components or loaders
 const TreeLoader = () => <div className='p-4 text-center'>Loading...</div>;
-
-
-
 
 const Landing = lazy(() => import('./pages/Home'));
 const Collections = lazy(() => import('./pages/app/Collections'));
 const Detail = lazy(() => import('./pages/app/Detail'));
-const FAQ = lazy(() => import('./pages/Home'));
-
-
-
+const FAQ = lazy(() => import('./pages/Home')); // Assuming Home handles FAQ or replace with actual FAQ page
 
 function App() {
   return (
@@ -35,8 +26,9 @@ function App() {
           </Route>
         </Routes>
       </Suspense>
-      <ToastHost />
+      <Toaster />
     </Router>
   );
 }
 
+export default App;
