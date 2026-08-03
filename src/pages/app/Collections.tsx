@@ -1,1 +1,24 @@
-import React from 'react';\n\nconst Collections: React.FC = () => {\n  return (\n    <div className=\"min-h-screen bg-black text-white p-8\">\n      <h1 className=\"text-4xl font-bold mb-6\">My Collections</h1>\n      <div className=\"grid grid-cols-1 md:grid-cols-3 gap-6\">\n        <div className=\"bg-zinc-900 p-6 rounded-lg border border-zinc-800\">\n          <h2 className=\"text-xl font-semibold mb-2\">Watchlist</h2>\n          <p className=\"text-zinc-400\">Movies and shows you want to watch.</p>\n        </div>\n        <div className=\"bg-zinc-900 p-6 rounded-lg border border-zinc-800\">\n          <h2 className=\"text-xl font-semibold mb-2\">Favorites</h2>\n          <p className=\"text-zinc-400\">Your all-time favorite titles.</p>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nexport default Collections;
+import React from 'react';
+
+
+
+const Collections: React.FC = () => {
+  
+  return (
+    
+    <div className=\"min-h-screen bg-black text-white p-8\">
+    
+      <h1 className=\"text-3xl font-bold mb-6\">My Collections</h1>h1>
+    
+      <p className=\"text-gray-400\">Your saved movies and shows will appear here.</p>p>
+    
+    </div>div>
+    
+  );
+  
+};
+
+
+
+export default Collections;</div>
+
