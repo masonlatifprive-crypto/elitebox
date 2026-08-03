@@ -581,6 +581,18 @@ function PlayerInner() {
     undefined,
   );
   const [streams, setStreams] = useState<StreamSource[] | null>(null);
+
+  useEffect(() => {
+    const openMeta = findShowcaseMeta(id);
+    if (!openMeta) return;
+    setProgress({
+      id,
+      type: openMeta.type,
+      progressSec: 8,
+      durationSec: Math.max(60, (openMeta.runtime ?? 10) * 60),
+    });
+  }, [id, setProgress]);
+
   const srcParam = Number.parseInt(searchParams.get('src') ?? '0', 10);
   const srcIdx = streams && streams.length > 0 ? Math.min(Math.max(0, srcParam || 0), streams.length - 1) : 0;
   const source = streams?.[srcIdx];
