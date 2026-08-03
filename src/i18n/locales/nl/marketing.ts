@@ -4,3 +4,5 @@ export const marketing = {
     subtitle: "Stream films, series en sport live."
   }
 } as any;
+
+export default marketing;
