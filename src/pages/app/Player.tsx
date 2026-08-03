@@ -582,6 +582,8 @@ function PlayerInner() {
   );
   const [streams, setStreams] = useState<StreamSource[] | null>(null);
 
+  const setProgress = useLibrary((s) => s.setProgress);
+
   useEffect(() => {
     const openMeta = findShowcaseMeta(id);
     if (!openMeta) return;
@@ -596,8 +598,6 @@ function PlayerInner() {
   const srcParam = Number.parseInt(searchParams.get('src') ?? '0', 10);
   const srcIdx = streams && streams.length > 0 ? Math.min(Math.max(0, srcParam || 0), streams.length - 1) : 0;
   const source = streams?.[srcIdx];
-
-  const setProgress = useLibrary((s) => s.setProgress);
   const setMemory = usePlaybackMemory((s) => s.setMemory);
   const getMemory = usePlaybackMemory((s) => s.getMemory);
   const autoplayNext = useSettings((s) => s.settings.playback.autoplayNext);
