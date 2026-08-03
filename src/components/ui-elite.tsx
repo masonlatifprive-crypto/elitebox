@@ -34,8 +34,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((
     variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
     variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
     variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
-    variant === 'neon' && 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)] hover:bg-cyan-400',
-    size === 'sm' && 'h-9 px-3',
+    variant === 'neon' && 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary/30',
+    size === 'sm' && 'h-9 px-3 text-xs',
     size === 'md' && 'h-10 px-4 py-2',
     size === 'lg' && 'h-11 px-8',
     size === 'icon' && 'h-10 w-10',
@@ -44,31 +44,34 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((
 
   if (to) {
     return (
-      <Link to={to} className={classes}>
+      <Link to={to} className={classes} {...(props as any)}>
         {props.children}
       </Link>
     );
   }
 
   return (
-    <button className={classes} ref={ref} {...props} />
+    <button
+      className={classes}
+      ref={ref}
+      {...props}
+    />
   );
 });
+Button.displayName = 'Button';
 
-export const ButtonPrimary = (props: ButtonProps) => <Button variant=\"primary\" {...props} />;
-export const ButtonNeon = (props: ButtonProps) => <Button variant=\"neon\" {...props} />;
-export const ButtonGhost = (props: ButtonProps) => <Button variant=\"ghost\" {...props} />;
+export const ButtonPrimary = (props: ButtonProps) => <Button variant="primary" {...props} />;
+export const ButtonGhost = (props: ButtonProps) => <Button variant="ghost" {...props} />;
+export const ButtonNeon = (props: ButtonProps) => <Button variant="neon" {...props} />;
 
 export const Eyebrow = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <span className={cn('text-xs font-bold uppercase tracking-widest text-primary', className)}>
+  <span className={cn("text-xs font-bold uppercase tracking-widest text-primary", className)}>
     {children}
   </span>
 );
 
 export const GlassPanel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('rounded-xl border border-white/10 bg-white/5 backdrop-blur-md', className)}>
+  <div className={cn("backdrop-blur-md bg-black/40 border border-white/10 rounded-xl", className)}>
     {children}
   </div>
 );
-
-Button.displayName = 'Button';
