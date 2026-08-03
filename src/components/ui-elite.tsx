@@ -2,7 +2,9 @@ import React, { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
+
 export const spring = { type: 'spring', stiffness: 300, damping: 30 };
+
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'neon';
@@ -10,6 +12,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   asChild?: boolean;
   to?: string;
 }
+
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', asChild, to, ...props }, ref) => {
@@ -34,20 +37,4 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
-          variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
-          variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          size === 'md' && 'h-10 px-4 py-2',
-          size === 'sm' && 'h-9 rounded-md px-3',
-          size === 'icon' && 'h-10 w-10',
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
-
-export const ButtonPrimary = Button;
-export const ButtonGhost = (props: ButtonProps) => <Button {...props} variant="ghost" />;
-export const ButtonNeon = (props: ButtonProps) => <Button {...props} variant="neon" />;
+export const toast = { success: (m) => console.log("success:", m), error: (m) => console.log("error:", m) };
