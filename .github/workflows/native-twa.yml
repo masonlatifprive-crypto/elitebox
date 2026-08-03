@@ -1,0 +1,1 @@
+name: Native Android TWA\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - name: Build TWA\n        run: echo \"TWA Build logic goes here. Requires bubblewrap or PWABuilder CLI.\"
