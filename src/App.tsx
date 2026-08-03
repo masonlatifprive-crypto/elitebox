@@ -3,10 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 import { TreeLoader } from '@/components/LivingTree'
 import { ToastHost } from '@/components/ui-elite'
 
-
 // Lazy load components with fallback for default/named exports
 const AppShell = lazy(() => import('@/components/layout/AppShell').then(m => ({ default: m.default || m.AppShell })));
-
 
 // Marketing Pages
 const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.default || m.Home })));
@@ -16,12 +14,10 @@ const Support = lazy(() => import('@/pages/marketing/Support').then(m => ({ defa
 const FAQ = lazy(() => import('@/pages/marketing/FAQ').then(m => ({ default: m.default || m.FAQ })));
 const Downloads = lazy(() => import('@/pages/marketing/Downloads').then(m => ({ default: m.default || m.Downloads })));
 
-
 // Auth Pages
 const Login = lazy(() => import('@/pages/auth/Login').then(m => ({ default: m.default || m.Login })));
 const Register = lazy(() => import('@/pages/auth/Register').then(m => ({ default: m.default || m.Register })));
 const Subscribe = lazy(() => import('@/pages/auth/Subscribe').then(m => ({ default: m.default || m.Subscribe })));
-
 
 // App Pages
 const AppHome = lazy(() => import('@/pages/app/AppHome').then(m => ({ default: m.default || m.AppHome })));
@@ -31,11 +27,39 @@ const Detail = lazy(() => import('@/pages/app/Detail').then(m => ({ default: m.d
 const Player = lazy(() => import('@/pages/app/Player').then(m => ({ default: m.default || m.Player })));
 const NotFoundPage = lazy(() => import('@/pages/NotFound').then(m => ({ default: m.default || m.NotFoundPage })));
 
-
 export default function App() {
   return (
     <BrowserRouter>
-      <ToastHost />
-      <Suspense fallback={<TreeLoader />}>
+      <Suspense fallback={<TreeLoader loader />}>
         <Routes>
           {/* Marketing Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/sports" element={<Sports />} />
+          <Route path="/store" element={<Store />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/downloads" element={<Downloads />} />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/subscribe" element={<Subscribe />} />
+
+          {/* Protected App Routes via AppShell */}
+          <Route path="/app" element={<AppShell />}>
+            <Route index element={<AppHome />} />
+            <Route path="discover" element={<Discover />} />
+            <Route path="collections" element={<Collections />} />
+            <Route path="movie/:id" element={<Detail />} />
+            <Route path="tv/:id" element={<Detail />} />
+            <Route path="watch/:type/:id" element={<Player />} />
+          </Route>
+
+          {/* 404 Fallback */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+      <ToastHost />
+    </BrowserRouter>
+  );
+}
