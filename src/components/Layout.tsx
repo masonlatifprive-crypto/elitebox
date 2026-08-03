@@ -29,4 +29,6 @@ export function Layout() {
   );
 }
 
+export const AppShell = Layout;
+export const MarketingShell = Layout;
 export default Layout;
