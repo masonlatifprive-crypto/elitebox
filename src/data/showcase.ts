@@ -258,16 +258,16 @@ export const SHOWCASE_CATALOG: MetaItem[] = [
 
 export const SHOWCASE_STREAMS: Record<string, StreamSource[]> = {
   'big-buck-bunny': [
-    stream('big-buck-bunny', 1, 'Mirror · 720p MP4', 'HD', `${GTV}/BigBuckBunny.mp4`),
+    stream('big-buck-bunny', 1, 'Browser-safe MP4 · 720p', 'HD', `${GTV}/BigBuckBunny.mp4`),
     stream('big-buck-bunny', 2, 'Blender Mirror · 720p H.264 (MOV)', 'HD', `${BLENDER}/peach/bigbuckbunny_movies/big_buck_bunny_720p_h264.mov`, '~111 MB'),
     stream('big-buck-bunny', 3, 'Blender Mirror · 1080p H.264 (MOV)', 'HD', `${BLENDER}/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov`, '~210 MB'),
   ],
   sintel: [
-    stream('sintel', 1, 'Mirror · 720p MP4', 'HD', `${GTV}/Sintel.mp4`),
+    stream('sintel', 1, 'Browser-safe MP4 · 720p', 'HD', `${GTV}/Sintel.mp4`),
     stream('sintel', 2, 'Blender Mirror · 720p (MKV)', 'HD', `${BLENDER}/durian/movies/Sintel.2010.720p.mkv`, '~124 MB'),
   ],
   'tears-of-steel': [
-    stream('tears-of-steel', 1, 'Mirror · 720p MP4', 'HD', `${GTV}/TearsOfSteel.mp4`),
+    stream('tears-of-steel', 1, 'Browser-safe MP4 · 720p', 'HD', `${GTV}/TearsOfSteel.mp4`),
     stream('tears-of-steel', 2, 'Blender Mirror · 720p (MOV)', 'HD', `${BLENDER}/tears/tears_of_steel_720p.mov`, '~371 MB'),
   ],
   'elephants-dream': [
