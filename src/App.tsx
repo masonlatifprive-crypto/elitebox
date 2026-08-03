@@ -3,13 +3,16 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MarketingShell, AppShell } from './components/Layout';
 import { Toaster as ToastHost } from './components/ui/sonner';
 
+
 // Stub missing components
 const TreeLoader = () => <div className='p-4 text-center'>Loading...</div>;
 
-const Landing = lazy(() => import('./pages/Landing'));
+
+const Landing = lazy(() => import('./pages/marketing/Landing'));
 const Collections = lazy(() => import('./pages/app/Collections'));
 const Detail = lazy(() => import('./pages/app/Detail'));
-const FAQ = lazy(() => import('./pages/FAQ'));
+const FAQ = lazy(() => import('./pages/marketing/FAQ'));
+
 
 function App() {
   return (
@@ -30,5 +33,6 @@ function App() {
     </Router>
   );
 }
+
 
 export default App;
