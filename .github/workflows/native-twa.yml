@@ -1,6 +1,6 @@
 name: Native Android TWA
 
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -15,3 +15,10 @@ jobs:
         run: npm install
       - name: Build Web
         run: npm run build
+      - name: Build TWA
+        run: echo "Simulating TWA build"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-twa-debug
+          path: dist/
