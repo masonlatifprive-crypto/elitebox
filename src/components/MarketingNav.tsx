@@ -1,142 +1,102 @@
-/**
- * Marketing navbar (design.md §10.1): fixed glass pill, active cyan underline
- * beam, profile + "Open App" CTA, mobile full-screen glass overlay menu,
- * scroll progress hairline (§8). The Layout owns content offset — the nav
- * itself stays fixed overlay (full-bleed hero design).
- */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, Search, User, X } from 'lucide-react';
-import { LogoMark } from '@/components/Logo';
+import { Menu, Search, X } from 'lucide-react';
+import LogoMark from '@/components/Logo';
 import LanguageSwitch from '@/components/LanguageSwitch';
-import openCommandPalette from '@/components/CommandPalette';
-import { ButtonPrimary } from '@/components/ui-elite';
+import { ButtonNeon, ButtonGhost } from '@/components/ui-elite';
 import { useT } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
-  { to: '/', label: 'Movies', end: true },
-  { to: '/features', label: 'Features' },
-  { to: '/downloads', label: 'Downloads' },
-  { to: '/providers', label: 'Addons' },
-  { to: '/community', label: 'Community' },
-  { to: '/developers', label: 'Developers' },
+  { to: '/', label: 'Home', end: true },
+  { to: '/app/explore', label: 'Discover' },
+  { to: '/faq', label: 'Support' },
 ] as const;
 
 export default function MarketingNav() {
   const { t } = useT();
   const [scrolled, setScrolled] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const onScroll = () => {
-      const winScroll = window.scrollY;
-      const height = document.documentElement.scrollHeight - window.innerHeight;
-      setScrolled(winScroll > 20);
-      if (height > 0) setProgress((winScroll / height) * 100);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
     setMenuOpen(false);
-  }, [location.pathname]);
+  }, [location]);
 
   return (
     <nav className={cn(
-      'fixed inset-x-0 top-0 z-50 transition-all duration-300',
-      scrolled ? 'bg-deep/80 py-8 backdrop-blur-md border-b border-white/5' : 'bg-transparent py-16'
+      'fixed top-0 inset-x-0 z-[100] transition-all duration-500 border-b',
+      scrolled 
+        ? 'bg-[#050505]/80 backdrop-blur-xl border-white/5 py-3' 
+        : 'bg-transparent border-transparent py-5'
     )}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-24">
-        <Link to="/" className="relative z-50 flex items-center gap-12 group">
-          <LogoMark className="h-32 w-32 text-cyan transition-transform group-hover:scale-105" />
-          <span className="text-h3 font-bold tracking-tight text-ink">EliteBox</span>
+      <div className="container-wide flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3 group">
+          <LogoMark className="w-10 h-10 text-primary transition-transform group-hover:scale-110" />
+          <span className="font-display text-xl font-bold tracking-tight text-white">EliteBox</span>
         </Link>
 
-        <div className="hidden items-center gap-32 lg:flex">
-          {LINKS.map((link) => (
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center gap-8">
+          {LINKS.map(link => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.end}
               className={({ isActive }) => cn(
-                'relative py-4 text-body font-medium transition-colors hover:text-cyan',
-                isActive ? 'text-cyan' : 'text-muted'
+                'text-sm font-medium transition-colors hover:text-white',
+                isActive ? 'text-white' : 'text-white/60'
               )}
             >
-              {({ isActive }) => (
-                <>
-                  {t(link.label)}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-underline"
-                      className="absolute -bottom-4 inset-x-0 h-2 bg-cyan shadow-[0_0_8px_rgba(124,217,236,.6)]"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </>
-              )}
+              {link.label}
             </NavLink>
           ))}
+          <div className="h-4 w-px bg-white/10 mx-2" />
+          <ButtonGhost size="sm" as={Link} to="/auth/login" className="text-white/70 hover:text-white">
+            Sign in
+          </ButtonGhost>
+          <ButtonNeon size="sm" as={Link} to="/app">
+            Launch App
+          </ButtonNeon>
         </div>
 
-        <div className="flex items-center gap-16">
-          <button
-            onClick={() => openCommandPalette()}
-            className="flex h-40 w-40 items-center justify-center rounded-full text-muted transition-all hover:bg-white/5 hover:text-ink"
-          >
-            <Search size={20} />
-          </button>
-          <div className="hidden sm:block">
-            <LanguageSwitch />
-          </div>
-          <Link to="/app">
-            <ButtonPrimary className="hidden sm:flex">Open App</ButtonPrimary>
-          </Link>
-          <button
-            className="flex h-40 w-40 items-center justify-center text-ink lg:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
+        {/* Mobile Toggle */}
+        <button 
+          className="md:hidden p-2 text-white/70 hover:text-white transition-colors"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
 
-      <div className="absolute bottom-0 left-0 h-1 bg-cyan/20 w-full">
-        <motion.div
-          className="h-full bg-cyan shadow-[0_0_8px_rgba(124,217,236,.6)]"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
+      {/* Mobile Menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 top-[60px] z-40 flex flex-col bg-deep/95 p-24 backdrop-blur-xl lg:hidden"
+            className="absolute top-full inset-x-0 bg-[#0A0A0A] border-b border-white/5 p-6 flex flex-col gap-6 md:hidden backdrop-blur-3xl"
           >
-            <div className="flex flex-col gap-24">
-              {LINKS.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className="text-h2 font-bold text-ink"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t(link.label)}
-                </NavLink>
-              ))}
-              <hr className="border-white/10" />
-              <div className="flex flex-col gap-16">
-                <Link to="/login" className="text-body text-muted">Sign In</Link>
-                <Link to="/register" className="text-body text-muted">Create Account</Link>
-              </div>
+            {LINKS.map(link => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className="text-lg font-medium text-white/70"
+              >
+                {link.label}
+              </NavLink>
+            ))}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+              <ButtonGhost as={Link} to="/auth/login">Sign in</ButtonGhost>
+              <ButtonNeon as={Link} to="/app">Launch</ButtonNeon>
             </div>
           </motion.div>
         )}
