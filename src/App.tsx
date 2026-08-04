@@ -1,1 +1,102 @@
-import React, { Suspense, lazy } from 'react';\nimport { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';\nimport MarketingShell, { AppShell } from './components/Layout';\nimport Toaster from './components/ui/sonner';\n\n// Stub missing components or loaders\nconst TreeLoader = () => <div className='p-4 text-center'>Loading...</div>;\n\nconst Landing = lazy(() => import('./pages/Home'));\nconst Collections = lazy(() => import('./pages/app/Collections'));\nconst Detail = lazy(() => import('./pages/app/Detail'));\nconst FAQ = lazy(() => import('./pages/Home')); // Assuming Home handles FAQ or replace with actual FAQ page\n\nfunction App() {\n  return (\n    <Router>\n      <Suspense fallback={<TreeLoader />}>\n        <Routes>\n          <Route element={<MarketingShell />}>\n            <Route path='/' element={<Landing />} />\n            <Route path='/faq' element={<FAQ />} />\n          </Route>\n          \n          <Route element={<AppShell />}>\n            <Route path='/app/collections' element={<Collections />} />\n            <Route path='/app/movie/:id' element={<Detail />} />\n            {/* Redirect /app to /app/collections to fix blank screen */}\n            <Route path='/app' element={<Navigate to='/app/collections' replace />} />\n          </Route>\n\n          {/* Catch-all route to prevent blank screens */}\n          <Route path='*' element={<Navigate to='/' replace />} />\n        </Routes>\n      </Suspense>\n      <Toaster />\n    </Router>\n  );\n}\n\nexport default App;\n
+import React, { Suspense, lazy } from 'react';
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+import MarketingShell from './components/layout/MarketingShell';
+
+import AppShell from './components/layout/AppShell';
+
+import LandingPage from './pages/LandingPage';
+
+import FAQPage from './pages/FAQPage';
+
+import LoadingScreen from './components/ui/LoadingScreen';
+
+
+
+const CollectionsPage = lazy(() => import('./pages/app/CollectionsPage'));
+
+const MovieDetailsPage = lazy(() => import('./pages/app/MovieDetailsPage'));
+
+
+
+function App() {
+  
+  return (
+    
+    <Router>
+    
+      <Routes>
+      
+        {/* Marketing Routes */}
+      
+        <Route path=\"/\" element={<MarketingShell />}>
+        
+          <Route index element={<LandingPage />} />
+        
+          <Route path=\"faq\" element={<FAQPage />} />
+        
+        </Route>Route>
+      
+
+      
+        {/* App Routes */}
+      
+        <Route path=\"/app\" element={<AppShell />}>
+        
+          <Route index element={<Navigate to=\"/app/collections\" replace />} />
+        
+          <Route
+            
+            path=\"collections\"
+        
+            element={
+              
+              <Suspense fallback={<LoadingScreen />}>
+              
+                <CollectionsPage />
+              
+              </Suspense>Suspense>
+          
+            }
+          
+          />
+          
+          <Route
+            
+            path=\"movie/:id\"
+          
+            element={
+              
+              <Suspense fallback={<LoadingScreen />}>
+              
+                <MovieDetailsPage />
+              
+              </Suspense>Suspense>
+          
+            }
+          
+          />
+          
+          </Route>Route>
+          
+
+          
+            {/* Fallback for /app subroutes and root 404 */}
+          
+        <Route path=\"/app/*\" element={<Navigate to=\"/app/collections\" replace />} />
+          
+        <Route path=\"*\" element={<Navigate to=\"/\" replace />} />
+          
+          </Route>Routes>
+        
+        </Route>Router>
+      
+  );
+      
+        }
+      
+
+      
+export default App;</Router>
+
