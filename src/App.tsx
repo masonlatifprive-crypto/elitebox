@@ -7,13 +7,11 @@ import Collections from './pages/app/Collections';
 import Detail from './pages/app/Detail';
 import { MarketingShell, AppShell } from './components/Layout';
 
-
 // Lazy load app pages to ensure they exist or show loading
 const Search = lazy(() => import('./pages/app/Search'));
 const Addons = lazy(() => import('./pages/app/Addons'));
 const Library = lazy(() => import('./pages/app/LibraryPage'));
 const Settings = lazy(() => import('./pages/app/Settings'));
-
 
 const App: React.FC = () => {
   return (
@@ -27,7 +25,6 @@ const App: React.FC = () => {
             <Route path="/downloads" element={<Downloads />} />
           </Route>
 
-
           {/* App Routes */}
           <Route path="/app" element={<AppShell />}>
             <Route index element={<Navigate to="/app/collections" replace />} />
@@ -36,4 +33,15 @@ const App: React.FC = () => {
             <Route path="addons" element={<Addons />} />
             <Route path="library" element={<Library />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="movie/:id" element={<Detail />} />
+            <Route path="detail/:id" element={<Detail />} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </Router>
+  );
+};
+
+export default App;
