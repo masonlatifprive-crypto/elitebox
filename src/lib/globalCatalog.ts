@@ -1,4 +1,4 @@
-import type { MetaItem } from '@/lib/types';
+import type { MetaItem } from "@/lib/types";
 
 /**
  * Global catalog is now driven entirely by real addons.
@@ -18,5 +18,13 @@ export async function getGlobalAnime(): Promise<MetaItem[]> {
 }
 
 export async function getAnimeCatalog(): Promise<MetaItem[]> {
+  return [];
+}
+
+export async function getCuratedGlobalTitles(): Promise<MetaItem[]> {
+  return [];
+}
+
+export async function getUpcomingTitles(): Promise<MetaItem[]> {
   return [];
 }
