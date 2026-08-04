@@ -18,7 +18,7 @@
  */
 import { useEffect, useState } from 'react';
 import { addonEngine } from '@/lib/addons/engine';
-import { findShowcaseMeta } from '@/data/showcase';
+import {  } from '@/data/showcase';
 import type { MetaItem } from '@/lib/types';
 
 const CACHE_KEY = 'elitebox.v1.publicCatalog';
@@ -51,7 +51,7 @@ async function fetchPublicCatalog(): Promise<MetaItem[]> {
     addonEngine.getCatalog('series'),
   ]);
   const remote = (list: MetaItem[]) =>
-    list.filter((m) => !findShowcaseMeta(m.id) && m.poster && m.name);
+    list.filter((m) => !(m.id) && m.poster && m.name);
   return interleave(remote(movies), remote(series), TARGET_COUNT);
 }
 
