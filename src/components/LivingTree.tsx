@@ -1,63 +1,7 @@
 import React, { useRef, useEffect, memo } from 'react';
 
-interface LivingTreeProps {
-  className?: string;
-  height?: number;
-  loader?: boolean;
-}
-
-const drawBranch = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  angle: number,
-  length: number,
-  depth: number,
-  seed: number,
-  isReducedMotion: boolean
-) => {
-  if (depth === 0) return;
-
-  const time = isReducedMotion ? 0 : Date.now() * 0.0015;
-  const variance = Math.sin(time + seed + depth) * 0.15;
-  const currentAngle = angle + variance;
-
-  const x2 = x + Math.cos(currentAngle) * length;
-  const y2 = y + Math.sin(currentAngle) * length;
-
-  ctx.lineWidth = depth * 0.8;
-  ctx.lineCap = 'round';
-
-  // Elegant Cyan/Purple/Silver Glow
-  const gradient = ctx.createLinearGradient(x, y, x2, y2);
-  gradient.addColorStop(0, '#00F5FF'); // Cyan
-  gradient.addColorStop(0.5, '#E5E7EB'); // Silver
-  gradient.addColorStop(1, '#A855F7'); // Purple
-
-  ctx.strokeStyle = gradient;
-  ctx.shadowColor = 'rgba(168, 85, 247, 0.4)';
-  ctx.shadowBlur = 12;
-
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-
-  const nextLength = length * 0.82;
-  const nextDepth = depth - 1;
-
-  drawBranch(ctx, x2, y2, currentAngle - 0.3, nextLength, nextDepth, seed, isReducedMotion);
-  drawBranch(ctx, x2, y2, currentAngle + 0.3, nextLength, nextDepth, seed, isReducedMotion);
-};
-
-const LivingTree: React.FC<LivingTreeProps> = ({
-  className = '',
-  height = 400,
-  loader = false,
-}) => {
+const LivingTree = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const requestRef = useRef<number>();
-  const seedRef = useRef(Math.random() * 100);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -66,50 +10,91 @@ const LivingTree: React.FC<LivingTreeProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let animationFrameId: number;
+    let particles: Particle[] = [];
 
-    const animate = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      init();
+    };
 
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+      x: number;
+      y: number;
+      size: number;
+      speedX: number;
+      speedY: number;
+      color: string;
+      opacity: number;
+
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 1.2;
+        this.speedY = (Math.random() - 0.5) * 1.2;
+        
+        const colors = ['#00f2ff', '#a855f7', '#e2e8f0'];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.opacity = Math.random() * 0.5 + 0.2;
       }
 
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
 
-      const startX = rect.width / 2;
-      const startY = rect.height - 20;
-      const initialLength = loader ? 35 : 75;
-      const initialDepth = loader ? 9 : 11;
+        if (this.x > canvas.width) this.x = 0;
+        else if (this.x < 0) this.x = canvas.width;
+        if (this.y > canvas.height) this.y = 0;
+        else if (this.y < 0) this.y = canvas.height;
+      }
 
-      drawBranch(
-        ctx,
-        startX,
-        startY,
-        -Math.PI / 2,
-        initialLength,
-        initialDepth,
-        seedRef.current,
-        isReducedMotion
-      );
+      draw() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.opacity;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+      }
+    }
 
-      requestRef.current = requestAnimationFrame(animate);
+    function init() {
+      particles = [];
+      const particleCount = Math.min(150, (window.innerWidth * window.innerHeight) / 8000);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    requestRef.current = requestAnimationFrame(animate);
+    animate();
+
     return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationFrameId);
     };
-  }, [loader]);
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className={'w-full h-full ' + className}
-      style={{ height: height + 'px' }}
+      className="fixed inset-0 pointer-events-none z-0"
+      style={{ opacity: 0.6 }}
     />
   );
 };
