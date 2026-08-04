@@ -1,10 +1,17 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import FAQ from './pages/marketing/FAQ';
+import Downloads from './pages/marketing/Downloads';
 import Collections from './pages/app/Collections';
 import Detail from './pages/app/Detail';
 import { MarketingShell, AppShell } from './components/Layout';
+
+// Lazy load app pages to ensure they exist or show loading
+const Search = lazy(() => import('./pages/app/Search'));
+const Addons = lazy(() => import('./pages/app/Addons'));
+const Library = lazy(() => import('./pages/app/Library'));
+const Settings = lazy(() => import('./pages/app/Settings'));
 
 const App: React.FC = () => {
   return (
@@ -15,12 +22,17 @@ const App: React.FC = () => {
           <Route element={<MarketingShell />}>
             <Route path="/" element={<Home />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/downloads" element={<Downloads />} />
           </Route>
 
           {/* App Routes */}
           <Route path="/app" element={<AppShell />}>
             <Route index element={<Navigate to="/app/collections" replace />} />
             <Route path="collections" element={<Collections />} />
+            <Route path="search" element={<Search />} />
+            <Route path="addons" element={<Addons />} />
+            <Route path="library" element={<Library />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="movie/:id" element={<Detail />} />
             <Route path="tv/:id" element={<Detail />} />
           </Route>
