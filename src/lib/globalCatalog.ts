@@ -16,3 +16,7 @@ export async function getGlobalSeries(): Promise<MetaItem[]> {
 export async function getGlobalAnime(): Promise<MetaItem[]> {
   return [];
 }
+
+export async function getAnimeCatalog(): Promise<MetaItem[]> {
+  return [];
+}
