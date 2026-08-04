@@ -22,25 +22,25 @@ function App() {
         {/* App Routes */}
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Navigate to="/app/collections" replace />} />
-          <Route
-            path="collections"
+          <Route 
+            path="collections" 
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <CollectionsPage />
               </Suspense>
-            }
+            } 
           />
-          <Route
-            path="movie/:id"
+          <Route 
+            path="movie/:id" 
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <MovieDetailsPage />
               </Suspense>
-            }
+            } 
           />
         </Route>
 
-        {/* Fallback Catch-all */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
