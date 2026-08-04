@@ -1,4 +1,5 @@
 /**
+
  * Settings — `/app/settings` (design settings.md).
  * Every control mutates a real store or runs a real probe:
  *  - contract settings (appearance/playback/subtitles/cache) → `useSettings`
