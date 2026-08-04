@@ -1,7 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import MarketingShell from './components/layout/MarketingShell';
-import AppShell from './components/layout/AppShell';
+import { MarketingShell, AppShell } from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import FAQPage from './pages/FAQPage';
 import LoadingScreen from './components/ui/LoadingScreen';
@@ -22,25 +21,25 @@ function App() {
         {/* App Routes */}
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Navigate to="/app/collections" replace />} />
-          <Route 
-            path="collections" 
+          <Route
+            path="collections"
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <CollectionsPage />
               </Suspense>
-            } 
+            }
           />
-          <Route 
-            path="movie/:id" 
+          <Route
+            path="movie/:id"
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <MovieDetailsPage />
               </Suspense>
-            } 
+            }
           />
         </Route>
 
-        {/* Fallback */}
+        {/* Catch-all Redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
