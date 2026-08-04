@@ -1,3 +1,23 @@
-/** * Elitebox addon engine (singleton). */import type {  AddonCatalog,  AddonHealth,  AddonInfo,  AddonLegal,  AddonPrivacy,  AddonStatus,  CircuitState,  MetaItem,  MetaType,  MetaVideo,  StreamSource} from '@/lib/types';import { useAddons } from '@/lib/store';export enum addonBlockReason {  NONE = 'NONE',  LEGAL = 'LEGAL',  MALWARE = 'MALWARE',  UNSTABLE = 'UNSTABLE'}export const addonTorrentHint = 'torrent';export function manifestUrlForTransport(url: string): string {  return url.replace(/\/manifest.json$/, '');}class AddonEngine {  private health: Record<string, AddonHealth> = {};
+/** * Elitebox addon engine (singleton). */
+import type {  AddonCatalog,  AddonHealth,  AddonInfo,  AddonLegal,  AddonPrivacy,  AddonStatus,  CircuitState,  MetaItem,  MetaType,  MetaVideo,  StreamSource} from '@/lib/types';
+import { useAddons } from '@/lib/store';
+
+export enum addonBlockReason {
+  NONE = 'NONE',
+  LEGAL = 'LEGAL',
+  MALWARE = 'MALWARE',
+  UNSTABLE = 'UNSTABLE'
+}
+
+export const addonTorrentHint = 'torrent';
+
+export function manifestUrlForTransport(url: string): string {
+  return url.replace(/\\/manifest.json$/, '');
+}
+
+class AddonEngine {
+  private health: Record<string, AddonHealth> = {};
+}
+
 export const addonEngine = new AddonEngine();
 export default addonEngine;
