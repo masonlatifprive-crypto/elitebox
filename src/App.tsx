@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { MarketingShell, AppShell } from './components/Layout';
 import Home from './pages/Home';
-import FAQPage from './pages/FAQPage';
+import FAQ from './pages/marketing/FAQ';
 import LoadingScreen from './components/ui/LoadingScreen';
 
 const CollectionsPage = lazy(() => import('./pages/app/CollectionsPage'));
@@ -15,7 +15,7 @@ function App() {
         {/* Marketing Routes */}
         <Route path="/" element={<MarketingShell />}>
           <Route index element={<Home />} />
-          <Route path="faq" element={<FAQPage />} />
+          <Route path="faq" element={<FAQ />} />
         </Route>
 
         {/* App Routes */}
@@ -39,7 +39,7 @@ function App() {
           />
         </Route>
 
-        {/* Catch-all redirect to home or app */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
