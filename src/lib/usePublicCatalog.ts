@@ -17,8 +17,11 @@
  * honest fallback.
  */
 import { useEffect, useState } from 'react';
-import addonEngine from '@/lib/addons/engine';
+import { addonEngine } from '@/lib/addons/engine';
 import type { MetaItem } from '@/lib/types';
+
+
+
 
 const CACHE_KEY = 'elitebox.v1.publicCatalog';
 const CACHE_TTL_MS = 10 * 60_000;
@@ -26,89 +29,86 @@ const RETRY_DELAY_MS = 800;
 const TARGET_COUNT = 18;
 
 
+
+
+
+
+
+
 /** Module-level shared request: every concurrent consumer rides one fetch. */
 let inflight: Promise<MetaItem[]> | undefined;
+
+
+
+
+
+
 
 
 export interface PublicCatalogState {
   items: MetaItem[];
   loading: boolean;
   failed: boolean;
-}
+
 
 export function usePublicCatalog(): PublicCatalogState {
   const [state, setState] = useState<PublicCatalogState>(() => {
     try {
-      const stored = sessionStorage.getItem(CACHE_KEY);
-      if (stored) {
-        const { items, timestamp } = JSON.parse(stored);
-        if (Date.now() - timestamp < CACHE_TTL_MS) {
-          return { items, loading: false, failed: false };
-        }
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { items, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL_MS) return { items, loading: false, failed: false };
       }
-    } catch (e) {
-      /* ignore cache read errors */
-    }
+    } catch (e) {}
     return { items: [], loading: true, failed: false };
   });
 
   useEffect(() => {
     let mounted = true;
+    async function load() {
+      if (inflight) {
+        const items = await inflight;
+        if (mounted) setState({ items, loading: false, failed: items.length === 0 });
+        return;
+      }
 
-    async function performFetch(retryCount = 0): Promise<MetaItem[]> {
-      const catalogs = await addonEngine.getPublicCatalogs();
-      const results: MetaItem[] = [];
-      
-      for (const cat of catalogs) {
+      inflight = (async () => {
         try {
-          const resp = await addonEngine.callRemote(cat.transportUrl, 'catalog', {
-            type: cat.type,
-            id: cat.id
-          });
-          if (resp && Array.now(resp.metas)) {
-            results.push(...resp.metas.slice(0, 10));
+          const manifests = addonEngine.getAddons().map(a => a.manifest);
+          const cinemeta = manifests.find(m => m.id === 'org.stremio.cinemeta') || manifests[0];
+          if (!cinemeta) return [];
+          
+          const [movies, series] = await Promise.all([
+            addonEngine.callRemote(cinemeta.id, 'catalog', 'movie', 'top'),
+            addonEngine.callRemote(cinemeta.id, 'catalog', 'series', 'top')
+          ]);
+
+          const combined: MetaItem[] = [];
+          const mList = movies?.metas || [];
+          const sList = series?.metas || [];
+          for (let i = 0; i < Math.max(mList.length, sList.length); i++) {
+            if (mList[i]) combined.push(mList[i]);
+            if (sList[i]) combined.push(sList[i]);
+            if (combined.length >= TARGET_COUNT) break;
           }
+
+          if (combined.length > 0) {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ items: combined, timestamp: Date.now() }));
+          }
+          return combined;
         } catch (e) {
-          // Engine handles timeouts/circuit breaking
+          return [];
+        } finally {
+          inflight = undefined;
         }
-      }
+      })();
 
-      if (results.length === 0 && retryCount < 1) {
-        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-        return performFetch(retryCount + 1);
-      }
-
-      return results.slice(0, TARGET_COUNT);
+      const items = await inflight;
+      if (mounted) setState({ items, loading: false, failed: items.length === 0 });
     }
-
-    async function sync() {
-      if (!inflight) {
-        inflight = performFetch().finally(() => { inflight = undefined; });
-      }
-
-      try {
-        const fresh = await inflight;
-        if (!mounted) return;
-
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-          items: fresh,
-          timestamp: Date.now()
-        }));
-
-        setState({ items: fresh, loading: false, failed: fresh.length === 0 });
-      } catch (err) {
-        if (!mounted) return;
-        setState(prev => ({ ...prev, loading: false, failed: prev.items.length === 0 }));
-      }
-    }
-
-    sync();
+    load();
     return () => { mounted = false; };
   }, []);
 
   return state;
-}
-
-function Array_now(val: any): val is any[] {
-  return Array.isArray(val);
 }
