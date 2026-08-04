@@ -3,13 +3,13 @@ import { Search as SearchIcon, Grid, Play, ChevronRight, Filter, Loader2, AlertC
 import addonEngine from '../../lib/addons/engine';
 import { AddonCatalog, MetaItem } from '../../lib/types';
 import { useNavigate } from 'react-router-dom';
-
+\u00A0
 const Collections: React.FC = () => {
   const [catalogs, setCatalogs] = useState<{addonId: string, catalog: AddonCatalog}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-
+\u00A0
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
@@ -35,99 +35,122 @@ const Collections: React.FC = () => {
         setLoading(false);
       }
     };
-
+\u00A0
     loadCatalogs();
   }, []);
-
+\u00A0
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin opacity-50" />
+        <p className="text-zinc-500 animate-pulse">Initializing catalogs...</p>
       </div>
     );
   }
-
-  return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-            Collections
-          </h1>
-          <p className="text-muted-foreground mt-1">Explore catalogs from your installed addons</p>
-        </div>
-        <button 
-          onClick={() => navigate('/app/addons')}
-          className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-all border border-primary/20"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Add More</span>
-        </button>
-      </div>
-
-      {catalogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
-          <div className="relative mb-6">
-            <div className="absolute -inset-4 bg-primary/20 blur-3xl rounded-full opacity-50" />
-            <div className="relative w-20 h-20 bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl">
-              <Grid className="w-10 h-10 text-primary/60" />
-            </div>
-          </div>
-          <h2 className="text-2xl font-semibold mb-3">No Catalogs Found</h2>
-          <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
-            Install addons to discover movies, TV shows, and more. We recommend starting with Cinemeta for official metadata.
-          </p>
+\u00A0
+  if (catalogs.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50 p-8 md:p-12">
+          {/* Background Glow */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 blur-[100px]" />
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/10 blur-[100px]" />
           
-          <div className="grid gap-4 w-full max-w-lg">
-            <button 
-              onClick={() => navigate('/app/addons')}
-              className="group relative flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-                  <PlusCircle className="w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">Browse Addon Store</div>
-                  <div className="text-sm text-muted-foreground">Find official legal metadata sources</div>
-                </div>
+          <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            <div className="flex-1 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
+                <Info className="w-3 h-3" />
+                Guided Setup
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors" />
-            </button>
-
-            <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground bg-blue-500/5 border border-blue-500/10 rounded-xl">
-              <Info className="w-4 h-4 text-blue-400 shrink-0" />
-              <p>EliteBoxMovies is a legal media browser. We do not provide content directly.</p>
+              
+              <div className="space-y-2">
+                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                  No Catalogs Found
+                </h1>
+                <p className="text-zinc-400 text-lg leading-relaxed">
+                  EliteBoxMovies uses the Addon Protocol to fetch metadata. To see movies and shows here, you'll need to install a metadata addon like Cinemeta.
+                </p>
+              </div>
+\u00A0
+              <div className="flex flex-col sm:row gap-4 pt-4">
+                <button 
+                  onClick={() => navigate('/app/addons')}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition-all active:scale-95 shadow-lg shadow-white/5"
+                >
+                  <PlusCircle className="w-5 h-5" />
+                  Browse Addon Store
+                </button>
+                <a 
+                  href="https://web.stremio.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-800 text-white font-semibold rounded-xl hover:bg-zinc-700 transition-all border border-zinc-700/50"
+                >
+                  <ExternalLink className="w-4 h-4 text-zinc-500" />
+                  Learn More
+                </a>
+              </div>
+            </div>
+\u00A0
+            <div className="w-full md:w-72 grid grid-cols-2 gap-3 opacity-40 grayscale pointer-events-none">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="aspect-[2/3] rounded-xl bg-zinc-800 animate-pulse" />
+              ))}
             </div>
           </div>
         </div>
-      ) : (
-        <div className="grid gap-8">
-          {catalogs.map(({ addonId, catalog }) => (
-            <section key={`${addonId}-${catalog.id}`} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  {catalog.name}
-                  <span className="text-xs font-normal text-muted-foreground bg-white/5 px-2 py-0.5 rounded">
-                    {addonId}
-                  </span>
-                </h2>
-                <button className="text-sm text-primary hover:underline">View All</button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div 
-                    key={i} 
-                    className="aspect-[2/3] bg-card/50 rounded-lg animate-pulse border border-white/5"
-                  />
-                ))}
-              </div>
-            </section>
+\u00A0
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: Grid, title: 'Centralized', desc: 'Manage all your catalogs in one clean, unified interface.' },
+            { icon: SearchIcon, title: 'Discovery', desc: 'Find new content across various legal providers.' },
+            { icon: Play, title: 'Seamless', desc: 'One-click playback for your favorite media sources.' }
+          ].map((feature, idx) => (
+            <div key={idx} className="p-6 rounded-2xl border border-zinc-800/50 bg-zinc-900/30">
+              <feature.icon className="w-6 h-6 text-blue-500 mb-3" />
+              <h3 className="text-white font-medium mb-1">{feature.title}</h3>
+              <p className="text-sm text-zinc-500">{feature.desc}</p>
+            </div>
           ))}
         </div>
-      )}
+      </div>
+    );
+  }
+\u00A0
+  return (
+    <div className="space-y-8 pb-12">
+      {catalogs.map((item, idx) => (
+        <section key={idx} className="space-y-4">
+          <div className="flex items-center justify-between px-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 bg-blue-500 rounded-full" />
+              <h2 className="text-xl font-bold text-white">{item.catalog.name}</h2>
+              <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-zinc-800 text-zinc-500 rounded border border-zinc-700">
+                {item.catalog.type}
+              </span>
+            </div>
+            <button className="group flex items-center gap-1 text-sm text-zinc-500 hover:text-white transition-colors">
+              View All
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+          
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto pb-4 px-4 no-scrollbar">
+              {[...Array(8)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className="flex-none w-[140px] md:w-[180px] aspect-[2/3] rounded-xl bg-zinc-900 border border-zinc-800/50 flex items-center justify-center"
+                >
+                  <Play className="w-8 h-8 text-zinc-800" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ))}
     </div>
   );
 };
-
+\u00A0
 export default Collections;
