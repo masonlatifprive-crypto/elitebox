@@ -82,9 +82,7 @@ function App() {
           
 
           
-            {/* Fallback for /app subroutes and root 404 */}
-          
-        <Route path=\"/app/*\" element={<Navigate to=\"/app/collections\" replace />} />
+            {/* Fallback */}
           
         <Route path=\"*\" element={<Navigate to=\"/\" replace />} />
           
