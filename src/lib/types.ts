@@ -4,7 +4,11 @@
  */
 
 
+
+
 export type MetaType = 'movie' | 'series' | 'channel';
+
+
 
 
 export interface MetaVideo {
@@ -16,6 +20,8 @@ export interface MetaVideo {
 }
 
 
+
+
 /** A trailer attached to a meta (Cinemeta `trailers` / `trailerStreams`). */
 export interface MetaTrailer {
   /** YouTube video id. */
@@ -23,6 +29,8 @@ export interface MetaTrailer {
   /** Cinemeta trailer kind, e.g. 'Trailer'. */
   type?: string;
 }
+
+
 
 
 export interface MetaItem {
@@ -34,14 +42,10 @@ export interface MetaItem {
   year?: number;
   genres: string[];
   rating?: number; // 0–10
-  description: string;
-  runtime?: number; // minutes
-  live?: boolean;
-  videos?: MetaVideo[];
 
 export interface AddonCatalog {
   id: string;
   name: string;
   type: MetaType;
-  extra?: { name: string; isRequired?: boolean; options?: string[] }[];
+  meta?: MetaItem;
 }
