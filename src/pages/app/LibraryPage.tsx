@@ -1,4 +1,5 @@
 /**
+
  * Library — `/app/library` (design library.md).
  * Tabs: Continue Watching / Watchlist / Favorites / History — all real data
  * from the profile-scoped `useLibrary` store. Stats strip (titles saved,
