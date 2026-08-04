@@ -17,9 +17,8 @@
  * honest fallback.
  */
 import { useEffect, useState } from 'react';
-import { addonEngine } from '@/lib/addons/engine';
+import addonEngine from '@/lib/addons/engine';
 import type { MetaItem } from '@/lib/types';
-
 
 const CACHE_KEY = 'elitebox.v1.publicCatalog';
 const CACHE_TTL_MS = 10 * 60_000;
@@ -35,4 +34,81 @@ export interface PublicCatalogState {
   items: MetaItem[];
   loading: boolean;
   failed: boolean;
+}
+
+export function usePublicCatalog(): PublicCatalogState {
+  const [state, setState] = useState<PublicCatalogState>(() => {
+    try {
+      const stored = sessionStorage.getItem(CACHE_KEY);
+      if (stored) {
+        const { items, timestamp } = JSON.parse(stored);
+        if (Date.now() - timestamp < CACHE_TTL_MS) {
+          return { items, loading: false, failed: false };
+        }
+      }
+    } catch (e) {
+      /* ignore cache read errors */
+    }
+    return { items: [], loading: true, failed: false };
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function performFetch(retryCount = 0): Promise<MetaItem[]> {
+      const catalogs = await addonEngine.getPublicCatalogs();
+      const results: MetaItem[] = [];
+      
+      for (const cat of catalogs) {
+        try {
+          const resp = await addonEngine.callRemote(cat.transportUrl, 'catalog', {
+            type: cat.type,
+            id: cat.id
+          });
+          if (resp && Array.now(resp.metas)) {
+            results.push(...resp.metas.slice(0, 10));
+          }
+        } catch (e) {
+          // Engine handles timeouts/circuit breaking
+        }
+      }
+
+      if (results.length === 0 && retryCount < 1) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        return performFetch(retryCount + 1);
+      }
+
+      return results.slice(0, TARGET_COUNT);
+    }
+
+    async function sync() {
+      if (!inflight) {
+        inflight = performFetch().finally(() => { inflight = undefined; });
+      }
+
+      try {
+        const fresh = await inflight;
+        if (!mounted) return;
+
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+          items: fresh,
+          timestamp: Date.now()
+        }));
+
+        setState({ items: fresh, loading: false, failed: fresh.length === 0 });
+      } catch (err) {
+        if (!mounted) return;
+        setState(prev => ({ ...prev, loading: false, failed: prev.items.length === 0 }));
+      }
+    }
+
+    sync();
+    return () => { mounted = false; };
+  }, []);
+
+  return state;
+}
+
+function Array_now(val: any): val is any[] {
+  return Array.isArray(val);
 }
