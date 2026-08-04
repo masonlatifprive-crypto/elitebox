@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -34,44 +34,46 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((
     variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
     variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
     variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
-    variant === 'neon' && 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary/30',
-    size === 'sm' && 'h-9 px-3 text-xs',
-    size === 'md' && 'h-10 px-4 py-2',
-    size === 'lg' && 'h-11 px-8',
-    size === 'icon' && 'h-10 w-10',
     className
   );
 
   if (to) {
-    return (
-      <Link to={to} className={classes} {...(props as any)}>
-        {props.children}
-      </Link>
-    );
+    return <Link to={to} className={classes} {...(props as any)} />;
   }
 
-  return (
-    <button
-      className={classes}
-      ref={ref}
-      {...props}
-    />
-  );
+  return <button className={classes} ref={ref} {...props} />;
 });
-Button.displayName = 'Button';
 
-export const ButtonPrimary = (props: ButtonProps) => <Button variant="primary" {...props} />;
-export const ButtonGhost = (props: ButtonProps) => <Button variant="ghost" {...props} />;
-export const ButtonNeon = (props: ButtonProps) => <Button variant="neon" {...props} />;
+export const Modal = ({ children, isOpen, onClose, title }: any) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-card w-full max-w-lg rounded-xl border border-border p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold">{title}</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
 
-export const Eyebrow = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <span className={cn("text-xs font-bold uppercase tracking-widest text-primary", className)}>
-    {children}
-  </span>
+export const Card = ({ children, className }: any) => (
+  <div className={cn("bg-card rounded-xl border border-border shadow-sm", className)}>{children}</div>
 );
 
-export const GlassPanel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("backdrop-blur-md bg-black/40 border border-white/10 rounded-xl", className)}>
-    {children}
-  </div>
+export const Badge = ({ children, className, variant = 'default' }: any) => (
+  <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", 
+    variant === 'default' ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground",
+    className
+  )}>{children}</span>
+);
+
+export const Input = forwardRef<HTMLInputElement, any>(({ className, ...props }, ref) => (
+  <input ref={ref} className={cn("flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm", className)} {...props} />
+));
+
+export const Skeleton = ({ className }: { className?: string }) => (
+  <div className={cn("animate-pulse rounded-md bg-muted", className)} />
 );
