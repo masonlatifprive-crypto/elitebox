@@ -25,7 +25,7 @@ import {
 import PosterCard from '@/components/PosterCard';
 import { ButtonNeon, EmptyState, spring, toast } from '@/components/ui-elite';
 import { DEFAULT_PROFILE_ID, useLibrary, useProfiles } from '@/lib/store';
-import { findShowcaseMeta } from '@/data/showcase';
+// Removed showcase import
 import { useCatalogItems } from '@/pages/app/Discover';
 import { addonEngine } from '@/lib/addons/engine';
 import { getAnimeCatalog, getCuratedGlobalTitles, getKnownTitleAliases, getUpcomingTitles } from '@/lib/globalCatalog';
@@ -282,7 +282,7 @@ export default function LibraryPage() {
   }, [catalogItems, remoteMeta]);
   const resolveMeta = (id: string): MetaItem | undefined => {
     const normalized = id.includes(':') ? id.split(':').at(-1)! : id;
-    const resolved = metaById.get(id) ?? metaById.get(normalized) ?? LIBRARY_STATIC_FALLBACKS[id] ?? LIBRARY_STATIC_FALLBACKS[normalized] ?? findShowcaseMeta(id) ?? findShowcaseMeta(normalized);
+    const resolved = metaById.get(id) ?? metaById.get(normalized) ?? LIBRARY_STATIC_FALLBACKS[id] ?? LIBRARY_STATIC_FALLBACKS[normalized] ?? (id) ?? (normalized);
     if (resolved) return { ...resolved, id };
     return {
       id,
