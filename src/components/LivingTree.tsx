@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, memo } from 'react';
-import { cn } from '@/lib/utils';
 
 interface LivingTreeProps {
   className?: string;
@@ -7,97 +6,110 @@ interface LivingTreeProps {
   loader?: boolean;
 }
 
-function drawBranch(
-  ctx: CanvasRenderingContext2D, 
-  x: number, 
-  y: number, 
-  angle: number, 
-  length: number, 
-  depth: number, 
+const drawBranch = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  angle: number,
+  length: number,
+  depth: number,
   seed: number,
   isReducedMotion: boolean
-) {
+) => {
   if (depth === 0) return;
 
-  const time = Date.now() / 1000;
-  const motionFactor = isReducedMotion ? 0 : 1;
-  const sway = Math.sin(time * 1.5 + seed + depth) * (0.04 * motionFactor);
-  const currentAngle = angle + sway;
+  const time = isReducedMotion ? 0 : Date.now() * 0.0015;
+  const variance = Math.sin(time + seed + depth) * 0.15;
+  const currentAngle = angle + variance;
 
   const x2 = x + Math.cos(currentAngle) * length;
   const y2 = y + Math.sin(currentAngle) * length;
 
-  // Visual enhancements: Higher density and polished glow
-  ctx.lineWidth = depth * 0.85;
-  
-  if (depth > 6) {
-    ctx.strokeStyle = 'rgba(192, 192, 192, 0.9)'; // Silver base for trunk
-    ctx.shadowColor = 'rgba(0, 255, 255, 0.8)'; // Cyan glow
-  } else {
-    ctx.strokeStyle = 'rgba(0, 255, 255, 0.85)'; // Cyan core for branches
-    ctx.shadowColor = 'rgba(147, 51, 234, 0.75)'; // Purple outer glow
-  }
-  
-  ctx.shadowBlur = depth * 1.8;
-  
+  ctx.lineWidth = depth * 0.8;
+  ctx.lineCap = 'round';
+
+  // Elegant Cyan/Purple/Silver Glow
+  const gradient = ctx.createLinearGradient(x, y, x2, y2);
+  gradient.addColorStop(0, '#00F5FF'); // Cyan
+  gradient.addColorStop(0.5, '#E5E7EB'); // Silver
+  gradient.addColorStop(1, '#A855F7'); // Purple
+
+  ctx.strokeStyle = gradient;
+  ctx.shadowColor = 'rgba(168, 85, 247, 0.4)';
+  ctx.shadowBlur = 12;
+
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(x2, y2);
   ctx.stroke();
 
-  const nextLength = length * 0.76;
-  // Recursive branching
-  drawBranch(ctx, x2, y2, currentAngle - 0.35, nextLength, depth - 1, seed, isReducedMotion);
-  drawBranch(ctx, x2, y2, currentAngle + 0.35, nextLength, depth - 1, seed, isReducedMotion);
-}
+  const nextLength = length * 0.82;
+  const nextDepth = depth - 1;
 
-const LivingTree = ({
-  className,
-  height = 180,
+  drawBranch(ctx, x2, y2, currentAngle - 0.3, nextLength, nextDepth, seed, isReducedMotion);
+  drawBranch(ctx, x2, y2, currentAngle + 0.3, nextLength, nextDepth, seed, isReducedMotion);
+};
+
+const LivingTree: React.FC<LivingTreeProps> = ({
+  className = '',
+  height = 400,
   loader = false,
-}: LivingTreeProps) => {
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
-  const seed = useRef(Math.random() * 100).current;
+  const seedRef = useRef(Math.random() * 100);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      const startX = canvas.width / 2;
-      const startY = canvas.height - 10;
-      const initialLength = height * 0.28;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
 
-      ctx.lineCap = 'round';
-      drawBranch(ctx, startX, startY, -Math.PI / 2, initialLength, loader ? 11 : 9, seed, isReducedMotion);
-      
+      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+      }
+
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const startX = rect.width / 2;
+      const startY = rect.height - 20;
+      const initialLength = loader ? 35 : 75;
+      const initialDepth = loader ? 9 : 11;
+
+      drawBranch(
+        ctx,
+        startX,
+        startY,
+        -Math.PI / 2,
+        initialLength,
+        initialDepth,
+        seedRef.current,
+        isReducedMotion
+      );
+
       requestRef.current = requestAnimationFrame(animate);
     };
 
     requestRef.current = requestAnimationFrame(animate);
-
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [height, loader, seed]);
+  }, [loader]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={400}
-      height={height}
-      className={cn(
-        'pointer-events-none opacity-90 transition-opacity duration-1000',
-        loader && 'animate-pulse',
-        className
-      )}
+      className={'w-full h-full ' + className}
+      style={{ height: height + 'px' }}
     />
   );
 };
