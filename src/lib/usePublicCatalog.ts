@@ -20,44 +20,28 @@ import { useEffect, useState } from 'react';
 import { addonEngine } from '@/lib/addons/engine';
 import type { MetaItem } from '@/lib/types';
 
-
-
-
 const CACHE_KEY = 'elitebox.v1.publicCatalog';
 const CACHE_TTL_MS = 10 * 60_000;
 const RETRY_DELAY_MS = 800;
 const TARGET_COUNT = 18;
 
-
-
-
-
-
-
-
-/** Module-level shared request: every concurrent consumer rides one fetch. */
-let inflight: Promise<MetaItem[]> | undefined;
-
-
-
-
-
-
-
-
-export interface PublicCatalogState {
+interface CatalogState {
   items: MetaItem[];
   loading: boolean;
   failed: boolean;
+}
 
+let inFlight: Promise<MetaItem[]> | null = null;
 
-export function usePublicCatalog(): PublicCatalogState {
-  const [state, setState] = useState<PublicCatalogState>(() => {
+export function usePublicCatalog(): CatalogState {
+  const [state, setState] = useState<CatalogState>(() => {
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
-        const { items, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_TTL_MS) return { items, loading: false, failed: false };
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL_MS) {
+          return { items: data, loading: false, failed: false };
+        }
       }
     } catch (e) {}
     return { items: [], loading: true, failed: false };
@@ -65,48 +49,61 @@ export function usePublicCatalog(): PublicCatalogState {
 
   useEffect(() => {
     let mounted = true;
-    async function load() {
-      if (inflight) {
-        const items = await inflight;
-        if (mounted) setState({ items, loading: false, failed: items.length === 0 });
-        return;
+
+    async function fetchCatalog(isRetry = false): Promise<MetaItem[]> {
+      const addons = addonEngine.getAddons().filter(a => a.manifest.types.includes('movie') || a.manifest.types.includes('series'));
+      const cinemeta = addons.find(a => a.transportUrl.includes('cinemeta')) || addons[0];
+
+      if (!cinemeta) return [];
+
+      try {
+        const [movies, series] = await Promise.all([
+          addonEngine.callRemote(cinemeta.transportUrl, 'catalog', 'movie', 'top'),
+          addonEngine.callRemote(cinemeta.transportUrl, 'catalog', 'series', 'top')
+        ]);
+
+        const interleaved: MetaItem[] = [];
+        const max = Math.max(movies?.metas?.length || 0, series?.metas?.length || 0);
+        for (let i = 0; i < max; i++) {
+          if (movies?.metas?.[i]) interleaved.push(movies.metas[i]);
+          if (series?.metas?.[i]) interleaved.push(series.metas[i]);
+          if (interleaved.length >= TARGET_COUNT) break;
+        }
+
+        if (interleaved.length === 0 && !isRetry) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+          return fetchCatalog(true);
+        }
+
+        return interleaved;
+      } catch (err) {
+        if (!isRetry) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+          return fetchCatalog(true);
+        }
+        throw err;
+      }
+    }
+
+    async function sync() {
+      if (!inFlight) {
+        inFlight = fetchCatalog().finally(() => { inFlight = null; });
       }
 
-      inflight = (async () => {
-        try {
-          const manifests = addonEngine.getAddons().map(a => a.manifest);
-          const cinemeta = manifests.find(m => m.id === 'org.stremio.cinemeta') || manifests[0];
-          if (!cinemeta) return [];
-          
-          const [movies, series] = await Promise.all([
-            addonEngine.callRemote(cinemeta.id, 'catalog', 'movie', 'top'),
-            addonEngine.callRemote(cinemeta.id, 'catalog', 'series', 'top')
-          ]);
-
-          const combined: MetaItem[] = [];
-          const mList = movies?.metas || [];
-          const sList = series?.metas || [];
-          for (let i = 0; i < Math.max(mList.length, sList.length); i++) {
-            if (mList[i]) combined.push(mList[i]);
-            if (sList[i]) combined.push(sList[i]);
-            if (combined.length >= TARGET_COUNT) break;
-          }
-
-          if (combined.length > 0) {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ items: combined, timestamp: Date.now() }));
-          }
-          return combined;
-        } catch (e) {
-          return [];
-        } finally {
-          inflight = undefined;
+      try {
+        const data = await inFlight;
+        if (mounted) {
+          setState({ items: data, loading: false, failed: false });
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
         }
-      })();
-
-      const items = await inflight;
-      if (mounted) setState({ items, loading: false, failed: items.length === 0 });
+      } catch (err) {
+        if (mounted) {
+          setState(prev => ({ ...prev, loading: false, failed: prev.items.length === 0 }));
+        }
+      }
     }
-    load();
+
+    sync();
     return () => { mounted = false; };
   }, []);
 
