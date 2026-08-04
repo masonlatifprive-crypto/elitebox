@@ -1,43 +1,28 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { MarketingShell, AppShell } from './components/Layout';
 import Home from './pages/Home';
 import FAQ from './pages/marketing/FAQ';
-import LoadingScreen from './components/ui/LoadingScreen';
+import Collections from './pages/app/Collections';
+import Detail from './pages/app/Detail';
+import { MarketingShell, AppShell } from './components/Layout';
 
-const CollectionsPage = lazy(() => import('./pages/app/Collections'));
-const MovieDetailsPage = lazy(() => import('./pages/app/Detail'));
-
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
-      <Suspense fallback={<LoadingScreen />}>
+      <Suspense fallback={<div className="flex items-center justify-center h-screen bg-[#050505] text-white">Loading...</div>}>
         <Routes>
           {/* Marketing Routes */}
-          <Route path="/" element={<MarketingShell />}>
-            <Route index element={<Home />} />
-            <Route path="faq" element={<FAQ />} />
+          <Route element={<MarketingShell />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/faq" element={<FAQ />} />
           </Route>
 
           {/* App Routes */}
           <Route path="/app" element={<AppShell />}>
             <Route index element={<Navigate to="/app/collections" replace />} />
-            <Route
-              path="collections"
-              element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <CollectionsPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="movie/:id"
-              element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <MovieDetailsPage />
-                </Suspense>
-              }
-            />
+            <Route path="collections" element={<Collections />} />
+            <Route path="movie/:id" element={<Detail />} />
+            <Route path="tv/:id" element={<Detail />} />
           </Route>
 
           {/* Catch-all */}
@@ -46,6 +31,6 @@ function App() {
       </Suspense>
     </Router>
   );
-}
+};
 
 export default App;
