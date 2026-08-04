@@ -25,10 +25,18 @@ export enum addonBlockReason {
   UNSTABLE = 'UNSTABLE'
 }
 
-const TIMEOUT_DIRECT = 7000;
+export const addonTorrentHint = 'torrent';
+
+export function manifestUrlForTransport(url: string): string {
+  return url.replace(/\/manifest.json$/, '');
+}
 
 class AddonEngine {
   private health: Record<string, AddonHealth> = {};
+
+  constructor() {
+    console.log('[AddonEngine] Initialized');
+  }
 
   getAddons(): AddonInfo[] {
     try {
@@ -53,12 +61,7 @@ class AddonEngine {
     const addon = this.getAddons().find(a => a.manifest.id === addonId);
     if (!addon) return [];
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), TIMEOUT_DIRECT);
-      const resp = await fetch(addon.transportUrl + '/catalog/' + type + '/' + id + '.json', {
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
+      const resp = await fetch(`${addon.transportUrl}/catalog/${type}/${id}.json`);
       const data = await resp.json();
       return data.metas || [];
     } catch (e) {
@@ -70,12 +73,7 @@ class AddonEngine {
     const addon = this.getAddons().find(a => a.manifest.id === addonId);
     if (!addon) return null;
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), TIMEOUT_DIRECT);
-      const resp = await fetch(addon.transportUrl + '/meta/' + type + '/' + id + '.json', {
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
+      const resp = await fetch(`${addon.transportUrl}/meta/${type}/${id}.json`);
       const data = await resp.json();
       return data.meta || null;
     } catch (e) {
@@ -86,19 +84,13 @@ class AddonEngine {
   async getStreams(type: string, id: string): Promise<StreamSource[]> {
     const addons = this.getAddons();
     const results: StreamSource[] = [];
-    const promises = addons.map(async (addon) => {
+    for (const addon of addons) {
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), TIMEOUT_DIRECT);
-        const resp = await fetch(addon.transportUrl + '/stream/' + type + '/' + id + '.json', {
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
+        const resp = await fetch(`${addon.transportUrl}/stream/${type}/${id}.json`);
         const data = await resp.json();
         if (data.streams) results.push(...data.streams);
       } catch (e) {}
-    });
-    await Promise.allSettled(promises);
+    }
     return results;
   }
 }
