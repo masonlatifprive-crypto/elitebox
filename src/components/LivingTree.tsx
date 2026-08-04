@@ -20,146 +20,105 @@ function drawBranch(
   length: number,
   depth: number,
   seed: number,
+  isReducedMotion: boolean
 ) {
-  if (depth <= 0 || length < 2.2) return;
-  const sway = Math.sin(seed + depth * 0.84) * 0.045;
-  const a = angle + sway;
-  const x2 = x + Math.cos(a) * length;
-  const y2 = y + Math.sin(a) * length;
-  const alpha = Math.max(0.09, depth / 9);
+  if (depth <= 0 || length < 2) return;
+
+  // Faster, smoother motion for non-reduced motion users
+  const speedMult = isReducedMotion ? 0.2 : 1.2;
+  const sway = Math.sin((seed * 0.001) + (depth * 0.8)) * (isReducedMotion ? 0.01 : 0.06) * speedMult;
+  const currentAngle = angle + sway;
+
+  const x2 = x + Math.cos(currentAngle) * length;
+  const y2 = y + Math.sin(currentAngle) * length;
 
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(0.7, depth * 0.42);
-  ctx.shadowBlur = 6;
-  ctx.shadowColor = 'rgba(220,230,248,.16)';
-  const grad = ctx.createLinearGradient(x, y, x2, y2);
-  grad.addColorStop(0, `rgba(255,255,255,${0.26 * alpha})`);
-  grad.addColorStop(0.62, `rgba(238,244,250,${0.76 * alpha})`);
-  grad.addColorStop(1, `rgba(124,217,236,${0.28 * alpha})`);
-  ctx.strokeStyle = grad;
+  
+  // Thicker branches for higher visual density
+  ctx.lineWidth = Math.max(0.8, depth * 0.55);
+
+  // Polished cyan/silver/purple glow
+  if (depth > 8) {
+    ctx.strokeStyle = 'rgba(192, 192, 192, 0.4)'; // Silver trunk
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+  } else if (depth > 4) {
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)'; // Cyan middle
+    ctx.shadowColor = 'rgba(0, 255, 255, 0.4)';
+    ctx.shadowBlur = 4;
+  } else {
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.6)'; // Purple tips
+    ctx.shadowColor = 'rgba(168, 85, 247, 0.5)';
+    ctx.shadowBlur = 6;
+  }
+
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(x2, y2);
   ctx.stroke();
-
-  if (depth <= 2) {
-    ctx.fillStyle = 'rgba(255,255,255,.78)';
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = 'rgba(220,230,248,.20)';
-    ctx.beginPath();
-    ctx.arc(x2, y2, 1.55, 0, Math.PI * 2);
-    ctx.fill();
-  }
   ctx.restore();
 
-  const next = length * (0.66 + Math.sin(seed + depth) * 0.025);
-  const spread = 0.43 + (9 - depth) * 0.014;
-  drawBranch(ctx, x2, y2, a - spread, next, depth - 1, seed + 1.6);
-  drawBranch(ctx, x2, y2, a + spread, next * 0.96, depth - 1, seed + 2.2);
-  if (depth > 4) drawBranch(ctx, x2, y2, a + 0.12, next * 0.58, depth - 2, seed + 3.4);
+  // Branching logic for higher density
+  const newDepth = depth - 1;
+  const newLength = length * 0.78;
+  
+  // Always branch at least twice for density
+  drawBranch(ctx, x2, y2, currentAngle - 0.35, newLength, newDepth, seed, isReducedMotion);
+  drawBranch(ctx, x2, y2, currentAngle + 0.35, newLength, newDepth, seed, isReducedMotion);
+  
+  // Extra detail branch in middle depths
+  if (depth > 3 && depth < 7) {
+    drawBranch(ctx, x2, y2, currentAngle, newLength * 0.6, newDepth - 1, seed, isReducedMotion);
+  }
 }
 
-const LivingTree = memo(function LivingTree({ className, height = 320, loader = false }: LivingTreeProps) {
+export const LivingTree = memo(({ className, height = 120, loader = false }: LivingTreeProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestRef = useRef<number>();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let raf = 0;
-    let running = true;
-    let w = 0;
-    let h = 0;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      w = Math.max(320, rect.width || 760);
-      h = Math.max(180, rect.height || height);
-      canvas.width = Math.floor(w * dpr);
-      canvas.height = Math.floor(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const animate = (time: number) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const startX = canvas.width / 2;
+      const startY = canvas.height - 10;
+      
+      // Increased depth for higher visual density (11-12 levels)
+      drawBranch(ctx, startX, startY, -Math.PI / 2, height * 0.28, 11, time, isReduced);
+      
+      requestRef.current = requestAnimationFrame(animate);
     };
 
-    const render = (time = 0) => {
-      if (!running) return;
-      const t = reduced ? 0 : time / 1000;
-      ctx.clearRect(0, 0, w, h);
-      const cx = w / 2;
-      const baseline = h * 0.78;
-      const treeHeight = h * (loader ? 0.60 : 0.68);
-      const breath = reduced ? 1 : 1 + Math.sin(t * 0.9) * (loader ? 0.016 : 0.008);
-
-      const aura = ctx.createRadialGradient(cx, baseline - treeHeight * 0.55, 0, cx, baseline - treeHeight * 0.55, Math.min(w, h) * 0.62);
-      aura.addColorStop(0, 'rgba(220,230,248,.045)');
-      aura.addColorStop(0.48, 'rgba(124,217,236,.012)');
-      aura.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = aura;
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.save();
-      ctx.globalAlpha = loader ? 0.48 : 0.32;
-      ctx.strokeStyle = 'rgba(235,242,250,.48)';
-      ctx.shadowBlur = 7;
-      ctx.shadowColor = 'rgba(220,230,248,.12)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(cx - Math.min(w * 0.36, 440), baseline);
-      ctx.lineTo(cx + Math.min(w * 0.36, 440), baseline);
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(cx, baseline);
-      ctx.scale(breath, breath);
-      ctx.translate(-cx, -baseline);
-      drawBranch(ctx, cx, baseline, -Math.PI / 2, treeHeight * 0.29, 9, t * (loader ? 1.65 : 0.62));
-      ctx.restore();
-
-      ctx.save();
-      const r = 3.4 + (reduced ? 0 : Math.sin(t * 2.2) * 0.75);
-      ctx.fillStyle = 'rgba(255,255,255,.92)';
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = 'rgba(220,230,248,.30)';
-      ctx.beginPath();
-      ctx.arc(cx, baseline, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      if (!reduced) raf = requestAnimationFrame(render);
-    };
-
-    resize();
-    const ro = new ResizeObserver(() => { resize(); render(0); });
-    ro.observe(canvas);
-    window.addEventListener('resize', resize);
-    raf = requestAnimationFrame(render);
+    requestRef.current = requestAnimationFrame(animate);
     return () => {
-      running = false;
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener('resize', resize);
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [height, loader]);
+  }, [height]);
 
   return (
-    <div className={cn('relative mx-auto w-full max-w-[820px]', className)} style={{ height }} aria-hidden="true" data-testid={loader ? 'elitebox-tree-loader' : 'elitebox-living-tree'}>
-      <canvas ref={canvasRef} className="block h-full w-full" />
+    <div className={cn('relative flex items-center justify-center overflow-hidden', className)}>
+      <canvas
+        ref={canvasRef}
+        width={300}
+        height={height + 20}
+        className="opacity-80 pointer-events-none"
+      />
+      {loader && (
+        <div className="absolute inset-0 flex items-center justify-center">
+           <div className="w-1 h-1 bg-cyan-500/40 rounded-full animate-ping" />
+        </div>
+      )}
     </div>
   );
 });
 
-export function TreeLoader({ label = 'Loading EliteBox', className }: { label?: string; className?: string }) {
-  return (
-    <div className={cn('flex min-h-[220px] flex-col items-center justify-center gap-10 text-center', className)} role="status" aria-live="polite">
-      <LivingTree height={150} loader className="max-w-[360px]" />
-      <span className="text-micro uppercase tracking-[0.24em] text-muted">{label}</span>
-    </div>
-  );
-}
-
-export default LivingTree;
+LivingTree.displayName = 'LivingTree';
