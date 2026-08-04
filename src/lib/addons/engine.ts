@@ -1,5 +1,17 @@
 /** * Elitebox addon engine (singleton). */
-import type {  AddonCatalog,  AddonHealth,  AddonInfo,  AddonLegal,  AddonPrivacy,  AddonStatus,  CircuitState,  MetaItem,  MetaType,  MetaVideo,  StreamSource} from '@/lib/types';
+import type {
+  AddonCatalog,
+  AddonHealth,
+  AddonInfo,
+  AddonLegal,
+  AddonPrivacy,
+  AddonStatus,
+  CircuitState,
+  MetaItem,
+  MetaType,
+  MetaVideo,
+  StreamSource
+} from '@/lib/types';
 import { useAddons } from '@/lib/store';
 
 export enum addonBlockReason {
@@ -12,7 +24,7 @@ export enum addonBlockReason {
 export const addonTorrentHint = 'torrent';
 
 export function manifestUrlForTransport(url: string): string {
-  return url.replace(/\\/manifest.json$/, '');
+  return url.replace(/\/manifest.json$/, '');
 }
 
 class AddonEngine {
