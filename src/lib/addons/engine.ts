@@ -1,17 +1,6 @@
 /**
  * Elitebox addon engine (singleton).
- *
- * - External addons speak a Stremio-flavoured HTTP protocol:
- *   GET {base}/manifest, /catalog/{type}/{id}.json, /meta/{type}/{id}.json,
- *   /stream/{type}/{id}.json, /subtitles/{type}/{id}.json
- * - Every remote call: 7s AbortController timeout, timing telemetry, and a
- *   circuit breaker — 3 consecutive failures open the circuit for 60s, then
- *   one half-open probe decides close/re-open. `recover(id)` force-resets.
- * - Cinemeta calls additionally get one same-origin proxy fallback
- *   (`/api/cine.php`, 9s timeout) when the direct fetch fails, so visitors on
- *   slow/rotating-IP networks still reach the real catalog.
  */
-
 
 import type {
   AddonCatalog,
@@ -27,20 +16,35 @@ import type {
   StreamSource
 } from '@/lib/types';
 
-
 import { useAddons } from '@/lib/store';
 
-
-// Constants for circuit breaker
-const TIMEOUT_DIRECT = 7000;
-const TIMEOUT_PROXY = 9000;
-const CIRCUIT_THRESHOLD = 3;
-const CIRCUIT_RESET_MS = 60000;
-
-
 export enum addonBlockReason {
-  NONE = "none",
-  DMCA = "dmca",
-  MALWARE = "malware",
-  UNSAFE = "unsafe"
+  NONE = 'NONE',
+  LEGAL = 'LEGAL',
+  MALWARE = 'MALWARE',
+  UNSTABLE = 'UNSTABLE'
 }
+
+const TIMEOUT_DIRECT = 7000;
+
+class AddonEngine {
+  getAddons(): AddonInfo[] {
+    try { return useAddons.getState().addons; } catch (e) { return []; }
+  }
+
+  async getStreams(type: string, id: string): Promise<StreamSource[]> {
+    const addons = this.getAddons();
+    const results: StreamSource[] = [];
+    const promises = addons.map(async addon => {
+      try {
+        const resp = await fetch(\`${addon.transportUrl}/stream/${type}/${id}.json\`);
+        const data = await resp.json();
+        if (data.streams) results.push(...data.streams);
+      } catch (e) {}
+    });
+    await Promise.allSettled(promises);
+    return results;
+  }
+}
+
+export const addonEngine = new AddonEngine();
