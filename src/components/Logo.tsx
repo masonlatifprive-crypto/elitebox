@@ -32,20 +32,36 @@ export function EngravedE({ size = 40, className, glow = true }: LogoProps) {
         <filter id="bevel" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur" />
           <feOffset in="blur" dx="1" dy="1" result="offsetBlur" />
-          <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1" specularExponent="20" lightingColor="#ffffff" result="specOut">
+          <feSpecularLighting
+            in="blur"
+            surfaceScale="5"
+            specularConstant="1"
+            specularExponent="20"
+            lightingColor="#ffffff"
+            result="specOut"
+          >
             <fePointLight x="-5000" y="-10000" z="20000" />
           </feSpecularLighting>
           <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut" />
-          <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litGraphic" />
+          <feComposite in="SourceAlpha" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litOut" />
+          <feMerge>
+            <feMergeNode in="offsetBlur" />
+            <feMergeNode in="litOut" />
+          </feMerge>
         </filter>
       </defs>
       <rect width="100" height="100" rx="24" fill="#0f172a" />
-      <rect width="100" height="100" rx="24" fill="url(#" + steelId + ")" fillOpacity="0.1" stroke="#1e293b" strokeWidth="1" />
+      <rect width="100" height="100" rx="24" fill={`url(#${steelId})`} fillOpacity="0.1" stroke="#1e293b" strokeWidth="1" />
       <path
         d="M30 25 h45 v12 h-33 v13 h28 v12 h-28 v13 h33 v12 h-45 Z"
         fill="url(#" + steelId + ")"
         filter="url(#bevel)"
-        className="transition-all duration-500"
+        className="transition-all duration-700"
+      />
+      <path
+        d="M30 25 h45 v12 h-33 v13 h28 v12 h-28 v13 h33 v12 h-45 Z"
+        fill={`url(#${steelId})`}
+        className="opacity-80"
       />
     </svg>
   );
