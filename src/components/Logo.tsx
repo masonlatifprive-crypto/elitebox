@@ -36,29 +36,45 @@ export function EngravedE({ size = 40, className, glow = true }: LogoProps) {
         </linearGradient>
       </defs>
 
-      <circle
-        cx="50"
-        cy="50"
-        r="48"
-        fill={glow ? "#0f172a" : "transparent"}
-        stroke={`url(#${steelId})`}
-        strokeWidth="0.5"
-        className="opacity-50"
+      {/* Main Box Shape with Inset Effect */}
+      <rect
+        x="10"
+        y="10"
+        width="80"
+        height="80"
+        rx="18"
+        fill={glow ? `url(#${steelId})` : "#1e293b"}
+        className="transition-colors duration-500"
       />
 
-      <path
-        d="M30 25h40v10H40v15h25v10H40v15h30v10H30z"
-        fill={`url(#${steelId})`}
-      />
-      <path
-        d="M30 25h40v10H40v15h25v10H40v15h30v10H30z"
+      {/* Inner Engraved Detail */}
+      <rect
+        x="15"
+        y="15"
+        width="70"
+        height="70"
+        rx="14"
         fill="none"
-        stroke="rgba(255,255,255,0.2)"
+        stroke="rgba(255,255,255,0.1)"
         strokeWidth="0.5"
-        className="pointer-events-none"
       />
+
+      {/* Stylized 'E' with Cyberpunk Engraving */}
+      <path
+        d="M35 30H65M35 50H60M35 70H65M35 30V70"
+        stroke="#06b6d4"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        className="opacity-80"
+      />
+
+      {/* Cyan Highlight Accents */}
+      <circle cx="75" cy="25" r="3" fill="#22d3ee" className="animate-pulse" />
     </svg>
   );
 }
 
-export default EngravedE;
+export const Logo = EngravedE;
+export default Logo;
