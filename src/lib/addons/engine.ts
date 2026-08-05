@@ -11,8 +11,9 @@ import type {
   MetaType,
   MetaVideo,
   StreamSource
-} from '@/lib/types';
-import { useAddons } from '@/lib/store';
+} from '../types';
+import { useAddons } from '../store';
+
 
 export enum addonBlockReason {
   NONE = 'NONE',
@@ -21,15 +22,19 @@ export enum addonBlockReason {
   UNSTABLE = 'UNSTABLE'
 }
 
+
 export const addonTorrentHint = 'torrent';
+
 
 export function manifestUrlForTransport(url: string): string {
   return url.replace(/\/manifest.json$/, '');
 }
 
+
 class AddonEngine {
   private health: Record<string, AddonHealth> = {};
 }
+
 
 export const addonEngine = new AddonEngine();
 export default addonEngine;
