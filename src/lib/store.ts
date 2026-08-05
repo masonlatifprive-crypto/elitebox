@@ -34,16 +34,26 @@ function scopedStorage(storeName: string) {
   }));
 }
 
-interface SettingsState {
-  locale: string;
-  setLocale: (l: string) => void;
-}
+// --- Stores ---
 
-export const useSettings = create<SettingsState>()(
+export const useProfiles = create<any>()(
   persist(
     (set) => ({
-      locale: 'en',
-      setLocale: (locale) => set({ locale }),
+      profiles: [],
+      activeProfileId: DEFAULT_PROFILE_ID,
+      switchProfile: (id: string) => set({ activeProfileId: id }),
+    }),
+    {
+      name: KEY_PREFIX + 'profiles',
+    }
+  )
+);
+
+export const useSettings = create<any>()(
+  persist(
+    (set) => ({
+      language: 'en',
+      theme: 'dark',
     }),
     {
       name: 'settings',
@@ -52,20 +62,38 @@ export const useSettings = create<SettingsState>()(
   )
 );
 
-interface ProfilesState {
-  activeProfileId: string;
-  setActiveProfileId: (id: string) => void;
-}
-
-export const useProfiles = create<ProfilesState>()(
+export const useAddons = create<any>()(
   persist(
     (set) => ({
-      activeProfileId: DEFAULT_PROFILE_ID,
-      setActiveProfileId: (activeProfileId) => set({ activeProfileId }),
+      installed: [],
     }),
     {
-      name: 'profiles',
-      storage: createJSONStorage(() => localStorage),
+      name: 'addons',
+      storage: scopedStorage('addons'),
+    }
+  )
+);
+
+export const useLibrary = create<any>()(
+  persist(
+    (set) => ({
+      items: [],
+    }),
+    {
+      name: 'library',
+      storage: scopedStorage('library'),
+    }
+  )
+);
+
+export const usePlayback = create<any>()(
+  persist(
+    (set) => ({
+      history: {},
+    }),
+    {
+      name: 'playback',
+      storage: scopedStorage('playback'),
     }
   )
 );
