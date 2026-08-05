@@ -10,14 +10,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Copy, MoreHorizontal, Play, Radio, RefreshCw, SignalHigh, SignalLow, SignalMedium } from 'lucide-react';
-import { Badge, ButtonNeon, ButtonPrimary, EmptyState, HealthDot, spring, toast } from '@/components/ui-elite';
-import { useCatalogItems } from '@/pages/app/Discover';
-import { addonEngine } from '@/lib/addons/engine';
-import { getShowcaseStreams } from '@/data/showcase';
-import { useAddons } from '@/lib/store';
-import type { AddonHealth, MetaItem } from '@/lib/types';
-import { useT } from '@/i18n';
-import { cn } from '@/lib/utils';
+import { Badge, ButtonNeon, ButtonPrimary, EmptyState, HealthDot, spring, toast } from '../../components/ui-elite';
+import { useCatalogItems } from './Discover';
+import { addonEngine } from '../../lib/addons/engine';
+import { getShowcaseStreams } from '../../data/showcase';
+import { useAddons } from '../../lib/store';
+import type { AddonHealth, MetaItem } from '../../lib/types';
+import { useT } from '../../i18n';
+import { cn } from '../../lib/utils';
+
+
 
 
 function signalFor(health?: AddonHealth): 1 | 2 | 3 {
@@ -28,11 +30,11 @@ function signalFor(health?: AddonHealth): 1 | 2 | 3 {
 }
 
 
+
+
 export default function Live() {
   const { t } = useT();
   const { items, loading, reload } = useCatalogItems();
   const reduceMotion = useReducedMotion();
   const installed = useAddons((s) => s.installed);
   const [health, setHealth] = useState<Record<string, AddonHealth>>({});
-  const [checkedAt, setCheckedAt] = useState(() => Date.now());
-  const [tick, setTick] = useState(0);
