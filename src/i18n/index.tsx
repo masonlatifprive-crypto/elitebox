@@ -25,7 +25,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  type ReactNode
+  type ReactNode,
 } from 'react';
 
 import DICTS from './locales';
@@ -35,64 +35,49 @@ export type Locale = 'en' | 'nl';
 
 export type TranslateVars = Record<string, string | number>;
 
-export type TFunction = (key: string, vars?: TranslateVars) => string;
-
-export interface I18nValue {
-  t: TFunction;
+interface I18nContextType {
+  t: (key: string, vars?: TranslateVars) => string;
   locale: Locale;
   setLocale: (l: Locale) => void;
 }
 
-const I18nContext = createContext<I18nValue | null>(null);
+const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const { settings, updateSettings } = useSettings();
-  const locale = (settings?.general?.language as Locale) || 'en';
+  const { general, updateGeneral } = useSettings();
+  const locale = (general.language as Locale) || 'en';
 
-  const setLocale = useCallback((l: Locale) => {
-    updateSettings({ general: { ...settings.general, language: l } });
-  }, [settings, updateSettings]);
+  const setLocale = useCallback(
+    (l: Locale) => {
+      updateGeneral({ language: l });
+    },
+    [updateGeneral]
+  );
 
-  const t: TFunction = useCallback((key, vars) => {
-    const [ns, ...pathParts] = key.split('.');
-    const path = pathParts.join('.');
+  const t = useCallback(
+    (key: string, vars?: TranslateVars) => {
+      const [ns, ...rest] = key.split('.');
+      const path = rest.join('.');
 
-    const getVal = (l: Locale) => {
-      const dict = (DICTS as any)[l]?.[ns];
-      if (!dict) return null;
-      return path.split('.').reduce((obj, key) => obj?.[key], dict);
-    };
+      const dict = DICTS[locale] || DICTS.en;
+      let val = (dict as any)[ns]?.[path];
 
-    let val = getVal(locale);
-
-    if (val === undefined || val === null) {
-      if (locale !== 'en') {
-        val = getVal('en');
-        if (val !== undefined && val !== null) {
-          if (import.meta.env.DEV) {
-            console.warn(`[i18n] Fallback to 'en' for key: ${key}`);
-          }
-        }
+      if (!val && locale !== 'en') {
+        val = (DICTS.en as any)[ns]?.[path];
       }
-    }
 
-    if (val === undefined || val === null) {
-      if (import.meta.env.DEV) {
-        console.warn(`[i18n] Missing key: ${key}`);
+      if (!val) return key;
+
+      if (vars) {
+        Object.entries(vars).forEach(([k, v]) => {
+          val = val.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+        });
       }
-      return key;
-    }
 
-    if (typeof val !== 'string') return key;
-
-    if (vars) {
-      return Object.entries(vars).reduce((str, [k, v]) => {
-        return str.replace(new RegExp(`{{s*${k}s*}}`, 'g'), String(v));
-      }, val);
-    }
-
-    return val;
-  }, [locale]);
+      return val;
+    },
+    [locale]
+  );
 
   const value = useMemo(() => ({ t, locale, setLocale }), [t, locale, setLocale]);
 
@@ -101,8 +86,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
 export function useT() {
   const ctx = useContext(I18nContext);
-  if (!ctx) {
-    throw new Error('useT must be used within an I18nProvider');
-  }
+  if (!ctx) throw new Error('useT must be used within I18nProvider');
   return ctx;
 }
+
+export default useT;
