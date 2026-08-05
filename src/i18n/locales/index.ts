@@ -32,20 +32,18 @@ function flatten(tree: MessageTree, prefix = ''): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(tree)) {
     const path = prefix ? `${prefix}.${k}` : k;
-    if (typeof v === 'string') out[path] = v;
-    else if (isTree(v)) Object.assign(out, flatten(v, path));
+    if (typeof v === 'string') {
+      out[path] = v;
+    } else if (isTree(v)) {
+      Object.assign(out, flatten(v, path));
+    }
   }
   return out;
 }
 
-/** Raw per-locale message trees, merged from the namespace modules. */
-export const MESSAGES = {
-  en: deepMerge({ common: enCommon }, { marketing: enMarketing }, { app: enApp }),
-  nl: deepMerge({ common: nlCommon }, { marketing: nlMarketing }, { app: nlApp }),
-} as const;
-
-/** Flattened dot-path dictionaries — what the runtime actually looks up. */
-export const DICTS: Record<'en' | 'nl', Record<string, string>> = {
-  en: flatten(MESSAGES.en),
-  nl: flatten(MESSAGES.nl),
+export const DICTS = {
+  en: flatten(deepMerge(enCommon, enMarketing, enApp)),
+  nl: flatten(deepMerge(nlCommon, nlMarketing, nlApp)),
 };
+
+export default DICTS;
