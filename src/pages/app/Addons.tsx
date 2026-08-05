@@ -1,4 +1,6 @@
-**
+/**
+
+
  * Addons — `/app/addons` (design addons.md).
  * The Addon Manager: install by manifest URL with permission preview,
  * enable/disable, reorder, remove with confirm, and the live Addon Health
