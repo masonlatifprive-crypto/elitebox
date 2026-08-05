@@ -34,11 +34,11 @@ const LivingTree = () => {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2.5 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 1.2;
-        this.speedY = (Math.random() - 0.5) * 1.2;
+        this.size = Math.random() * 2 + 1;
+        this.speedX = Math.random() * 1 - 0.5;
+        this.speedY = Math.random() * 1 - 0.5;
         
-        const colors = ['#00f2ff', '#a855f7', '#e2e8f0'];
+        const colors = ['#00ffff', '#c0c0c0', '#a855f7'];
         this.color = colors[Math.floor(Math.random() * colors.length)];
         this.opacity = Math.random() * 0.5 + 0.2;
       }
@@ -59,7 +59,7 @@ const LivingTree = () => {
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.globalAlpha = this.opacity;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 15;
         ctx.shadowColor = this.color;
         ctx.fill();
       }
@@ -67,8 +67,8 @@ const LivingTree = () => {
 
     function init() {
       particles = [];
-      const particleCount = Math.min(150, (window.innerWidth * window.innerHeight) / 8000);
-      for (let i = 0; i < particleCount; i++) {
+      const count = Math.floor((canvas.width * canvas.height) / 15000);
+      for (let i = 0; i < count; i++) {
         particles.push(new Particle());
       }
     }
@@ -93,8 +93,16 @@ const LivingTree = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.6 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 0,
+        background: 'transparent'
+      }}
     />
   );
 };
